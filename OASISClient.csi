@@ -1,0 +1,18 @@
+[History]
+B0=OASISClient/DynamicDataModule/cmdNext_Click
+B1=OASISClient/DynamicDataModule/SetAutoCalcField
+B2=OASISClient/DynamicDataModule/DisplayGridData
+B3=OASISClient/frmLogin/AppSettingsUpdate
+B4=OASISClient/frmLogin/CheckProfileUpdate
+B5=OASISClient/frmMain/m_frmMnuOperations_ExportLayer
+B6=OASISClient/frmMain/mnuAutoHeight_Click
+B7=OASISClient/frmMain/mnu4Rows_Click
+B8=OASISClient/frmMain/mnu16rows_Click
+B9=OASISClient/frmMain/SetGridOption
+B10=OASISClient/frmMain/mnuAutoSize_Click
+B11=OASISClient/frmMain/LoadOASISIncidentsEX
+B12=OASISClient/frmMain/LoadLayerAttrDataToGridInit
+B13=OASISClient/frmMain/LoadLayerAttrDataToGrid
+B14=OASISClient/frmMain/m_fmrAddIncident_SubmitIncident
+[Workbench]
+0=46   OASISClient/frmMainSettings/chkShowWater_Click18   chkShowWater_Click20   MembEventProcPrivate1    01    0

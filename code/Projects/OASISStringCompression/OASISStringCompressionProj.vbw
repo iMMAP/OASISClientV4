@@ -1,0 +1,5 @@
+OASISCompression = 22, 22, 780, 596, 
+clsAES = 0, 0, 0, 0, C
+modEncryptUtils = 0, 0, 0, 0, C
+clsZlibWrapper = 0, 0, 0, 0, C
+CRijndael = 66, 66, 846, 378, 

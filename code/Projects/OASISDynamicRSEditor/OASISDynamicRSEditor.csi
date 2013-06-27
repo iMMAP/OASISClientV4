@@ -1,0 +1,7 @@
+[History]
+B0=OASISDynamRSEditor/OASISDynamicRSEditor/SaveRecord
+B1=OASISDynamRSEditor/OASISDynamicRSEditor/PopulateCombo
+B2=OASISDynamRSEditor/OASISDynamicRSEditor/DisplayFields
+B3=OASISDynamRSEditor/OASISDynamicRSEditor/Init
+B4=OASISDynamRSEditor/OASISDynamicRSEditor/DeleteFields
+B5=OASISDynamRSEditor/OASISDynamicRSEditor/Reset

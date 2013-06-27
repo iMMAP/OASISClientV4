@@ -1,0 +1,20 @@
+Line 3: Could not create reference: '{5B57CA38-0CAB-48F9-BBAE-8A2342F4A7C2}#8.4#0'.
+Line 69: Class TatukGIS_DK.XGIS_ControlAttributes of control Attributes1 was not a loaded control class.
+Line 75: The property name ReadOnly in Attributes1 is invalid.
+Line 76: The property name AllowRestructure in Attributes1 is invalid.
+Line 77: The property name ColorHeader in Attributes1 is invalid.
+Line 78: The property name ColorGrid in Attributes1 is invalid.
+Line 80: The property name BevelInner in Attributes1 is invalid.
+Line 81: The property name BevelOuter in Attributes1 is invalid.
+Line 82: The property name Ctl3D in Attributes1 is invalid.
+Line 84: The property name Color in Attributes1 is invalid.
+Line 95: The property name ParentColor in Attributes1 is invalid.
+Line 96: The property name ParentCtl3D in Attributes1 is invalid.
+Line 97: The property name Object.Visible in Attributes1 is invalid.
+Line 98: The property name ParentBackground in Attributes1 is invalid.
+Line 99: The property name DoubleBuffered in Attributes1 is invalid.
+Line 100: The property name AllowNull in Attributes1 is invalid.
+Line 101: The property name BevelWidth in Attributes1 is invalid.
+Line 102: The property name BorderWidth in Attributes1 is invalid.
+Line 104: The property name ParentFont in Attributes1 is invalid.
+Line 105: The property name TabOrder in Attributes1 is invalid.

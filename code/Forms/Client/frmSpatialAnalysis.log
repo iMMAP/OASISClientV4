@@ -1,0 +1,8 @@
+Line 1327: Class XpressEditorsLibCtl.dxDateEdit of control dxDateFromTemplate was not a loaded control class.
+Line 1345: Class XpressEditorsLibCtl.dxDateEdit of control dxDateTillTemplate was not a loaded control class.
+Line 1389: Class DXDBGRIDLibCtl.dxDBGrid of control ego was not a loaded control class.
+Line 1474: Class DXDBGRIDLibCtl.dxDBGrid of control dxDBGrid1 was not a loaded control class.
+Line 1489: Class XpressEditorsLibCtl.dxMemoEdit of control txtOverlayFilter was not a loaded control class.
+Line 1515: Class XpressEditorsLibCtl.dxDateEdit of control dxDateFrom was not a loaded control class.
+Line 1559: Class XpressEditorsLibCtl.dxDateEdit of control dxDateTill was not a loaded control class.
+Line 1618: Class XpressEditorsLibCtl.dxMemoEdit of control txtTargetFilter was not a loaded control class.

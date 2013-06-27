@@ -1,0 +1,11 @@
+[History]
+B0=OASISThemeRange/OASISThemeRangePicker/dxThemeIntervals_Change
+B1=OASISThemeRange/OASISThemeRangePicker/dxProgressBar_Click
+B2=OASISThemeRange/OASISThemeRangePicker/GetNumberOfIntervals
+B3=OASISThemeRange/OASISThemeRangePicker/ChangedRatio
+B4=OASISThemeRange/ColorFunctions/GetRGB
+B5=OASISThemeRange/OASISThemeRangePicker/cmdResetSizes_Click
+B6=OASISThemeRange/OASISThemeRangePicker/UserControl_Initialize
+B7=OASISThemeRange/OASISThemeRangePicker/UserControl_Terminate
+B8=OASISThemeRange/OASISThemeRangePicker/GetIntervalEndColor
+B9=OASISThemeRange/OASISThemeRangePicker/dxIntervalColor_Change

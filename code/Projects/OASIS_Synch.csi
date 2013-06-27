@@ -1,0 +1,16 @@
+[History]
+B0=OASIS_SynchNG/SynchWorker/CreateTable
+B1=OASIS_SynchNG/SynchWorker/GetSynchRecordsTOADD
+B2=OASIS_SynchNG/SynchWorker/GetLocalTables
+B3=OASIS_SynchNG/SynchWorker/GetRemoteTables
+B4=OASIS_SynchNG/SynchWorker/GetAllFieldNamesForLocalTable
+B5=OASIS_SynchNG/SynchWorker/CompareTables
+B6=OASIS_SynchNG/SynchWorker/UseEvents
+B7=OASIS_SynchNG/SynchWorker/GetAllGUIDsFromServerDB
+B8=OASIS_SynchNG/SynchWorker/GetAllGUIDsFromLocalDB
+B9=OASIS_SynchNG/SynchWorker/UpdateSynchHistoryOverview
+B10=OASIS_SynchNG/SynchWorker/CheckForClientTableDuplicateUID
+B11=OASIS_SynchNG/SynchWorker/GetSynchTablesToWipe
+B12=OASIS_SynchNG/SynchWorker/SynchHistoryEdit
+B13=OASIS_SynchNG/SynchWorker/OpenServerRSCompressed
+B14=OASIS_SynchNG/SynchWorker/LocateIndexOfTable

@@ -1,0 +1,2 @@
+--- On the next line specify the number of records to download in batch
+200

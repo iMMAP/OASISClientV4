@@ -1,0 +1,36 @@
+Type=Exe
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\WINDOWS\system32\stdole2.tlb#OLE Automation
+Object={0AFE7BE0-11B7-4A3E-978D-D4501E9A57FE}#1.0#0; c1sizer.ocx
+Reference=*\G{420B2830-E718-11CF-893D-00A0C9054228}#1.0#0#..\..\..\..\..\WINDOWS\system32\scrrun.dll#Microsoft Scripting Runtime
+Reference=*\G{7928DA2F-2D04-40A2-8AA8-9345C19E7C26}#2.0#0#..\..\..\..\Components\OASISChartingProvider.dll#OASISCharting
+Startup="Sub Main"
+HelpFile=""
+ExeName32="RunningProject.exe"
+Command32=""
+Name="Project1"
+HelpContextID="0"
+CompatibleMode="0"
+MajorVer=1
+MinorVer=0
+RevisionVer=0
+AutoIncrementVer=0
+ServerSupportFiles=0
+VersionCompanyName="bolggnet"
+CompilationType=0
+OptimizationType=0
+FavorPentiumPro(tm)=0
+CodeViewDebugInfo=0
+NoAliasing=0
+BoundsCheck=0
+OverflowCheck=0
+FlPointCheck=0
+FDIVCheck=0
+UnroundedFP=0
+StartMode=0
+Unattended=0
+Retained=0
+ThreadPerObject=0
+MaxNumberOfThreads=1
+
+[MS Transaction Server]
+AutoRefresh=1

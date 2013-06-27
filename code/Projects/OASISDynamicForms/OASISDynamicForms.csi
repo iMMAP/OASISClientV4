@@ -1,0 +1,16 @@
+[History]
+B0=Project1/UserControl1/SetDropdown
+B1=Project1/UserControl1/cmdEditDropdown_Click
+B2=Project1/UserControl1/CreatePageDef
+B3=Project1/UserControl1/DisplayFields
+B4=Project1/UserControl1/dxDBInspector_GotFocus
+B5=Project1/UserControl1/dxDBInspector_OnChangeNode
+B6=Project1/UserControl1/PreparePageDefinition
+B7=Project1/UserControl1/SetCaptions
+B8=Project1/UserControl1/cmdCommand2_Click
+B9=Project1/UserControl1/cmdPrepDefs_Click
+B10=Project1/UserControl1/cmdShowMT_Click
+B11=Project1/UserControl1/PreparePageDefintion
+B12=Project1/UserControl1/lblPage_Click
+B13=Project1/UserControl1/CreateCustomRS
+B14=Project1/UserControl1/GetFieldCaption

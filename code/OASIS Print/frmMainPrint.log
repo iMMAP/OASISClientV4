@@ -1,0 +1,15 @@
+Line 22: Class OASISClient.OASISDrawObj of control OASISDrawObj1 was not a loaded control class.
+Line 74: Class OASISClient.tipPopup of control tipPopup1 was not a loaded control class.
+Line 249: Class OASISClient.ColorPicker of control ColorPicker1 was not a loaded control class.
+Line 28: The property name _ExtentX in OASISDrawObj1 is invalid.
+Line 29: The property name _ExtentY in OASISDrawObj1 is invalid.
+Line 30: The property name CanvasWidth in OASISDrawObj1 is invalid.
+Line 31: The property name CanvasHeight in OASISDrawObj1 is invalid.
+Line 32: The property name UndoBufferSize in OASISDrawObj1 is invalid.
+Line 33: The property name ShowCanvasSize in OASISDrawObj1 is invalid.
+Line 34: The property name ArrowStep in OASISDrawObj1 is invalid.
+Line 35: The property name ZoomFactor in OASISDrawObj1 is invalid.
+Line 79: The property name _ExtentX in tipPopup1 is invalid.
+Line 80: The property name _ExtentY in tipPopup1 is invalid.
+Line 255: The property name _ExtentX in ColorPicker1 is invalid.
+Line 256: The property name _ExtentY in ColorPicker1 is invalid.

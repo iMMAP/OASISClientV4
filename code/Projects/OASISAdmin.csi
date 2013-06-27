@@ -1,0 +1,11 @@
+[History]
+B0=OASISRemoteAdmin/frmSelectUserGroup/Form_Load
+B1=OASISRemoteAdmin/frmDatabaseConnect/Form_Initialize
+B2=OASISRemoteAdmin/frmConfig/SaveAllSettings
+B3=OASISRemoteAdmin/frmDatabaseConnect/Form_Unload
+B4=OASISRemoteAdmin/frmConfig/OASISThemeRangePicker1_GotFocus
+B5=OASISRemoteAdmin/frmIncidentsMaintainance/cmdSave_Click
+B6=OASISRemoteAdmin/frmIncidentsMaintainance/LoadData
+B7=OASISRemoteAdmin/frmIncidentsMaintainance/Form_Load
+B8=OASISRemoteAdmin/frmIncidentsMaintainance/CloneRS
+B9=OASISRemoteAdmin/frmOASISProgress/SaveHttpCommsRS

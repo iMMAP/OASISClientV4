@@ -1,0 +1,10 @@
+[History]
+B0=OASISDynamicReports/OASISDynamReports/SetTitle
+B1=OASISDynamicReports/OASISDynamReports/List1_Click
+B2=OASISDynamicReports/OASISDynamReports/SetWVIParams
+B3=OASISDynamicReports/OASISDynamReports/PrintToPDF
+B4=OASISDynamicReports/OASISDynamReports/VSReport1_OnPrint
+B5=OASISDynamicReports/OASISDynamReports/loadXML
+B6=OASISDynamicReports/OASISDynamReports/ShowReportDetail
+B7=OASISDynamicReports/OASISDynamReports/SetOrientLandscape
+B8=OASISDynamicReports/OASISDynamReports/GenerateChart

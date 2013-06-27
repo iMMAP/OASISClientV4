@@ -1,0 +1,16 @@
+[History]
+B0=OASISPrint/OASISDrawObj/RedimList
+B1=OASISPrint/OASISDrawObj/AddObject
+B2=OASISPrint/frmMainPrint/txtEdit_KeyPress
+B3=OASISPrint/frmMainPrint/txtEdit_KeyDown
+B4=OASISPrint/frmMainPrint/Form_Load
+B5=OASISPrint/frmMainPrint/InitPrint
+B6=OASISPrint/frmStart/cmdDoit_Click
+B7=OASISPrint/cMonitor/ShowPrint
+B8=OASISPrint/frmMainPrint/Toolbar1_ButtonClick
+B9=OASISPrint/frmMainPrint/Form_Unload
+B10=OASISPrint/frmMainPrint/SmnuFile_Click
+B11=OASISPrint/mMain/Main
+B12=OASISPrint/cMonitor/IsPrimary
+B13=OASISPrint/frmMainPrint/ColorPal1_MouseDown
+B14=OASISPrint/ColorPal/LoadPalette
