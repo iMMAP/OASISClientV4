@@ -663,19 +663,19 @@ Begin VB.UserControl DynamicDataReports
             AccessibleDescription=   ""
             AccessibleValue =   ""
             AccessibleRole  =   9
-            Begin XpressEditorsLibCtl.dxMemoEdit dxFilterSQL 
-               Height          =   810
-               Left            =   5535
-               OleObjectBlob   =   "DynamicDataReports.ctx":10E2
-               TabIndex        =   23
-               Top             =   270
-               Width           =   5475
-            End
             Begin XpressEditorsLibCtl.dxMemoEdit dxSQLCommand 
                Height          =   1605
                Left            =   0
-               OleObjectBlob   =   "DynamicDataReports.ctx":11DE
+               OleObjectBlob   =   "DynamicDataReports.ctx":10E2
                TabIndex        =   9
+               Top             =   270
+               Width           =   5475
+            End
+            Begin XpressEditorsLibCtl.dxMemoEdit dxFilterSQL 
+               Height          =   810
+               Left            =   5535
+               OleObjectBlob   =   "DynamicDataReports.ctx":11DE
+               TabIndex        =   23
                Top             =   270
                Width           =   5475
             End
