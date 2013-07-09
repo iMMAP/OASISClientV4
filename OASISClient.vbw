@@ -1,7 +1,7 @@
 Downloader = 0, 0, 0, 0, C, 66, 66, 638, 546, C
 ColorPicker = 0, 0, 0, 0, C, 88, 88, 660, 568, C
 clientMain = 0, 0, 0, 0, C
-frmLogin = 22, 22, 726, 506, , 110, 110, 682, 590, C
+frmLogin = 22, 22, 726, 506, C, 110, 110, 682, 590, C
 frmOVMap = 0, 0, 0, 0, C, 132, 132, 704, 612, CZ
 GISFunctions = 0, 0, 0, 0, C
 frmAttributes = 0, 0, 0, 0, C, 154, 154, 726, 634, C
@@ -126,7 +126,7 @@ mHover = 0, 0, 0, 0, C
 frmGeoSummary = 0, 0, 0, 0, C, 198, 198, 770, 678, C
 frmSelectorReports = 0, 0, 0, 0, C, 220, 220, 792, 700, C
 frmSelectorSettings = 0, 0, 0, 0, C, 0, 0, 572, 480, C
-DynamicDataModule = 25, 25, 1104, 532, Z, 50, 50, 1129, 557, C
+DynamicDataModule = 25, 25, 1061, 532, C, 50, 50, 1129, 557, C
 DynamicDataReports = 198, 198, 623, 678, C, 44, 44, 616, 524, C
 frmMnuDynamicDataModule = 0, 0, 0, 0, C, 66, 66, 638, 546, C
 frmMnuDynamicReportsModule = 0, 0, 0, 0, C, 88, 88, 660, 568, C

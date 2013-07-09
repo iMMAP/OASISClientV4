@@ -1412,12 +1412,12 @@ Private Sub UpdateSynchHistoryOverview(cn As Connection, ByVal sWebsite As Strin
 106         If Not oRSLocal.EOF Then .lCountLocal = oRSLocal.Fields(0).Value
 108         oRSLocal.Close
         
-110         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' ORDER BY [sWhen] DESC", cn, adOpenDynamic, adLockReadOnly
+110         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' AND NOT ([noconflict]='local') ORDER BY [sWhen] DESC", cn, adOpenDynamic, adLockReadOnly
 112         .sWhenMaxActualLocal = sWhenNow
 114         If Not oRSLocal.EOF Then .sWhenMaxActualLocal = oRSLocal.Fields(0).Value
 116         oRSLocal.Close
         
-118         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' ORDER BY [sWhen]", cn, adOpenDynamic, adLockReadOnly
+118         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' AND NOT ([noconflict]='local') ORDER BY [sWhen]", cn, adOpenDynamic, adLockReadOnly
 120         .sWhenMinActualLocal = sWhenNow
 122         If Not oRSLocal.EOF Then .sWhenMinActualLocal = oRSLocal.Fields(0).Value
 124         oRSLocal.Close
@@ -2825,6 +2825,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 208                         If RSServerSynchHistory.EOF Then RSServerSynchHistory.AddNew
 210                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
 212                         RSLocalSynchHistory.Fields("updates").Value = "true"
+                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
 
 214                         Do Until j = RSLocalSynchHistory.Fields.Count
 216                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
@@ -2963,6 +2964,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 330                                             If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
 332                                             RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
 334                                             RSLocalSynchHistory.Fields("updates").Value = "true"
+                                                RSLocalSynchHistory.Fields("noconflict").Value = "false"
 
 336                                             Do Until j = RSLocalSynchHistory.Fields.Count
 338                                                 RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
@@ -3080,7 +3082,8 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 416                                         RSServerSynchHistory.AddNew
 418                                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
 420                                         RSLocalSynchHistory.Fields("updates").Value = "true"
-
+                                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
+                                            
 422                                         Do Until j = RSLocalSynchHistory.Fields.Count
 424                                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
 
@@ -3105,6 +3108,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 432                         TxMsg "    --- add aborted: Record " & i & " with id: " & RSLocalSynchHistory.Fields("sID").Value & " is already on the server - adjusting SynchHistory accordingly" ', True
 434                         RSLocalSynchHistory.Fields("updates").Value = "true"
 436                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
                         
                         End If
 
@@ -3237,6 +3241,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 558                                     RSServerSynchHistory.AddNew
 560                                     RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
 562                                     RSLocalSynchHistory.Fields("updates").Value = "true"
+                                        RSLocalSynchHistory.Fields("noconflict").Value = "false"
     
 564                                     Do Until j = RSLocalSynchHistory.Fields.Count
 566                                         RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
@@ -3405,7 +3410,8 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 708                                         If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
 710                                         RSLocalSynchHistory.Fields("updates").Value = "true"
 712                                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-
+                                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
+                                            
 714                                         Do Until j = RSLocalSynchHistory.Fields.Count
 716                                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
 718                                             j = j + 1
@@ -3441,6 +3447,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 734                         If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
 736                         RSLocalSynchHistory.Fields("updates").Value = "true"
 738                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
 
 740                         Do Until j = RSLocalSynchHistory.Fields.Count
 742                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
@@ -3467,6 +3474,7 @@ Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
 
 760                         RSLocalSynchHistory.Fields("updates").Value = "true"
 762                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
 764                         RSLocalSynchHistory.UpdateBatch adAffectCurrent
 
                         End If
