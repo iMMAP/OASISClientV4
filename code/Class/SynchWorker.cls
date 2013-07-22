@@ -44,6 +44,7 @@ Private m_sWhen As String
 Private m_bDebug As Boolean
 Private m_bIncidentsV2 As Boolean
 Private m_lCountDownloaded As Long
+Private bRecordsDownloaded As Boolean
 
 Private OASStringCompression As New OASISStringCompression.OASISCompression
 
@@ -1581,6 +1582,9 @@ Private Function GetSynchRecordsTOADD(ByVal sTableName As String, _
             
             SynchHistoryOverview.sWhenMinSearched = SynchHistoryOverview.sWhenMinActualLocal
             SynchHistoryOverview.sWhenMaxSearched = SynchHistoryOverview.sWhenMaxActualLocal
+            If SynchHistoryOverview.sWhenMaxActualLocal > SynchHistoryOverview.sWhenMaxActualServer Then
+                SynchHistoryOverview.sWhenMaxSearched = SynchHistoryOverview.sWhenMaxActualServer
+            End If
             
             
 '144         SynchHistoryOverview.sWhenMinSearched = RSSynchHistoryOverview.Fields("sWhenMinSearched").Value
@@ -1613,7 +1617,7 @@ Private Function GetSynchRecordsTOADD(ByVal sTableName As String, _
 
 162                     .MoveFirst
 164                     GetSynchRecordsTOADD = True
-
+                        bRecordsDownloaded = True
 166                     TxMsg "    --- " & RSGUIDSNeedingDownloading.RecordCount & " new record(s) are to be downloaded from the OASIS Cloud Server............"
 168                     sDebugInfo = "Here is the debug info for function: GetSynchRecordsTOADD"
 170                     i = 0
@@ -1775,7 +1779,7 @@ Private Function GetSynchRecordsTOADD(ByVal sTableName As String, _
 340                                         RSUpdater_GEO.UpdateBatch adAffectCurrent
 342                                         SynchHistoryAddNew cn, GetGuid, RSServerNewRecord_FEA.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA"), True, "true", sLocalSynchHistPrefix, sServerSequenceFound
 344                                         sWhenCurrent = sServerDateFound
-                
+                                          '  bRecordsDownloaded = True
                                             ' Report to client
 346                                         If Not m_bUseEvents Then
 348                                             If bIncidents Then
@@ -1888,10 +1892,12 @@ Private Function GetSynchRecordsTOADD(ByVal sTableName As String, _
                                            
 432                                             SynchHistoryAddNew cn, GetGuid, RSServerNewRecord.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, sTableName, True, "true", sLocalSynchHistPrefix, sServerSequenceFound
 434                                             sWhenCurrent = sServerDateFound
-
+                                                'bRecordsDownloaded = True
+                                                
                                                 ' Report to client
 436                                             If Not m_bUseEvents Then
                                                     m_lCountDownloaded = m_lCountDownloaded + 1
+                                                    
 438                                                 TxMsg CStr("**??New record " & i & " of " & RSGUIDSNeedingDownloading.RecordCount & " for table: " & sTableName & " with ID: " & RSServerNewRecord.Fields(sGUID).Value)
 
                                                     'TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") and ID: " & RSServerNewRecord.Fields(sGUID).Value)
@@ -4263,58 +4269,6 @@ Private Sub SynchDDWithServer(sTableNamePrefix As String, _
 104     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
 106     m_sIDs = ""
 
-        ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-        'UPLOAD DATA...............................
-        '
-        'RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sdelete] DESC", cn, adOpenDynamic, adLockBatchOptimistic
-108     RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sTableName] DESC", cn, adOpenDynamic, adLockBatchOptimistic
-        
-110     If Not RSLocalSynchHistory.State = adStateClosed Then
-
-112         If RSLocalSynchHistory.EOF = False Then
-
-114             TxMsg "Records are pending update to server..........."
-
-116             Do Until RSLocalSynchHistory.EOF
-
-118                 If RSLocalSynchHistory.Fields("sdelete").Value = "true" Then
-120                     SynchOp = Delete
-                    Else
-
-122                     If RSLocalSynchHistory.Fields("sequence").Value > 1 Then
-124                         SynchOp = Update
-126                     ElseIf RSLocalSynchHistory.Fields("sequence").Value = 1 Then
-128                         SynchOp = Add
-                        End If
-                    End If
-
-130                 sLocalTableName = RSLocalSynchHistory.Fields("sTableName").Value
-132                 sTableNameSmall = Right$(sLocalTableName, Len(sLocalTableName) - Len(sTableNamePrefix))
-
-134                 If Left$(sTableNameSmall, 4) = "link" Then
-136                     sLocalTableGUID = "GUID2"
-                    Else
-138                     sLocalTableGUID = "GUID1"
-                    End If
-
-140                 If Left$(Replace(sLocalTableName, sTableNamePrefix, "", , , vbTextCompare), 4) = "link" Then sLocalTableGUID = "GUID2"
-142                 bIsGeo = False
-
-144                 If Right$(sLocalTableName, 4) = "_FEA" Then
-146                     bIsGeo = True
-148                     sLocalTableName = Left$(sLocalTableName, Len(sLocalTableName) - 4)
-                    End If
-                    
-150                 UploadTableChangesToServer sLocalTableName, sLocalTableGUID, bIsGeo, sWebsite, cn, SynchOp, sTableNamePrefix
-152                 RSLocalSynchHistory.MoveFirst
-154                 RSLocalSynchHistory.Requery
-                
-                Loop
-
-            End If
-
-        End If
-        
 156     Set RSLocalSynchHistory = Nothing
 
         ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -4326,6 +4280,7 @@ Private Sub SynchDDWithServer(sTableNamePrefix As String, _
 162     sTableNames = Split(sRetVal, ",", , vbTextCompare)
         
 164     i = UBound(sTableNames)
+        bRecordsDownloaded = False
 
 166     Do Until i = -1 'UBound(sTableNames) + 1
           
@@ -4338,7 +4293,7 @@ Private Sub SynchDDWithServer(sTableNamePrefix As String, _
             End If
             
             'If Not Right(sTableNames(i), 13) = "ChartSettings" And Not Right(sTableNames(i), 7) = "Queries" Then
-                'sTableNames(i) = sTableNames(i) & "_GEO"
+            'sTableNames(i) = sTableNames(i) & "_GEO"
             'End If
             
 176         If Not Right$(sTableNames(i), 12) = "SynchHistory" And Not Right$(sTableNames(i), 20) = "SynchHistoryOverview" And Not Right$(sTableNames(i), 4) = "_GEO" Then
@@ -4350,29 +4305,29 @@ Private Sub SynchDDWithServer(sTableNamePrefix As String, _
 182                 bIsGeo = False
                 End If
                 
-
-                
 186             lOldNumBatchDownload = lBatchCountToDownload
 188             bLargePolygonDownloadFailed = False
                 
 190             bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
+
                 If SynchHistoryOverview.NextSynchNextOpeation = NewOnly And Not bNewRecordsFetched Then GetSynchRecordsTODELETE sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix
                 
-'                If SynchHistoryOverview.NextSynchNextOpeation = NewOnly And m_lCountDownloaded = 0 Then
-'                    TxMsg "!!!! Next synch operation is still set to NewOnly but no records were downloaded!  Adjusting SynchHistoryOverview", True, True
-'                    cn.Execute "UPDATE [" & sTableNamePrefix & "SynchHistoryOverview] SET sWhenMaxSearched = sWhenMinSearched WHERE [sTablename] = '" & sTableNames(i) & "'"
-'
-'                End If
-'
-'192             Do While SynchHistoryOverview.NextSynchNextOpeation = NewOnly 'And bNewRecordsFetched
-'194                 bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
-'                Loop
+                '                If SynchHistoryOverview.NextSynchNextOpeation = NewOnly And m_lCountDownloaded = 0 Then
+                '                    TxMsg "!!!! Next synch operation is still set to NewOnly but no records were downloaded!  Adjusting SynchHistoryOverview", True, True
+                '                    cn.Execute "UPDATE [" & sTableNamePrefix & "SynchHistoryOverview] SET sWhenMaxSearched = sWhenMinSearched WHERE [sTablename] = '" & sTableNames(i) & "'"
+                '
+                '                End If
+                '
+                '192             Do While SynchHistoryOverview.NextSynchNextOpeation = NewOnly 'And bNewRecordsFetched
+                '194                 bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
+                '                Loop
                                                   
-            'need to check this logic
+                'need to check this logic
                 If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
                     GetSynchRecordsTODELETE sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix
                 End If
-            '''''''''
+
+                '''''''''
                 
 196             If bLargePolygonDownloadFailed Then
                 
@@ -4407,6 +4362,63 @@ Private Sub SynchDDWithServer(sTableNamePrefix As String, _
         
         TxMsg "**??Updating extents for queries......................", True
         FixLocalQueriesExtents cn, sTableNamePrefix
+        
+        If Not bRecordsDownloaded Then
+        
+            Set RSLocalSynchHistory = Nothing
+            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+            'UPLOAD DATA...............................
+            '
+            'RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sdelete] DESC", cn, adOpenDynamic, adLockBatchOptimistic
+108         RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sTableName] DESC", cn, adOpenDynamic, adLockBatchOptimistic
+        
+110         If Not RSLocalSynchHistory.State = adStateClosed Then
+
+112             If RSLocalSynchHistory.EOF = False Then
+
+114                 TxMsg "Records are pending update to server..........."
+
+116                 Do Until RSLocalSynchHistory.EOF
+
+118                     If RSLocalSynchHistory.Fields("sdelete").Value = "true" Then
+120                         SynchOp = Delete
+                        Else
+
+122                         If RSLocalSynchHistory.Fields("sequence").Value > 1 Then
+124                             SynchOp = Update
+126                         ElseIf RSLocalSynchHistory.Fields("sequence").Value = 1 Then
+128                             SynchOp = Add
+                            End If
+                        End If
+
+130                     sLocalTableName = RSLocalSynchHistory.Fields("sTableName").Value
+132                     sTableNameSmall = Right$(sLocalTableName, Len(sLocalTableName) - Len(sTableNamePrefix))
+
+134                     If Left$(sTableNameSmall, 4) = "link" Then
+136                         sLocalTableGUID = "GUID2"
+                        Else
+138                         sLocalTableGUID = "GUID1"
+                        End If
+
+140                     If Left$(Replace(sLocalTableName, sTableNamePrefix, "", , , vbTextCompare), 4) = "link" Then sLocalTableGUID = "GUID2"
+142                     bIsGeo = False
+
+144                     If Right$(sLocalTableName, 4) = "_FEA" Then
+146                         bIsGeo = True
+148                         sLocalTableName = Left$(sLocalTableName, Len(sLocalTableName) - 4)
+                        End If
+                    
+150                     UploadTableChangesToServer sLocalTableName, sLocalTableGUID, bIsGeo, sWebsite, cn, SynchOp, sTableNamePrefix
+152                     RSLocalSynchHistory.MoveFirst
+154                     RSLocalSynchHistory.Requery
+                
+                    Loop
+
+                End If
+
+            End If
+        
+        End If
         
 224     TxMsg "**??Finished synchronisation of dynamic database: " & sTableNamePrefix & "......................", True
 226     TxMsg ">>>>>>>>>>>>"
