@@ -1,10 +1,30 @@
 Attribute VB_Name = "clientMain"
 
 Option Explicit
-Private Declare Function FindFirstFile Lib "kernel32" Alias "FindFirstFileA" (ByVal lpFileName As String, lpFindFileData As WIN32_FIND_DATA) As Long
-Private Declare Function FindNextFile Lib "kernel32" Alias "FindNextFileA" (ByVal hFindFile As Long, lpFindFileData As WIN32_FIND_DATA) As Long
-Private Declare Function GetFileAttributes Lib "kernel32" Alias "GetFileAttributesA" (ByVal lpFileName As String) As Long
-Private Declare Function FindClose Lib "kernel32" (ByVal hFindFile As Long) As Long
+Public Const LOCALE_SSHORTDATE = &H1F
+
+Public Declare Function GetSystemDefaultLCID _
+               Lib "kernel32" () As Long
+
+Public Declare Function SetLocaleInfo _
+               Lib "kernel32" _
+               Alias "SetLocaleInfoA" (ByVal Locale As Long, _
+                                       ByVal LCType As Long, _
+                                       ByVal lpLCData As String) As Boolean
+
+Private Declare Function FindFirstFile _
+                Lib "kernel32" _
+                Alias "FindFirstFileA" (ByVal lpFileName As String, _
+                                        lpFindFileData As WIN32_FIND_DATA) As Long
+Private Declare Function FindNextFile _
+                Lib "kernel32" _
+                Alias "FindNextFileA" (ByVal hFindFile As Long, _
+                                       lpFindFileData As WIN32_FIND_DATA) As Long
+Private Declare Function GetFileAttributes _
+                Lib "kernel32" _
+                Alias "GetFileAttributesA" (ByVal lpFileName As String) As Long
+Private Declare Function FindClose _
+                Lib "kernel32" (ByVal hFindFile As Long) As Long
 
 Private Type FILETIME
     dwLowDateTime As Long
@@ -23,8 +43,6 @@ Private Type WIN32_FIND_DATA
     cFileName As String * MAX_PATH
     cAlternate As String * 14
 End Type
-
-
 
 Dim m_frmMain As New frmMain
 
@@ -877,22 +895,19 @@ Public Sub SaveStartUpParams()
 182         .value = g_udtSynchUpdateOptions.Thematics
 184         .AddKeyWithValue
 
-
         End With
 
         '<EhFooter>
         Exit Sub
 
 SaveStartUpParams_Err:
-        MsgBox Err.Description & vbCrLf & _
-               "in OASISClient.clientMain.SaveStartUpParams " & _
-               "at line " & Erl
+        MsgBox Err.Description & vbCrLf & "in OASISClient.clientMain.SaveStartUpParams " & "at line " & Erl
         Resume Next
         '</EhFooter>
 End Sub
 
 Public Function CreateNewINI(StrIniFile As String, _
-                              oINIReader As clIniReader) As Boolean
+                             oINIReader As clIniReader) As Boolean
         '<EhHeader>
         On Error GoTo CreateNewINI_Err
         '</EhHeader>
@@ -919,8 +934,7 @@ Public Function CreateNewINI(StrIniFile As String, _
 
 CreateNewINI_Err:
          
-         
-         '</EhFooter>
+        '</EhFooter>
 End Function
 
 Private Sub CheckStartUpParams()
@@ -932,8 +946,6 @@ Private Sub CheckStartUpParams()
 100     If Not CreateNewINI(g_sAppPath & "\data\user\Sessions\sup.ini", oIni) Then Exit Sub
     
 102     With oIni
-
-
     
 104         .Path = g_sAppPath & "\data\user\Sessions\sup.ini"
             
@@ -954,8 +966,8 @@ Private Sub CheckStartUpParams()
 124         .Key = "Feeds"
 126         g_udtSynchUpdateOptions.Feeds = CBool(IIf(.value = "", True, .value))
 
-128        ' .Key = "ForceZero"
-130        ' g_udtSynchUpdateOptions.ForceZero = IIf(.Value = "", False, CBool(.Value))
+128         ' .Key = "ForceZero"
+130         ' g_udtSynchUpdateOptions.ForceZero = IIf(.Value = "", False, CBool(.Value))
         
 132         .Key = "GeoMarks"
 134         g_udtSynchUpdateOptions.GeoMarks = CBool(IIf(.value = "", True, .value))
@@ -990,8 +1002,8 @@ Private Sub CheckStartUpParams()
         Exit Sub
 
 CheckStartUpParams_Err:
-MsgBox Err.desc
-Resume Next
+        MsgBox Err.desc
+        Resume Next
         '</EhFooter>
 End Sub
 
@@ -1000,10 +1012,21 @@ Sub Main()
         On Error GoTo Main_Err
         '</EhHeader>
         Dim lHwnd As Long
+        
+        Dim lngLocale As Long
+
+        lngLocale = GetSystemDefaultLCID()
+
+        If SetLocaleInfo(lngLocale, LOCALE_SSHORTDATE, "dd-MMM-yy") = False Then
+
+            ' Handle error, possibly by writing it
+            'MsgBox "date set error"
+            ' to a server error log
+
+        End If
 
 100     Set m_oAES = New clsAES
 102     Set m_frmDebug = New frmDebug
-        
 104     CreateAppPath
 106     CheckIfEncryptedOK
         
@@ -1076,8 +1099,10 @@ Sub Main()
 170             Load frmLogin
             Else
                 frmLogin.Show
+
                 FormOnTop frmLogin
             End If
+
         Else
             'fLogin.Show vbModal
 172         frmLogin.Show
@@ -1102,9 +1127,7 @@ Sub Main()
         Exit Sub
 
 Main_Err:
-        MsgBox Err.Description & vbCrLf & _
-               "in OASISClient.clientMain.Main " & _
-               "at line " & Erl
+        MsgBox Err.Description & vbCrLf & "in OASISClient.clientMain.Main " & "at line " & Erl
         Resume Next
         '</EhFooter>
 End Sub
@@ -1151,13 +1174,12 @@ Public Sub LoadMainWin()
 118     m_frmMain.Init 'g_sAppPath & g_RSAppSettings.Fields.Item("SettingValue1").value '"\data\user\Maps\Iraq_Admin.TTKGP"
         m_frmMain.Show
         m_frmMain.GIS10.Lock
+
 120     DoEvents
 
 122     If Not g_sLanguage = "" And Not UCase$(g_sLanguage) = "DEFAULT" Then
 124         m_frmMain.g_clsHotKey_HotKeyPress "INITWORKAROUND", MOD_ALT, vbKey0
         End If
-        
-        
         
         'Dim f As Form
         
@@ -1192,9 +1214,11 @@ LoadMainWin_Err:
 End Sub
 
 Function StripNulls(OriginalStr As String) As String
+
     If (InStr(OriginalStr, Chr(0)) > 0) Then
         OriginalStr = left(OriginalStr, InStr(OriginalStr, Chr(0)) - 1)
     End If
+
     StripNulls = OriginalStr
 End Function
 
@@ -1239,7 +1263,6 @@ Public Sub FixDB(Optional bForce As Boolean = False)
 126         mTxtStream.Close
 128         Set mTxtStream = Nothing
     
-    
 130         If iNumtimes > 10 Then
 132             If MsgBox("OASIS has detected that you have not done any client Data maintainance for some time." & vbCrLf & "Would you like to do that now (this may take a few minutes)?", vbYesNo, "OASIS Database Maintainance") = vbYes Then
 134                 oDbUtility.CompactAccessDB g_sAppPath & "\data\db\OasisClient.mdb"
@@ -1275,7 +1298,7 @@ Public Sub FixDB(Optional bForce As Boolean = False)
         Exit Sub
 
 FixDB_Err:
-         MsgBox Err.Description & vbCrLf & "in OASISClient.clientMain.FixDB " & "at line " & Erl
+        MsgBox Err.Description & vbCrLf & "in OASISClient.clientMain.FixDB " & "at line " & Erl
         On Error Resume Next
         Set oDbUtility = Nothing
         '</EhFooter>
@@ -1349,9 +1372,7 @@ Public Sub CheckIfEncryptedOK()
         Exit Sub
 
 CheckIfEncryptedOK_Err:
-        MsgBox Err.Description & vbCrLf & _
-               "in OASISClient.clientMain.CheckIfEncryptedOK " & _
-               "at line " & Erl
+        MsgBox Err.Description & vbCrLf & "in OASISClient.clientMain.CheckIfEncryptedOK " & "at line " & Erl
         Resume Next
         '</EhFooter>
 End Sub

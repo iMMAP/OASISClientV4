@@ -663,19 +663,19 @@ Begin VB.UserControl DynamicDataReports
             AccessibleDescription=   ""
             AccessibleValue =   ""
             AccessibleRole  =   9
-            Begin XpressEditorsLibCtl.dxMemoEdit dxSQLCommand 
-               Height          =   1605
-               Left            =   0
-               OleObjectBlob   =   "DynamicDataReports.ctx":10E2
-               TabIndex        =   9
-               Top             =   270
-               Width           =   5475
-            End
             Begin XpressEditorsLibCtl.dxMemoEdit dxFilterSQL 
                Height          =   810
                Left            =   5535
-               OleObjectBlob   =   "DynamicDataReports.ctx":11DE
+               OleObjectBlob   =   "DynamicDataReports.ctx":10E2
                TabIndex        =   23
+               Top             =   270
+               Width           =   5475
+            End
+            Begin XpressEditorsLibCtl.dxMemoEdit dxSQLCommand 
+               Height          =   1605
+               Left            =   0
+               OleObjectBlob   =   "DynamicDataReports.ctx":11DE
+               TabIndex        =   9
                Top             =   270
                Width           =   5475
             End
@@ -942,30 +942,30 @@ Private Sub CreateXLSFromRS(oRS As ADODB.Recordset, _
     
         Dim mstream As New ADODB.Stream
         Dim sText As String
-        Dim icol As Long
+        Dim iCol As Long
         Dim iRow As Long
 
 100     If SafeMoveFirst(oRS) Then
         
-102         icol = 0
+102         iCol = 0
 104         sText = "<table border=1>"
 106         sText = sText & "<tr>"
         
-108         Do Until (icol + 1) > oRS.Fields.Count
-110             sText = sText & "<td><b>" & oRS.Fields(icol).Name & "</b></td>"
-112             icol = icol + 1
+108         Do Until (iCol + 1) > oRS.Fields.Count
+110             sText = sText & "<td><b>" & oRS.Fields(iCol).Name & "</b></td>"
+112             iCol = iCol + 1
             Loop
         
 114         sText = sText & "</tr>"
         
 116         Do Until oRS.EOF
         
-118             icol = 0
+118             iCol = 0
 120             sText = sText & "<tr>"
         
-122             Do Until (icol + 1) > oRS.Fields.Count
-124                 sText = sText & "<td>" & oRS.Fields(icol).value & "</td>"
-126                 icol = icol + 1
+122             Do Until (iCol + 1) > oRS.Fields.Count
+124                 sText = sText & "<td>" & oRS.Fields(iCol).value & "</td>"
+126                 iCol = iCol + 1
                 Loop
 
 128             sText = sText & "</tr>"

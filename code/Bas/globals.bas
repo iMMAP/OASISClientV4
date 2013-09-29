@@ -14,6 +14,7 @@ Public lP1, lP2, lP3, lP4 As TatukGIS_XDK10.XGIS_Point    'large map extent poin
 Public g_PrevExt As TatukGIS_XDK10.XGIS_Extent
 
 'GLOBAL APPLICATION SETTINGS
+'Public oDebug As New clsDebug
 Public m_oColUserLayers As New Collection
 Public g_RSAppSettings As New ADODB.Recordset
 Public g_RSLocalAppSettings As New ADODB.Recordset
@@ -99,10 +100,10 @@ Declare Function StringFromGUID2 _
                          ByVal lpstrClsId As Long, _
                          ByVal cbMax As Long) As Long
 Declare Function GetCursorPos _
-        Lib "User32" (lpPoint As POINTAPI) As Long
+        Lib "user32" (lpPoint As POINTAPI) As Long
 Declare Function ShellExecute _
         Lib "shell32.dll" _
-        Alias "ShellExecuteA" (ByVal hWnd As Long, _
+        Alias "ShellExecuteA" (ByVal hwnd As Long, _
                                ByVal lpOperation As String, _
                                ByVal lpFile As String, _
                                ByVal lpParameters As String, _
@@ -111,7 +112,7 @@ Declare Function ShellExecute _
 Const SW_SHOWNORMAL = 1
 
 Public Declare Function SetParent _
-               Lib "User32" (ByVal hWndChild As Long, _
+               Lib "user32" (ByVal hWndChild As Long, _
                              ByVal hWndNewParent As Long) As Long
 
 'GUID STRUCT
@@ -231,7 +232,7 @@ Public Const R2_WHITE = 16   ' 1
 Public Const R2_XORPEN = 7   ' DPx
 
 Public Declare Function LoadCursorFromFile _
-               Lib "User32" _
+               Lib "user32" _
                Alias "LoadCursorFromFileA" (ByVal lpFileName As String) As Long
 Private Declare Function GetVersionExA _
                 Lib "kernel32" (lpVersionInformation As OSVERSIONINFO) As Integer
@@ -262,12 +263,12 @@ Public Const SWP_NOSIZE = &H1
 Public Const SWP_NOMOVE = &H2
 
 Public Declare Function GetWindowDC _
-               Lib "User32" (ByVal hWnd As Long) As Long
+               Lib "user32" (ByVal hwnd As Long) As Long
 Public Declare Function ReleaseDC _
-               Lib "User32" (ByVal hWnd As Long, _
+               Lib "user32" (ByVal hwnd As Long, _
                              ByVal hdc As Long) As Long
 Public Declare Function SetWindowPos _
-               Lib "user32.dll" (ByVal hWnd As Long, _
+               Lib "user32.dll" (ByVal hwnd As Long, _
                                  ByVal hWndInsertAfter As Long, _
                                  ByVal x As Long, _
                                  ByVal y As Long, _
@@ -328,7 +329,7 @@ Public g_udtSynchUpdateOptions As SynchUpdateOptions
 Public g_bUpdateDynamicDataDefs As Boolean
 
 Public Declare Function GetDesktopWindow _
-               Lib "User32" () As Long
+               Lib "user32" () As Long
 
 Public g_ssubdomain As String
 Public m_bAdvancedDebug As Boolean
@@ -389,7 +390,7 @@ Public Function HaversineDistance(ByVal Long1 As Double, _
     Const R As Integer = 6371   'earth radius in km
         
     Dim DeltaLat As Double, DeltaLong As Double
-    Dim a As Double, c As Double
+    Dim A As Double, c As Double
     Dim Pi As Double
     
     On Error GoTo ErrorExit
@@ -406,11 +407,11 @@ Public Function HaversineDistance(ByVal Long1 As Double, _
     DeltaLat = Abs(Lat2 - Lat1)
     DeltaLong = Abs(Long2 - Long1)
     
-    a = ((Sin(DeltaLat / 2)) ^ 2) + (Cos(Lat1) * Cos(Lat2) * ((Sin(DeltaLong / 2)) ^ 2))
-    a = (Sin(DeltaLat / 2) * Sin(DeltaLat / 2)) + (Cos(Lat1) * Cos(Lat2) * Sin(DeltaLong / 2) * Sin(DeltaLong / 2))
+    A = ((Sin(DeltaLat / 2)) ^ 2) + (Cos(Lat1) * Cos(Lat2) * ((Sin(DeltaLong / 2)) ^ 2))
+    A = (Sin(DeltaLat / 2) * Sin(DeltaLat / 2)) + (Cos(Lat1) * Cos(Lat2) * Sin(DeltaLong / 2) * Sin(DeltaLong / 2))
     
     
-    c = 2 * atan2(Sqr(1 - a), Sqr(a))                    'expressed as radians
+    c = 2 * atan2(Sqr(1 - A), Sqr(A))                    'expressed as radians
     'c = 2 * Atn((Sqr(1 - a)) / (Sqr(a)))
     HaversineDistance = R * c
 ErrorExit:
@@ -432,13 +433,13 @@ Public Function atan2(x As Double, _
 
 End Function
 
-Public Function InstallAUpdate(hWnd As Long) As Boolean
+Public Function InstallAUpdate(hwnd As Long) As Boolean
     ' /PermissionManagerCheckInstalled
    
     'Shell
    If g_bOnlineCheckedAtLogin Then
-    ShellExecute hWnd, vbNullString, g_sAppPath & "\OASIS_SynchNG_Client.exe", "CheckBackground", "C:\", 1
-    ShellExecute hWnd, vbNullString, g_sAppPath & "\AUClient.exe", "CheckBackground", "C:\", 1
+    ShellExecute hwnd, vbNullString, g_sAppPath & "\OASIS_SynchNG_Client.exe", "CheckBackground", "C:\", 1
+    ShellExecute hwnd, vbNullString, g_sAppPath & "\AUClient.exe", "CheckBackground", "C:\", 1
     
     End If
 End Function

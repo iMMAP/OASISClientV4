@@ -30,9 +30,7 @@ Public Event WorkerError(ErrNum As Long, errDesc As String, errSource As String)
 Const HTTPREQUEST_PROXYSETTING_PROXY = 2
      
 Private RemoteTables As DDTableCollection
-Private DefinedDDQueries As DDQueryCollection
 Private LocalTables As DDTableCollection
-Private LocalQueries As DDQueryCollection
 Private bAbortSynchronisation As Boolean
 Private sDebugInfo As String
 Private lTimeDiffFromServerInSeconds As Long
@@ -48,32 +46,66 @@ Private bRecordsDownloaded As Boolean
 
 Private OASStringCompression As New OASISStringCompression.OASISCompression
 
-Private Type SynchHistoryOverviewEnum
+Private Enum SynchNextOperation
+    NewOnly = 1
+    OldOnly = 2
 
-    sWhenMinSearched As String
-    sWhenMaxSearched As String
-    sWhenMinActualLocal As String
+    DoNotSynch = 3
+    EditsOnly = 4
+    DeleteOnly = 5
+End Enum
+
+Private Enum DownloadOperation
+    NewRecords = 1
+    NewUpdates = 2
+    NewDeletes = 3
+End Enum
+
+Private Type SynchOperations
+        
+     sTableNameClient As String
+     sTableNameServer As String
+     sSynchHistoryClient As String
+     sSynchHistoryServer As String
+     sSearchRecordParams As String
+     sSearchSynchHistoryParams As String
+     ToAddLocal As String
+     ToAddServer As String
+     ToUpdateLocal As String
+     ToUpdateServer As String
+     ToDeleteLocal As String
+     ToDeleteServer As String
+        
+End Type
+
+Private Type DownloadUploadStats
+
+    AllDone As Boolean
+    NextSynchOperation As SynchNextOperation
+    
+    sWhenNow As String
+    lCountLocal As Long
     sWhenMaxActualLocal As String
+    sWhenMinActualLocal As String
+    lCountServer As Long
     sWhenMinActualServer As String
     sWhenMaxActualServer As String
+    sWhenMinSearched As String
+    sWhenMaxSearched As String
+    
     lBatchSizeLast As Long
     lBatchSizeNext As Long
     sTablenameLocal As String
-    sTablenameServer As String
+    sTableNameServer As String
     sSynchHistoryTableLocal As String
     sSynchHistoryTableServer As String
-    lCountServer As Long
-    lCountLocal As Long
-    NextSynchNextOpeation As SynchNextOpeation
+    lDeletesOnServer As Long
+    lDeletesOnClient As Long
+    lDeletesPendingOnClient As Long
+    ' lCountLocal As Long
+    ' NextSynchNextOpeation As SynchNextOpeation
     
 End Type
-
-Private Enum SynchNextOpeation
-    NewOnly = 1
-    OldOnly = 2
-    DoNotSynch = 3
-    EditsOnly = 4
-End Enum
 
 Private Type DDColumn
 
@@ -141,8 +173,6 @@ Private Enum SynchOperation
     Update = 2
 End Enum
 
-Private SynchHistoryOverview As SynchHistoryOverviewEnum
-
 Private m_lInterval As Long
 Private m_bRunning As Boolean
 Private m_bPaddy As Boolean
@@ -170,8 +200,6 @@ Private m_sIDs As String
 Private m_bUseEvents As Boolean
 Private m_bSynchGeoMarks As Boolean
 Private m_bSynchSynchLayers As Boolean
-
-Private lBatchCountToDownload As Long
 
 Private m_bProxyEnabled As Boolean
 Private m_sProxyIP As String
@@ -311,6 +339,140 @@ Public Property Let Interval(ByVal lInterval As Long)
     m_lInterval = lInterval
 End Property
 
+Private Function CompareSynchHashes(sTableName As String, _
+                                    oCN As ADODB.Connection) As Long
+        '<EhHeader>
+        On Error GoTo CompareSynchHashes_Err
+        '</EhHeader>
+
+100     CompareSynchHashes = -1 'this is good - all records match
+    
+        Dim oRSLocal As New ADODB.Recordset
+        Dim oRSServer As ADODB.Recordset
+        Dim i As Long
+102     i = 0
+    
+104     UpdateHash sTableName, oCN
+106     'SleepAPI 2000
+108     oRSLocal.Open "SELECT * FROM [" & sTableName & "Hashed]", oCN, adOpenStatic, adLockReadOnly
+        'SleepAPI 2000
+110     Set oRSServer = OpenServerRSCompressed(m_StrWebsiteURL, "ID", "[dbo].[GetHashedSynchHistory] '" & sTableName & "'")
+        SleepAPI 2000
+        i = 0
+        
+        Do
+    
+112         i = i + 1
+
+            If oRSServer.EOF And oRSLocal.EOF Then Exit Do
+
+114         If oRSServer.EOF Then
+116             CompareSynchHashes = i
+118             TxMsg "### Server is missing set: " & i ', True
+                Exit Do
+120         ElseIf oRSLocal.EOF Then
+122             CompareSynchHashes = i
+124             TxMsg "### Local is missing set: " & i ', True
+                'TxMsg "### oRSServer.Fields(0).Value: " & oRSServer.Fields(0).Value, True
+                Exit Do
+            Else
+
+126             If Not (Trim(oRSLocal.Fields(0).Value) = Trim(oRSServer.Fields(0).Value)) Then
+128                 CompareSynchHashes = i
+130                 TxMsg "### oRSLocal Hash Record  (" & i & "): " & oRSLocal.Fields(0).Value, True
+132                 TxMsg "### oRSServer Hash Record (" & i & "): " & oRSServer.Fields(0).Value, True
+134                 TxMsg "### Mismatch between local and server records: " & ((i * 200) - 199) & " and " & (i * 200) ', True
+                    Exit Do
+                End If
+                
+            End If
+        
+136         oRSLocal.MoveNext
+138         oRSServer.MoveNext
+
+140     Loop Until (oRSLocal.EOF And oRSServer.EOF)
+        
+142     If CompareSynchHashes = -1 Then
+144         TxMsg "### Matching server records for: " & sTableName, True
+        End If
+        
+        oRSServer.Close
+        oRSLocal.Close
+
+        'TxMsg "SynchWorker.CompareSynchHashes_Err on line (" & Erl & ") " & Err.Description, True
+        '<EhFooter>
+        Exit Function
+
+CompareSynchHashes_Err:
+        TxMsg "SynchWorker.CompareSynchHashes_Err on line (" & Erl & ") " & Err.Description, True
+        '</EhFooter>
+End Function
+
+Private Sub UpdateHash(sTableName As String, _
+                       oCN As ADODB.Connection)
+        '<EhHeader>
+        On Error GoTo UpdateHash_Err
+        '</EhHeader>
+
+        Dim oMD5 As New MD5Hash
+        Dim oRS As New ADODB.Recordset
+        Dim oRS2 As New ADODB.Recordset
+        Dim sSingleLine As String
+        Dim i As Long
+        Dim l As Long
+    
+104     If Not DoesTableExist(oCN, sTableName & "Hashed") Then
+106         oCN.Execute "CREATE TABLE [" & sTableName & "Hashed] (Col1 text)"
+        Else
+108         oCN.Execute "DELETE FROM [" & sTableName & "Hashed]"
+        End If
+
+        Do While oCN.State = adStateExecuting
+            SleepAPI 2000
+        Loop
+
+110     oRS.Open "SELECT * from [" & sTableName & "] order by [stablename], [sID]", oCN, adOpenDynamic, adLockBatchOptimistic
+112     oRS2.Open "SELECT * from [" & sTableName & "Hashed]", oCN, adOpenDynamic, adLockBatchOptimistic
+
+116     With oRS
+
+118         l = 1
+        
+120         Do Until .EOF
+    
+122             i = 1
+124             sSingleLine = ""
+
+126             Do Until i > 200 Or .EOF
+128                 sSingleLine = sSingleLine & oMD5.HashBytes(StrConv(.Fields("sID").Value & .Fields("sTableName").Value & .Fields("swhen").Value & CStr(.Fields("sequence").Value) & .Fields("sdelete").Value & .Fields("updates").Value, vbFromUnicode))
+130                 i = i + 1
+132                 .MoveNext
+                Loop
+
+134             sSingleLine = oMD5.HashBytes(StrConv(sSingleLine, vbFromUnicode))
+138             l = l + 1
+
+140             oRS2.AddNew
+                oRS2.Fields("Col1").Value = sSingleLine
+142             oRS2.UpdateBatch adAffectCurrent
+
+            Loop
+        
+        End With
+    
+144     oRS2.Close
+146     oRS.Close
+148     'oCN.Close
+150     Set oMD5 = Nothing
+    
+        '<EhFooter>
+        Exit Sub
+
+UpdateHash_Err:
+        TxMsg "SynchWorker.UpdateHash_Err on line (" & Erl & ") " & Err.Description, True
+        '</EhFooter>
+End Sub
+
 Private Sub CheckIfDebugEnhancedEnabled(mCN As ADODB.Connection)
         '<EhHeader>
         On Error GoTo CheckIfDebugEnhancedEnabled_Err
@@ -343,8 +505,8 @@ CheckIfDebugEnhancedEnabled_Err:
 End Sub
 
 Private Function OpenServerRSCompressed(sWebsite As String, _
-                              sFunction As String, _
-                              sParameter As String) As ADODB.Recordset
+                                        sFunction As String, _
+                                        sParameter As String) As ADODB.Recordset
         '<EhHeader>
         On Error GoTo OpenServerRSCompressed_Err
         '</EhHeader>
@@ -365,6 +527,7 @@ Private Function OpenServerRSCompressed(sWebsite As String, _
         Else
             TxMsg ">>>> OpenServerRSCompressed created a recordset from retval: " & sRetVal, True, True
         End If
+
         '<EhFooter>
         Exit Function
 
@@ -430,7 +593,7 @@ Private Function SaveServerRSCompressed(sWebsite As String, _
         Dim sSent As String
         
         sWebsite = Replace(sWebsite, "oasis4.asp", "oasisuploader4.asp")
-      '  TxMsg ">>>> sWebsite " & sWebsite, True, True
+        '  TxMsg ">>>> sWebsite " & sWebsite, True, True
         
 100     PrepareHttpComms oHttp, sWebsite, True
 102     oRS.Save MsXmlDoc, 1
@@ -460,22 +623,6 @@ SaveServerRSCompressed_Err:
         Set MsXmlDoc = Nothing
         '</EhFooter>
 End Function
-
-'Private Function SaveServerRS(sWebsite As String, _
-'                              oRS As ADODB.Recordset) As String
-'
-'    Dim oHttp As New WinHttpRequest
-'    Dim MsXmlDoc As New MSXML2.DOMDocument
-'
-'    PrepareHttpComms oHttp, sWebsite, True
-'    oRS.Save MsXmlDoc, 1
-'    oHttp.send MsXmlDoc
-'    SaveServerRS = Trim(CStr(oHttp.responseText))
-'    oHttp.abort
-'    Set MsXmlDoc = Nothing
-'    Set oHttp = Nothing
-'
-'End Function
 
 Private Function CheckIfIncidentsEnabled(mCN As ADODB.Connection) As Boolean
         '<EhHeader>
@@ -569,19 +716,20 @@ Private Sub CreateAccessDatabase(sDatabaseToCreate)
 
 End Sub
 
-Private Function CheckIfFileExists(Filename As String) As Boolean
+Private Function CheckIfFileExists(FileName As String) As Boolean
     Dim i As Integer
     
     On Local Error Resume Next
-    i = Len(Dir$(Filename$))
+    i = Len(Dir$(FileName$))
+
     If Err Or i = 0 Then
         CheckIfFileExists = False
     Else
         CheckIfFileExists = True
     End If
+
     On Local Error GoTo 0
 End Function
-
 
 Public Sub Start()
 
@@ -595,7 +743,6 @@ Public Sub Start()
     End If
 
 End Sub
-
 
 Public Sub StartNonAsync()
     'Non Threaded
@@ -630,13 +777,17 @@ Private Sub Runnable_Start()
         '<EhHeader>
         On Error GoTo Runnable_Start_Err
         '</EhHeader>
-        
+        Dim sSQL As String
+        Dim bFound As Boolean
+        Dim bRetval As Boolean
+        Dim iCount As Integer
         Dim i As Long
         Dim bCancel As Boolean
         Dim sDDConnStr As String
         Dim bClientDDInOrder As Boolean
         Dim sDatabaseFullPath As String
         Dim oCN As ADODB.Connection
+        Dim oRS As ADODB.Recordset
         Dim DDCnn As ADODB.Connection
         Dim oRSSQLLyr As ADODB.Recordset
         Dim bSkipAttachments As Boolean
@@ -687,179 +838,239 @@ Private Sub Runnable_Start()
                             
 148                         CheckIfDebugEnhancedEnabled oCN
 150                         CheckProxySettings oCN
-                            m_bIncidentsV2 = IncidentsV2Active(oCN)
+152                         m_bIncidentsV2 = IncidentsV2Active(oCN)
                             
-152                         Set m_ColNewIncidents = New Collection
-154                         Set m_ColDeletedIncidents = New Collection
+154                         Set m_ColNewIncidents = New Collection
+156                         Set m_ColDeletedIncidents = New Collection
 
-156                         If Not Right$(m_StrWebsiteURL, 1) = "/" Then m_StrWebsiteURL = m_StrWebsiteURL & "/"
+158                         If Not Right$(m_StrWebsiteURL, 1) = "/" Then m_StrWebsiteURL = m_StrWebsiteURL & "/"
         
-158                         If FetchServerTime(m_StrWebsiteURL) Then
+160                         If FetchServerTime(m_StrWebsiteURL) Then
             
-160                             GetNumberOfBatchToDownload m_StrWebsiteURL
-                                Set m_RSttkGISLayerSQLRemote = OpenServerRSCompressed(m_StrWebsiteURL, "ID", "SELECT * FROM ttkGISLayerSQL")
+164                             Set m_RSttkGISLayerSQLRemote = OpenServerRSCompressed(m_StrWebsiteURL, "ID", "SELECT * FROM ttkGISLayerSQL")
                                 
-                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                '' SYNCH GEOBOOKMARKS
-                    
-162                             If m_bSynchGeoMarks Then
-
-164                                 ValidateClientTable "GeoBookMarks", "GUID1", True, False, oCN, ""
-166                                 ValidateClientTable "GeoBookMarksCategories", "GUID1", True, False, oCN, ""
-
-168                                 GetSynchRecordsTOADD "GeoBookMarksCategories", "GUID1", False, m_StrWebsiteURL, oCN
-170                                 GetSynchRecordsTOADD "GeoBookMarks", "GUID1", False, m_StrWebsiteURL, oCN
-
-172                                 If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-174                                     GetSynchRecordsTODELETE "GeoBookMarks", "GUID1", False, m_StrWebsiteURL, oCN
-                                    End If
-
-176                                 If SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-178                                     GetSynchRecordsTOUPDATE "GeoBookMarks", "GUID1", False, m_StrWebsiteURL, oCN
-                                    End If
-                                    
-180                                 UploadTableChangesToServer "GeoBookMarks", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Add
-
-                                End If
-
-                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                '' SYNCH INCIDENT CHARTS
-                        
-                                If m_bIncidentsV2 Then
-182                                 bSkipIncidents = True
-                                Else
-                                    bSkipIncidents = Not CheckIfIncidentsEnabled(oCN)
-                                End If
-
-184                             If Not bSkipIncidents Then
-
-186                                 ValidateClientTable "Incidents_ChartSettings", "GUID1", True, False, oCN, ""
-
-188                                 GetSynchRecordsTOADD "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
-
-190                                 If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-192                                     GetSynchRecordsTODELETE "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
-                                    End If
-
-194                                 If SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch Then
-196                                     GetSynchRecordsTOUPDATE "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
-                                    End If
-                
-198                                 UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Add
-200                                 UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Delete
-202                                 UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Update
-                            
-                                End If
+                                '                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                '                                '' SYNCH GEOBOOKMARKS
+                                '
+                                '162                             If m_bSynchGeoMarks Then
+                                '
+                                '164                                 ValidateClientTable "GeoBookMarks", "GUID1", True, False, oCN, ""
+                                '166                                 ValidateClientTable "GeoBookMarksCategories", "GUID1", True, False, oCN, ""
+                                '                                    UpdateRecordsFromServer "GeoBookMarks", m_StrRemoteTablePrefix & "GeoBookMarks", "SynchHistory", m_StrRemoteTablePrefix & "SynchHistory", oCN, m_StrWebsiteURL, "GUID1"
+                                '                                    UpdateRecordsFromServer "GeoBookMarksCategories", m_StrRemoteTablePrefix & "GeoBookMarksCategories", "SynchHistory", m_StrRemoteTablePrefix & "SynchHistory", oCN, m_StrWebsiteURL, "GUID1"
+                                '180                                 UploadTableChangesToServer "GeoBookMarks", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Add
+                                '
+                                '                                End If
+                                '
+                                '                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                '                                '' SYNCH INCIDENT CHARTS
+                                '
+                                '                                If 1 = 3 Then
+                                '
+                                '                                    If m_bIncidentsV2 Then
+                                '182                                     bSkipIncidents = True
+                                '                                    Else
+                                '                                        bSkipIncidents = Not CheckIfIncidentsEnabled(oCN)
+                                '                                    End If
+                                '
+                                '184                                 If Not bSkipIncidents Then
+                                '
+                                '186                                     ValidateClientTable "Incidents_ChartSettings", "GUID1", True, False, oCN, ""
+                                '
+                                '188                                     GetSynchRecordsTOADD "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
+                                '
+                                '190                                     If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
+                                '192                                         GetSynchRecordsTODELETE "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
+                                '                                        End If
+                                '
+                                '194                                     If SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch Then
+                                '196                                         GetSynchRecordsTOUPDATE "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN
+                                '                                        End If
+                                '
+                                '198                                     UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Add
+                                '200                                     UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Delete
+                                '202                                     UploadTableChangesToServer "Incidents_ChartSettings", "GUID1", False, m_StrWebsiteURL, oCN, SynchOperation.Update
+                                '
+                                '                                    End If
+                                '
+                                '                                    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                '                                    '' SYNCH INCIDENTS
+                                '                                    '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                '
+                                '204                                 If Not bSkipIncidents Then
+                                '
+                                '                                        Set m_RSttkGISLayerSQLLocal = New ADODB.Recordset
+                                '                                        m_RSttkGISLayerSQLLocal.Open "SELECT * FROM ttkGISLayerSQL", oCN, adOpenDynamic, adLockBatchOptimistic
+                                '                                        UpdatettkGISLaySQL "oincidents", oCN
+                                '
+                                '206                                     ValidateClientTable "oincidents", "ID", True, True, oCN, ""
+                                '
+                                '208                                     GetSynchRecordsTOADD "oincidents", "ID", True, m_StrWebsiteURL, oCN
+                                '
+                                '210                                     Do While SynchHistoryOverview.NextSynchNextOpeation = NewOnly
+                                '212                                         GetSynchRecordsTOADD "oincidents", "ID", True, m_StrWebsiteURL, oCN
+                                '                                        Loop
+                                '
+                                '214                                     TxMsg CStr("**" & CStr(RT_IncidentSynch) & m_sIDs), True
+                                '
+                                '216                                     If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
+                                '218                                         GetSynchRecordsTODELETE "oincidents", "ID", True, m_StrWebsiteURL, oCN
+                                '                                        End If
+                                '
+                                '220                                     If SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch Then
+                                '222                                         GetSynchRecordsTOUPDATE "oincidents", "ID", True, m_StrWebsiteURL, oCN
+                                '                                        End If
+                                '
+                                '224                                     UploadTableChangesToServer "oincidents", "ID", False, m_StrWebsiteURL, oCN, SynchOperation.Add
+                                '
+                                '                                    End If
+                                '
+                                '                                End If
                                 
-                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                '' SYNCH INCIDENTS
-                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+166                             ValidateClientTable "Incidents_ChartSettings", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
+168                             ValidateClientTable "oincidents", "ID", True, True, oCN, ""
+170                             ValidateClientTable "GeoBookMarks", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
+172                             ValidateClientTable "GeoBookMarksCategories", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
 
-204                             If Not bSkipIncidents Then
-
-                                    Set m_RSttkGISLayerSQLLocal = New ADODB.Recordset
-                                    m_RSttkGISLayerSQLLocal.Open "SELECT * FROM ttkGISLayerSQL", oCN, adOpenDynamic, adLockBatchOptimistic
-                                    UpdatettkGISLaySQL "oincidents", oCN
-
-206                                 ValidateClientTable "oincidents", "ID", True, True, oCN, ""
-
-208                                 GetSynchRecordsTOADD "oincidents", "ID", True, m_StrWebsiteURL, oCN
-                                    
-210                                 Do While SynchHistoryOverview.NextSynchNextOpeation = NewOnly
-212                                     GetSynchRecordsTOADD "oincidents", "ID", True, m_StrWebsiteURL, oCN
-                                    Loop
-
-214                                 TxMsg CStr("**" & CStr(RT_IncidentSynch) & m_sIDs), True
-
-216                                 If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-218                                     GetSynchRecordsTODELETE "oincidents", "ID", True, m_StrWebsiteURL, oCN
-                                    End If
-
-220                                 If SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch Then
-222                                     GetSynchRecordsTOUPDATE "oincidents", "ID", True, m_StrWebsiteURL, oCN
-                                    End If
-
-224                                 UploadTableChangesToServer "oincidents", "ID", False, m_StrWebsiteURL, oCN, SynchOperation.Add
-                                    
+174                             If Not DoesTableExist(oCN, m_StrRemoteTablePrefix & "SynchHistory") Then
+176                                 oCN.Execute "SELECT * INTO [" & m_StrRemoteTablePrefix & "SynchHistory] FROM [SynchHistory]"
+178                                 oCN.Execute "DELETE FROM [" & m_StrRemoteTablePrefix & "SynchHistory]"
                                 End If
-                    
+
+180                             iCount = 0
+                                    
+182                             TxMsg "**??############################################################################################", True
+184                             TxMsg "**?? Beginning sync for usergroup datasets", True
+
+                                Do
+186                                 bRetval = SynchDDWithServer2(m_StrRemoteTablePrefix, m_StrWebsiteURL, oCN)
+188                                 iCount = iCount + 1
+190                             Loop Until bRetval Or iCount = 50
+
+192                             TxMsg "**?? Ending sync for common datasets", True
+194                             TxMsg "**??############################################################################################", True
+
+196                             TxMsg "", True
+198                             Set oRS = oCN.OpenSchema(adSchemaTables)
+200                             bFound = False
+                                
+202                             Do Until oRS.EOF
+
+204                                 If oRS.Fields("Table_Name").Value = "oincidents" Then
+206                                     bFound = True
+                                        Exit Do
+                                    End If
+
+208                                 oRS.MoveNext
+                                Loop
+                                
+210                             sSQL = "SELECT oincidents_GEO.UID, oincidents_FEA.UID, oincidents_GEO.XMIN, oincidents_GEO.XMAX, oincidents_GEO.YMIN, oincidents_GEO.YMAX, oincidents_GEO.SHAPETYPE as SHAPETYPEFORINCIDENTS, oincidents_FEA.ID, oincidents_FEA.NAME, oincidents_FEA.TYPE, oincidents_FEA.TARGET, oincidents_FEA.Dead, oincidents_FEA.Affected, oincidents_FEA.Violent, oincidents_FEA.Injured, oincidents_FEA.Incident_DATE, oincidents_FEA.TIME00, oincidents_FEA.LocDesc, oincidents_FEA.Source, oincidents_FEA.Town, oincidents_FEA.District, oincidents_FEA.Province, oincidents_FEA.DESCRIPTION, oincidents_FEA.Scoring, oincidents_FEA.Incident_DATESERIAL" & " FROM oincidents_FEA INNER JOIN oincidents_GEO ON oincidents_FEA.UID = oincidents_GEO.UID"
+
+212                             If Not bFound Then CreateQuery "oincidents", sSQL, oCN, ""
+                                
+214                             iCount = 0
+
+216                             TxMsg "**??#########################################################################################", True
+218                             TxMsg "**?? Beginning sync for common datasets", True
+
+                                Do
+220                                 bRetval = SynchDDWithServer2("", m_StrWebsiteURL, oCN)
+222                                 iCount = iCount + 1
+224                             Loop Until bRetval Or iCount >= 50
+
+226                             TxMsg "**?? Ending sync for common datasets", True
+228                             TxMsg "**??########################################################################################", True
+
                                 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                 '' SYNCH DYNAMIC DATA DEFS
                                 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                     
-226                             If 1 = 1 Then 'Currently DynamicDataDefs are synched automatically
+230                             If 1 = 1 Then 'Currently DynamicDataDefs are synched automatically
 
-228                                 Set oRSSQLLyr = New ADODB.Recordset
+232                                 Set oRSSQLLyr = New ADODB.Recordset
                         
-230                                 With oRSSQLLyr
+234                                 With oRSSQLLyr
 
-232                                     If Not bSQLServerInUse Then
-234                                         .Open "SELECT DISTINCT DDDefName, ConnectionString FROM DynamicDataDefs WHERE [Synch] = True", oCN, adOpenDynamic, adLockReadOnly
+236                                     If Not bSQLServerInUse Then
+238                                         .Open "SELECT DISTINCT DDDefName, ConnectionString FROM DynamicDataDefs WHERE [Synch] = True", oCN, adOpenDynamic, adLockReadOnly
                                         Else
-236                                         .Open "SELECT DISTINCT [DDDefName], CAST([ConnectionString] AS varchar(max)) FROM DynamicDataDefs WHERE [Synch] = 'True'", oCN, adOpenDynamic, adLockReadOnly
+240                                         .Open "SELECT DISTINCT [DDDefName], CAST([ConnectionString] AS varchar(max)) FROM DynamicDataDefs WHERE [Synch] = 'True'", oCN, adOpenDynamic, adLockReadOnly
                                         End If
                                     
-238                                     If Not .BOF Or Not .EOF Then
+242                                     If Not .BOF Or Not .EOF Then
 
-240                                         .MoveFirst
+244                                         .MoveFirst
                                 
-242                                         Do While Not .EOF
+246                                         Do While Not .EOF
             
-244                                             Set DDCnn = New ADODB.Connection
+248                                             Set DDCnn = New ADODB.Connection
 
-246                                             If bSQLServerInUse Then
+250                                             If bSQLServerInUse Then
                                                     'DDCnn.CursorLocation = adUseClient
-248                                                 TxMsg "Connecting to OasisV3 MSSQL Database......"
-250                                                 DDCnn.Open m_StrLocalConnectionString
+252                                                 TxMsg "Connecting to OasisV3 MSSQL Database......"
+254                                                 DDCnn.Open m_StrLocalConnectionString
                                                 Else
 
-252                                                 sDDConnStr = oCN.Properties.Item("Data Source Name").Value
-254                                                 sDDConnStr = Left$(sDDConnStr, Len(sDDConnStr) - 15)
-256                                                 sDDConnStr = Replace$(.Fields(1).Value, "\data\db\", sDDConnStr, , , vbTextCompare)
-258                                                 DDCnn.CursorLocation = adUseClient
-260                                                 TxMsg "Connecting to connection string: " & sDDConnStr, True
-262                                                 sDatabaseFullPath = Mid$(sDDConnStr, InStr(sDDConnStr, "Data Source=") + 12, InStr(sDDConnStr, "Mode=") - (InStr(sDDConnStr, "Data Source=") + 12) - 1)
-264                                                 DDCnn.ConnectionString = sDDConnStr
+256                                                 sDDConnStr = oCN.Properties.Item("Data Source Name").Value
+258                                                 sDDConnStr = Left$(sDDConnStr, Len(sDDConnStr) - 15)
+260                                                 sDDConnStr = Replace$(.Fields(1).Value, "\data\db\", sDDConnStr, , , vbTextCompare)
+262                                                 DDCnn.CursorLocation = adUseClient
+264                                                 TxMsg "Connecting to connection string: " & sDDConnStr, True
+266                                                 sDatabaseFullPath = Mid$(sDDConnStr, InStr(sDDConnStr, "Data Source=") + 12, InStr(sDDConnStr, "Mode=") - (InStr(sDDConnStr, "Data Source=") + 12) - 1)
+268                                                 DDCnn.ConnectionString = sDDConnStr
 
-266                                                 If Not CheckIfFileExists(sDatabaseFullPath) Then
-268                                                     TxMsg "   --- Creating dynamic database: " & sDatabaseFullPath, True
-270                                                     CreateAccessDatabase sDatabaseFullPath
+270                                                 If Not CheckIfFileExists(sDatabaseFullPath) Then
+272                                                     TxMsg "   --- Creating dynamic database: " & sDatabaseFullPath, True
+274                                                     CreateAccessDatabase sDatabaseFullPath
                                                     End If
                                                 
-272                                                 DDCnn.Open sDDConnStr
+276                                                 DDCnn.Open sDDConnStr
 
-                                                    If Not DoesTableExist(DDCnn, "ttkGISLayerSQL") Then
+278                                                 If Not DoesTableExist(DDCnn, "ttkGISLayerSQL") Then
             
-                                                        DDCnn.Execute "CREATE TABLE [ttkGISLayerSQL]  ([NAME] TEXT(255), [XMIN] DOUBLE, [XMAX] DOUBLE, [YMIN] DOUBLE, [YMAX] DOUBLE, [SHAPETYPE] INTEGER)"
-                                                        TxMsg "   --- Creating table [ttkGISLayerSQL]"
+280                                                     DDCnn.Execute "CREATE TABLE [ttkGISLayerSQL]  ([NAME] TEXT(255), [XMIN] DOUBLE, [XMAX] DOUBLE, [YMIN] DOUBLE, [YMAX] DOUBLE, [SHAPETYPE] INTEGER)"
+282                                                     TxMsg "   --- Creating table [ttkGISLayerSQL]"
 
                                                     End If
                                                 
                                                 End If
                                                 
-                                                Set m_RSttkGISLayerSQLLocal = New ADODB.Recordset
-                                                m_RSttkGISLayerSQLLocal.Open "SELECT * FROM ttkGISLayerSQL", DDCnn, adOpenDynamic, adLockBatchOptimistic
+284                                             Set m_RSttkGISLayerSQLLocal = New ADODB.Recordset
+286                                             m_RSttkGISLayerSQLLocal.Open "SELECT * FROM ttkGISLayerSQL", DDCnn, adOpenDynamic, adLockBatchOptimistic
                                 
-274                                             bClientDDInOrder = RunDDSchemaCompare(m_StrWebsiteURL, "dd_" & .Fields(0) & "_", DDCnn)
+288                                             bClientDDInOrder = RunDDSchemaCompare(m_StrWebsiteURL, "dd_" & .Fields(0) & "_", DDCnn)
                                                 
-276                                             If bClientDDInOrder Then
-278                                                 SynchDDWithServer "dd_" & .Fields(0) & "_", m_StrWebsiteURL, DDCnn
+290                                             If bClientDDInOrder Then
+                                                    
+292                                                 iCount = 0
+
+294                                                 TxMsg "**??#########################################################################################", True
+296                                                 TxMsg "**?? Beginning data sync for dynamic database: " & .Fields(0) & " ......................", True
+
+                                                    Do
+298                                                     bRetval = SynchDDWithServer2("dd_" & .Fields(0) & "_", m_StrWebsiteURL, DDCnn)
+300                                                     iCount = iCount + 1
+302                                                 Loop Until bRetval Or iCount = 50
+
+304                                                 TxMsg "**?? Ending sync for dynamic database: " & "dd_" & .Fields(0) & " ......................", True
+306                                                 TxMsg "**??#########################################################################################", True
+
                                                 End If
                                             
-280                                             DDCnn.Close
-282                                             Set DDCnn = Nothing
-284                                             .MoveNext
+308                                             DDCnn.Close
+310                                             Set DDCnn = Nothing
+312                                             .MoveNext
 
                                             Loop
                         
-286                                         If Len(sTablesCreated) > 0 Then TxMsg "**?? TABLES CREATED: " & sTablesCreated, True
-288                                         sTablesCreated = ""
+314                                         If Len(sTablesCreated) > 0 Then TxMsg "**?? TABLES CREATED: " & sTablesCreated, True
+316                                         sTablesCreated = ""
                                             
                                         End If
                             
                                     End With
                         
-290                                 Set oRSSQLLyr = Nothing
+318                                 Set oRSSQLLyr = Nothing
                     
                                 End If
                                 
@@ -894,14 +1105,17 @@ Private Sub Runnable_Start()
         
             End If
     
-292         Set oRSSQLLyr = Nothing
+320         Set oRSSQLLyr = Nothing
             
         Loop
 
-294     TxMsg "**", True
-296     TxMsg "**??Synchronisation complete", True
-298     m_bRunning = False
+322     TxMsg "**", True
+324     TxMsg "**??Synchronisation complete", True
+326     m_bRunning = False
 
+        'TxMsg "SynchWorker.Runnable_Start_Err on line (" & Erl & ") " & Err.Description, True
+        'Set oRSSQLLyr = Nothing
+        'm_bRunning = False
         '<EhFooter>
         Exit Sub
 
@@ -958,30 +1172,32 @@ Private Sub UpdatettkGISLaySQL(ByVal sTableName As String, _
                     
                 End If
                 
+                .UpdateBatch adAffectCurrent
+                
 142             oRS.Close
 144             Set oRS = Nothing
                 
-146             If m_RSttkGISLayerSQLRemote.State = adStateOpen Then
-        
-148                 If Not (m_RSttkGISLayerSQLRemote.EOF And m_RSttkGISLayerSQLRemote.BOF) Then
-        
-150                     m_RSttkGISLayerSQLRemote.MoveFirst
-152                     m_RSttkGISLayerSQLRemote.Find "[name] = '" & sTableName & "'"
-                        
-154                     If Not m_RSttkGISLayerSQLRemote.EOF Then
-                        
-156                         .Fields("Name").Value = m_RSttkGISLayerSQLRemote.Fields("Name").Value
-158                         .Fields("XMIN").Value = m_RSttkGISLayerSQLRemote.Fields("XMIN").Value
-160                         .Fields("XMAX").Value = m_RSttkGISLayerSQLRemote.Fields("XMAX").Value
-162                         .Fields("YMIN").Value = m_RSttkGISLayerSQLRemote.Fields("YMIN").Value
-164                         .Fields("YMAX").Value = m_RSttkGISLayerSQLRemote.Fields("YMAX").Value
-166                         .Fields("SHAPETYPE").Value = m_RSttkGISLayerSQLRemote.Fields("SHAPETYPE").Value
-                        
-                        End If
-                
-                    End If
-                
-                End If
+                '146             If m_RSttkGISLayerSQLRemote.State = adStateOpen Then
+                '
+                '148                 If Not (m_RSttkGISLayerSQLRemote.EOF And m_RSttkGISLayerSQLRemote.BOF) Then
+                '
+                '150                     m_RSttkGISLayerSQLRemote.MoveFirst
+                '152                     m_RSttkGISLayerSQLRemote.Find "[name] = '" & sTableName & "'"
+                '
+                '154                     If Not m_RSttkGISLayerSQLRemote.EOF Then
+                '
+                '156                         .Fields("Name").Value = m_RSttkGISLayerSQLRemote.Fields("Name").Value
+                '158                         .Fields("XMIN").Value = m_RSttkGISLayerSQLRemote.Fields("XMIN").Value
+                '160                         .Fields("XMAX").Value = m_RSttkGISLayerSQLRemote.Fields("XMAX").Value
+                '162                         .Fields("YMIN").Value = m_RSttkGISLayerSQLRemote.Fields("YMIN").Value
+                '164                         .Fields("YMAX").Value = m_RSttkGISLayerSQLRemote.Fields("YMAX").Value
+                '166                         .Fields("SHAPETYPE").Value = m_RSttkGISLayerSQLRemote.Fields("SHAPETYPE").Value
+                '
+                '                        End If
+                '
+                '                    End If
+                '
+                '                End If
             
 168             .UpdateBatch adAffectCurrent
            
@@ -1000,21 +1216,21 @@ End Sub
 Private Sub ValidateClientTable(ByVal sTableName As String, _
                                 ByVal sGUIDFieldName As String, _
                                 ByVal bGUIDFieldIsString As String, _
-                                ByVal bIsGeotable As Boolean, _
+                                ByVal bIsGeoTable As Boolean, _
                                 cn As ADODB.Connection, _
                                 ByVal sSynchHistoryPrefix As String)
     
     Dim sTableDesc As String
-    sTableDesc = IIf(bIsGeotable, "GEO-table", "table")
+    sTableDesc = IIf(bIsGeoTable, "GEO-table", "table")
     
     'TxMsg "   ------------------------------------------------------------------------------------------------"
     TxMsg "**?? Verifying " & sTableDesc & " [" & sTableName & "]" & " for integrity....."
     'TxMsg "   ------------------------------------------------------------------------------------------------"
     'TxMsg "   --- Verifying " & sTableDesc & " [" & sTableName & "]" & " for duplicate field [" & sGUIDFieldName & "]....."
     
-    CheckForClientTableDuplicates sTableName, sGUIDFieldName, bGUIDFieldIsString, bIsGeotable, cn, sSynchHistoryPrefix
+    CheckForClientTableDuplicates sTableName, sGUIDFieldName, bGUIDFieldIsString, bIsGeoTable, cn, sSynchHistoryPrefix
     
-    If bIsGeotable Then
+    If bIsGeoTable Then
         'TxMsg "   --- Verifying " & sTableDesc & " [" & sTableName & "]" & " for duplicate UID....."
         CheckForClientTableDuplicateUID sTableName, cn, sGUIDFieldName, sSynchHistoryPrefix
         
@@ -1023,7 +1239,7 @@ Private Sub ValidateClientTable(ByVal sTableName As String, _
     End If
     
     'TxMsg "   --- Verifying " & sTableDesc & " [" & sTableName & "]" & " is in accordance with SynchHistory....."
-    CheckForClientTableSynchRules sTableName, sGUIDFieldName, bIsGeotable, cn, sSynchHistoryPrefix
+    CheckForClientTableSynchRules sTableName, sGUIDFieldName, bIsGeoTable, cn, sSynchHistoryPrefix
     
     'TxMsg "   --- Verification of " & sTableDesc & " [" & sTableName & "]" & " complete."
     'TxMsg "   ------------------------------------------------------------------------------------------------"
@@ -1032,7 +1248,7 @@ End Sub
 
 Private Sub CheckForClientTableSynchRules(ByVal sTableName As String, _
                                           ByVal sGUIDFieldName As String, _
-                                          ByVal bIsGeotable As Boolean, _
+                                          ByVal bIsGeoTable As Boolean, _
                                           cn As ADODB.Connection, _
                                           ByVal sLocalSynchHistPrefix As String)
         '<EhHeader>
@@ -1044,7 +1260,7 @@ Private Sub CheckForClientTableSynchRules(ByVal sTableName As String, _
             
         If Not Right(sTableName, 4) = "_GEO" Then
         
-100         If bIsGeotable = True Then
+100         If bIsGeoTable = True Then
 102             If Not Right(sTableName, 4) = "_FEA" Then sTableName = sTableName & "_FEA"
 104             sSQL = "SELECT [" & sTableName & "].[" & sGUIDFieldName & "], [UID] FROM [" & sTableName & "] LEFT OUTER JOIN [" & sLocalSynchHistPrefix & "SynchHistory] ON [" & sTableName & "].[" & sGUIDFieldName & "] = [" & sLocalSynchHistPrefix & "SynchHistory].[sID] Where ([" & sLocalSynchHistPrefix & "SynchHistory].[sID] Is Null)"
             Else
@@ -1060,7 +1276,7 @@ Private Sub CheckForClientTableSynchRules(ByVal sTableName As String, _
 114                 TxMsg "!!!!!! [" & sTableName & "].[" & sGUIDFieldName & "] value '" & RSDifferences.Fields(0).Value & "' not found in SynchHistory.  Removing this record...", True
 116                 cn.Execute "DELETE FROM [" & sTableName & "] WHERE [" & sGUIDFieldName & "] = '" & RSDifferences.Fields(0).Value & "'"
 
-118                 If bIsGeotable = True Then
+118                 If bIsGeoTable = True Then
 120                     cn.Execute "DELETE FROM [" & Left(sTableName, Len(sTableName) - 4) & "_GEO] WHERE [UID] = " & RSDifferences.Fields(1).Value
                     End If
 
@@ -1116,6 +1332,7 @@ Private Sub CheckProxySettings(cn As ADODB.Connection)
 122                     sKey = Replace(sProxyArray(i), "http=", "")
                         Exit Do
                     End If
+
 124                 i = i + 1
                 Loop
                 
@@ -1144,16 +1361,17 @@ Private Sub CheckProxySettings(cn As ADODB.Connection)
 CheckProxySettings_Err:
         Resume Next
         'Err.Raise vbObjectError + 100, _
-                  "OASIS_SynchNG.SynchWorker.CheckProxySettings", _
-                  "SynchWorker component failure"
+         "OASIS_SynchNG.SynchWorker.CheckProxySettings", _
+         "SynchWorker component failure"
         '</EhFooter>
 End Sub
 
 Private Sub CheckForClientTableDuplicates(sTableName As String, _
                                           sGUIDFieldName As String, _
                                           bGUIDFieldIsString As String, _
-                                          bIsGeotable As Boolean, _
-                                          cn As ADODB.Connection, sLocalSynchHistPrefix As String)
+                                          bIsGeoTable As Boolean, _
+                                          cn As ADODB.Connection, _
+                                          sLocalSynchHistPrefix As String)
         '<EhHeader>
         On Error GoTo CheckForClientTableDuplicates_ERR
         '</EhHeader>
@@ -1164,7 +1382,7 @@ Private Sub CheckForClientTableDuplicates(sTableName As String, _
 100     If bGUIDFieldIsString Then sBrackets = "'"
         Dim RSLocalDuplicates As New ADODB.Recordset
     
-102     If bIsGeotable Then
+102     If bIsGeoTable Then
     
             Dim sTableName_GEO As String
             Dim sTableName_FEA As String
@@ -1323,9 +1541,9 @@ ValidateClientGEOTable_Err:
 End Sub
 
 Private Sub CheckForClientTableDuplicateUID(sTableName As String, _
-                                                 cn As ADODB.Connection, _
-                                                 sUniqueGUID As String, _
-                                                 Optional sLocalSynchHistPrefix As String = "")
+                                            cn As ADODB.Connection, _
+                                            sUniqueGUID As String, _
+                                            Optional sLocalSynchHistPrefix As String = "")
         '<EhHeader>
         On Error GoTo CheckForClientTableDuplicateUID_Err
         '</EhHeader>
@@ -1394,615 +1612,6 @@ CheckForClientTableDuplicateUID_Err:
         '</EhFooter>
 End Sub
     
-Private Sub UpdateSynchHistoryOverview(cn As Connection, ByVal sWebsite As String)
-        '<EhHeader>
-        On Error GoTo UpdateSynchHistoryOverview_Err
-        '</EhHeader>
-
-        Dim oRSLocal As New ADODB.Recordset
-        Dim oRSServer As New ADODB.Recordset
-        Dim sOperation As String
-        Dim sWhenNow As String
-        
-        sWhenNow = CalcServerDateTime(Now())
-    
-100     With SynchHistoryOverview
-    
-102         oRSLocal.Open "SELECT count(*) FROM [" & IIf(.sTablenameLocal = "oincidents", "oincidents_FEA", .sTablenameLocal) & "]", cn, adOpenDynamic, adLockReadOnly
-104         .lCountLocal = 0
-106         If Not oRSLocal.EOF Then .lCountLocal = oRSLocal.Fields(0).Value
-108         oRSLocal.Close
-        
-110         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' AND NOT ([noconflict]='local') ORDER BY [sWhen] DESC", cn, adOpenDynamic, adLockReadOnly
-112         .sWhenMaxActualLocal = sWhenNow
-114         If Not oRSLocal.EOF Then .sWhenMaxActualLocal = oRSLocal.Fields(0).Value
-116         oRSLocal.Close
-        
-118         oRSLocal.Open "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableLocal & "] WHERE updates = 'true' AND sDelete = 'false' AND sTablename = '" & .sTablenameLocal & "' AND NOT ([noconflict]='local') ORDER BY [sWhen]", cn, adOpenDynamic, adLockReadOnly
-120         .sWhenMinActualLocal = sWhenNow
-122         If Not oRSLocal.EOF Then .sWhenMinActualLocal = oRSLocal.Fields(0).Value
-124         oRSLocal.Close
-    
-126         Set oRSServer = OpenServerRSCompressed(sWebsite, "id", "SELECT count(*) FROM [" & .sTablenameServer & "]")
-128         .lCountServer = 0
-130         If Not oRSServer.EOF Then .lCountServer = oRSServer.Fields(0).Value
-132         oRSServer.Close
-        
-134         Set oRSServer = OpenServerRSCompressed(sWebsite, "id", "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableServer & "] WHERE sDelete = 'false' AND sTablename = '" & .sTablenameServer & "' ORDER BY [sWhen] DESC")
-136         .sWhenMaxActualServer = "" 'CalcServerDateTime(Now())
-138         If Not oRSServer.EOF Then .sWhenMaxActualServer = oRSServer.Fields(0).Value
-140         oRSServer.Close
-        
-142         Set oRSServer = OpenServerRSCompressed(sWebsite, "id", "SELECT top 1 [sWhen] FROM [" & .sSynchHistoryTableServer & "] WHERE sDelete = 'false' AND sTablename = '" & .sTablenameServer & "' ORDER BY [sWhen]")
-144         .sWhenMinActualServer = "" 'CalcServerDateTime(Now())
-146         If Not oRSServer.EOF Then .sWhenMinActualServer = oRSServer.Fields(0).Value
-148         oRSServer.Close
-        
-150         If (.lCountLocal = .lCountServer _
-                And Not .lCountServer = 0 _
-                And Not .sWhenMaxActualLocal = .sWhenMaxActualServer) Then
-                
-152             .NextSynchNextOpeation = EditsOnly
-154             sOperation = "EditsOnly"
-            ElseIf .lCountLocal = .lCountServer Then
-                .NextSynchNextOpeation = DoNotSynch
-                sOperation = "DoNotSynch"
-156         ElseIf .sWhenMaxActualLocal = .sWhenMaxActualServer Or .sWhenMaxActualLocal = sWhenNow Then
-158             .NextSynchNextOpeation = OldOnly
-160             sOperation = "OldOnly"
-162         ElseIf .sWhenMinActualLocal = .sWhenMaxActualServer Then
-164             .NextSynchNextOpeation = NewOnly
-166             sOperation = "NewOnly"
-            Else
-168             .NextSynchNextOpeation = NewOnly
-170             sOperation = "NewOnly - there are old records also but first we want to get all the latest records"
-            End If
-        
-172         TxMsg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", True, True
-174         TxMsg ">>> Local record count : " & .lCountLocal, True, True
-176         TxMsg ">>> Local min sWhen    : " & .sWhenMinActualLocal, True, True
-178         TxMsg ">>> Local max sWhen    : " & .sWhenMaxActualLocal, True, True
-182         TxMsg ">>> Server record count: " & .lCountServer, True, True
-184         TxMsg ">>> Server min sWhen   : " & .sWhenMinActualServer, True, True
-186         TxMsg ">>> Server max sWhen   : " & .sWhenMaxActualServer, True, True
-190         TxMsg "**?? Table [" & .sTablenameLocal & "] -- Operation: " & sOperation & " -- Records: " & .lCountLocal & " on local, " & .lCountServer & " on server", True
-192         TxMsg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", True, True
-        
-        End With
-    
-194     Set oRSLocal = Nothing
-196     Set oRSServer = Nothing
-    
-        '<EhFooter>
-        Exit Sub
-
-UpdateSynchHistoryOverview_Err:
-        TxMsg "SynchWorker.UpdateSynchHistoryOverview_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Sub
-
-Private Function GetSynchRecordsTOADD(ByVal sTableName As String, _
-                                      ByVal sGUID As String, _
-                                      bIsGeotable As Boolean, _
-                                      ByVal sWebsite As String, _
-                                      cn As ADODB.Connection, _
-                                      Optional sLocalSynchHistPrefix As String = "") As Boolean
-        '<EhHeader>
-        On Error GoTo GetSynchRecordsTOADD_Err
-        '</EhHeader>
-        
-        'Operation: This sub loads all GUIDs off a server table and all GUIDs off a local table
-        '           The list of GUIDs are compared and any missing on the local table
-        '           are downloaded from the server table and saved in a table on
-        '           the local database by the same name as the server table
-        
-        Dim sWhenCurrent As String
-        m_lCountDownloaded = 0
-        
-        'Dim RSSynchHistoryOverview As New ADODB.Recordset
-        Dim RSServerALLGUIDS As ADODB.Recordset
-        Dim RSLocalALLGUIDS As ADODB.Recordset
-        Dim RSGUIDSNeedingDownloading As ADODB.Recordset
-        
-        Dim RSServerNewRecord As New ADODB.Recordset
-        Dim RSServerNewRecord_FEA As New ADODB.Recordset
-        Dim RSServerNewRecord_GEO As New ADODB.Recordset
-        
-        Dim RSUpdater As New ADODB.Recordset
-        Dim RSUpdater_GEO As New ADODB.Recordset
-        Dim RSUpdater_FEA As New ADODB.Recordset
-        Dim bIncidents As Boolean
-        
-        Dim bMasterTableEntryExists As Boolean
-        Dim bValidation As Boolean
-        Dim sServerDate() As String
-        Dim sServerSequence() As Long
-        Dim sServerGUID() As String
-        Dim sServerDateFound As String
-        Dim sServerSequenceFound As Long
-        'Dim sServerGUID() As String
-        Dim lCurrentRecordInBatch As Long
-        Dim sAllGUIDSForDownload As String
-        Dim sAllUIDSForDownload As String
-        Dim lMaxRecordBatch As Long
-        Dim i As Long
-        Dim iArrayIndex As Long
-        Dim j As Long
-        Dim lMAX As Long
-        Dim sUGName As String
-        
-        Dim bCatchFailAddLocalValue_FEA As Boolean
-        Dim bCatchFailAddLocalValue_GEO As Boolean
-        Dim bCatchFailOpenRSUpdater_FEA As Boolean
-        
-100     GetSynchRecordsTOADD = False
-102     lCurrentRecordInBatch = 0
-104     lMaxRecordBatch = lBatchCountToDownload
-106     m_sIDs = ""
-        
-108     If sTableName = "oincidents" Then
-110         'TxMsg "**??Scanning for new incidents...", True
-112         bIncidents = True
-114         sUGName = ""
-116     ElseIf sTableName = "Attachments" Then
-118         'TxMsg "**??Scanning for new attachments...", True
-120         sUGName = ""
-        Else
-
-122         If sLocalSynchHistPrefix = "" Then sUGName = m_StrRemoteTablePrefix
-            'If sLocalSynchHistPrefix = "" Then sUGName = m_StrRemoteTablePrefix
-124         'TxMsg "**??Scanning for new records on server table: [" & sUGName & sTableName & "]", False
-        End If
-        
-'126     RSSynchHistoryOverview.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistoryOverview] WHERE [sTablename] = '" & sTableName & "'", cn, adOpenDynamic, adLockBatchOptimistic
-'
-'128     If RSSynchHistoryOverview.EOF Then
-'130         RSSynchHistoryOverview.AddNew
-'132         RSSynchHistoryOverview.Fields("sWhenMinSearched").Value = CalcServerDateTime(Now())
-'134         RSSynchHistoryOverview.Fields("sWhenMaxSearched").Value = RSSynchHistoryOverview.Fields("sWhenMinSearched").Value
-'136         RSSynchHistoryOverview.Fields("sTablename").Value = sTableName
-'138         RSSynchHistoryOverview.UpdateBatch adAffectCurrent
-'        End If
-
-        SynchHistoryOverview.sTablenameLocal = sTableName
-        SynchHistoryOverview.sTablenameServer = sUGName & sTableName
-        SynchHistoryOverview.sSynchHistoryTableLocal = sLocalSynchHistPrefix & "SynchHistory"
-        SynchHistoryOverview.sSynchHistoryTableServer = sUGName & sLocalSynchHistPrefix & "SynchHistory"
-        
-        TxMsg "SynchHistoryOverview.sTablenameLocal: " & SynchHistoryOverview.sTablenameLocal, True, True
-        TxMsg "SynchHistoryOverview.sTablenameServer: " & SynchHistoryOverview.sTablenameServer, True, True
-        TxMsg "SynchHistoryOverview.sSynchHistoryTableLocal: " & SynchHistoryOverview.sSynchHistoryTableLocal, True, True
-        TxMsg "SynchHistoryOverview.sSynchHistoryTableServer: " & SynchHistoryOverview.sSynchHistoryTableServer, True, True
-        
-140     UpdateSynchHistoryOverview cn, sWebsite
-        
-142     If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-        
-            TxMsg "**??Scanning for new records on server table: [" & sUGName & sTableName & "]", True
-            
-            SynchHistoryOverview.sWhenMinSearched = SynchHistoryOverview.sWhenMinActualLocal
-            SynchHistoryOverview.sWhenMaxSearched = SynchHistoryOverview.sWhenMaxActualLocal
-            If SynchHistoryOverview.sWhenMaxActualLocal > SynchHistoryOverview.sWhenMaxActualServer Then
-                SynchHistoryOverview.sWhenMaxSearched = SynchHistoryOverview.sWhenMaxActualServer
-            End If
-            
-            
-'144         SynchHistoryOverview.sWhenMinSearched = RSSynchHistoryOverview.Fields("sWhenMinSearched").Value
-'146         SynchHistoryOverview.sWhenMaxSearched = RSSynchHistoryOverview.Fields("sWhenMaxSearched").Value
-
-            TxMsg ">>> sWhenMinSearched: " & SynchHistoryOverview.sWhenMinSearched, True, True
-            TxMsg ">>> sWhenMaxSearched: " & SynchHistoryOverview.sWhenMaxSearched, True, True
-            TxMsg ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", True, True
-        
-148         If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
-150         Set RSLocalALLGUIDS = GetAllGUIDsFromLocalDB(sTableName, sLocalSynchHistPrefix & "SynchHistory", cn, Add)
-151         'Set RSServerALLGUIDS = GetAllGUIDsFromServerDB(sUGName & sTableName, sLocalSynchHistPrefix & sUGName & "SynchHistory", m_sWhen, sWebsite, Add)
-
-            If sTableName = "Incidents_ChartSettings" Then
-152             Set RSServerALLGUIDS = GetAllGUIDsFromServerDB(sTableName, sLocalSynchHistPrefix & sUGName & "SynchHistory", m_sWhen, sWebsite, Add)
-            Else
-153             Set RSServerALLGUIDS = GetAllGUIDsFromServerDB(sUGName & sTableName, sLocalSynchHistPrefix & sUGName & "SynchHistory", m_sWhen, sWebsite, Add)
-            End If
-
-154         Set RSGUIDSNeedingDownloading = GetRSWithGUIDSFORDOWNLOAD(RSServerALLGUIDS, RSLocalALLGUIDS, Add)
-'            RSSynchHistoryOverview.Fields("sWhenMaxSearched").Value = SynchHistoryOverview.sWhenMinSearched
-'            RSSynchHistoryOverview.Fields("sWhenMaxSearched").Value = SynchHistoryOverview.sWhenMaxSearched
-'            RSSynchHistoryOverview.UpdateBatch adAffectCurrent
-        
-156         If Not RSGUIDSNeedingDownloading Is Nothing Then
-
-158             With RSGUIDSNeedingDownloading
-
-160                 If Not .EOF Then
-
-162                     .MoveFirst
-164                     GetSynchRecordsTOADD = True
-                        bRecordsDownloaded = True
-166                     TxMsg "    --- " & RSGUIDSNeedingDownloading.RecordCount & " new record(s) are to be downloaded from the OASIS Cloud Server............"
-168                     sDebugInfo = "Here is the debug info for function: GetSynchRecordsTOADD"
-170                     i = 0
-
-172                     Do Until .EOF
-
-174                         ReDim sServerDate(lMaxRecordBatch)
-176                         ReDim sServerSequence(lMaxRecordBatch)
-178                         ReDim sServerGUID(lMaxRecordBatch)
-                        
-180                         iArrayIndex = 0
-182                         sAllGUIDSForDownload = "WHERE"
-184                         lCurrentRecordInBatch = 0
-186                         TxMsg "    --- Processing download list (not downloading right now)............"
-                
-188                         Do Until .EOF Or (lCurrentRecordInBatch = lMaxRecordBatch)
-
-190                             lCurrentRecordInBatch = lCurrentRecordInBatch + 1
-                            
-192                             If sAllGUIDSForDownload = "WHERE" Then
-194                                 sAllGUIDSForDownload = sAllGUIDSForDownload & " ("
-                                Else
-196                                 sAllGUIDSForDownload = sAllGUIDSForDownload & " OR "
-                                End If
-                        
-198                             sServerGUID(iArrayIndex) = .Fields("sID").Value
-200                             sServerDate(iArrayIndex) = .Fields("sWhen").Value
-202                             sServerSequence(iArrayIndex) = .Fields("sequence").Value
-204                             sAllGUIDSForDownload = sAllGUIDSForDownload & "[" & sGUID & "] = '" & .Fields(0).Value & "'"
-206                             .MoveNext
-208                             iArrayIndex = iArrayIndex + 1
-                        
-                            Loop
-                            
-210                         If bIncidents Or bIsGeotable Then
-212                             If Not sLocalSynchHistPrefix = "" And Right(sTableName, 4) = "_FEA" Then sTableName = Left(sTableName, Len(sTableName) - 4)
-214                             RSUpdater_GEO.CursorLocation = adUseClient
-216                             RSUpdater_FEA.CursorLocation = adUseClient
-                            
-218                             RSUpdater_GEO.Open "SELECT * FROM [" & sTableName & "_GEO] ORDER BY [UID]", cn, adOpenDynamic, adLockBatchOptimistic
-220                             bCatchFailOpenRSUpdater_FEA = True
-222                             RSUpdater_FEA.Open "SELECT * FROM [" & sTableName & "_FEA] " & sAllGUIDSForDownload & ") ORDER BY [" & sGUID & "]", cn, adOpenDynamic, adLockBatchOptimistic
-224                             bCatchFailOpenRSUpdater_FEA = False
-                            Else
-226                             RSUpdater.CursorLocation = adUseClient
-                                TxMsg ">>>>>> LOADING LOCALLY: SELECT * FROM [" & sTableName & "] " & sAllGUIDSForDownload & ") ORDER BY [" & sGUID & "]", True, True
-228                             RSUpdater.Open "SELECT * FROM [" & sTableName & "] " & sAllGUIDSForDownload & ") ORDER BY [" & sGUID & "]", cn, adOpenDynamic, adLockBatchOptimistic
-                            End If
-                        
-230                         sAllGUIDSForDownload = sAllGUIDSForDownload & ") ORDER BY [sWhen] DESC, [sid]"
-                            'TxMsg "sAllGUIDSForDownload: " & sAllGUIDSForDownload, True
-                            'iArrayIndex = 0
-
-                            'Get new record from server
-232                         If bIncidents Or bIsGeotable Then
-
-234                             TxMsg "    --- Downloading batch............"
-236                             Set RSServerNewRecord_FEA = DownloadBatchRecordsFromServer(IIf(bIncidents, "oincidents_FEA", sUGName & sTableName & "_FEA"), sAllGUIDSForDownload, sWebsite, sLocalSynchHistPrefix, sGUID)
-
-238                             If Not bBatchDownloadOK Then GoTo cleanupandexit
-
-240                             If Not RSServerNewRecord_FEA.State = adStateClosed Then
-242                                 If Not RSServerNewRecord_FEA.EOF Or Not RSServerNewRecord_FEA.BOF Then
-
-244                                     RSServerNewRecord_FEA.MoveFirst
-                                    
-246                                     sAllUIDSForDownload = "WHERE"
-
-248                                     Do Until RSServerNewRecord_FEA.EOF
-                                        
-250                                         If sAllUIDSForDownload = "WHERE" Then
-252                                             sAllUIDSForDownload = sAllUIDSForDownload & " ("
-                                            Else
-254                                             sAllUIDSForDownload = sAllUIDSForDownload & " OR "
-                                            End If
-                                            
-256                                         sAllUIDSForDownload = sAllUIDSForDownload & "[UID] = " & RSServerNewRecord_FEA.Fields("UID").Value
-258                                         RSServerNewRecord_FEA.MoveNext
-                                            
-                                        Loop
-                                    
-260                                     sAllUIDSForDownload = sAllUIDSForDownload & ")"
-262                                     RSServerNewRecord_FEA.MoveFirst
-264                                     Set RSServerNewRecord_GEO = DownloadBatchRecordsFromServer(IIf(bIncidents, "oincidents_GEO", sUGName & sTableName & "_GEO"), sAllUIDSForDownload, sWebsite, sLocalSynchHistPrefix, sGUID)
-
-266                                     If Not bBatchDownloadOK Then GoTo cleanupandexit
-                                    
-                                    End If
-                                End If
-
-268                             If Not RSServerNewRecord_FEA.State = adStateClosed And Not RSServerNewRecord_GEO.State = adStateClosed Then
-
-270                                 If Not RSServerNewRecord_FEA.BOF Or Not RSServerNewRecord_FEA.EOF Then RSServerNewRecord_FEA.MoveFirst
-
-272                                 Do Until RSServerNewRecord_FEA.EOF
-274                                     i = i + 1
-                                        'iArrayIndex = iArrayIndex + 1
-
-276                                     iArrayIndex = 0
-                                        
-278                                     Do Until iArrayIndex >= UBound(sServerGUID)
-
-280                                         If sServerGUID(iArrayIndex) = RSServerNewRecord_FEA.Fields(sGUID).Value Then
-282                                             sServerDateFound = sServerDate(iArrayIndex)
-284                                             sServerSequenceFound = sServerSequence(iArrayIndex)
-                                            End If
-
-286                                         iArrayIndex = iArrayIndex + 1
-                                        Loop
-                                                                              
-288                                     If Not RSUpdater_FEA.EOF Or Not RSUpdater_FEA.BOF Then RSUpdater_FEA.MoveFirst
-290                                     RSUpdater_FEA.Find sGUID & " = '" & RSServerNewRecord_FEA.Fields(sGUID).Value & "'"
-                                        'RSUpdater_FEA.Filter = "[" & sGUID & "] = '" & RSServerNewRecord_FEA.Fields(sGUID).Value & "'"
-                                        
-292                                     If Not RSServerNewRecord_GEO.EOF Or Not RSServerNewRecord_GEO.BOF Then RSServerNewRecord_GEO.MoveFirst
-294                                     RSServerNewRecord_GEO.Find "UID = " & RSServerNewRecord_FEA.Fields("UID").Value
-                                        'RSServerNewRecord_GEO.Filter = "UID = " & RSServerNewRecord_FEA.Fields("UID").Value
-                                    
-296                                     If (RSUpdater_FEA.EOF Or RSUpdater_FEA.BOF) Then
-    
-298                                         lMAX = GetMaxUIDFromGEOTable(sTableName & "_GEO", cn) + CLng(1)
-300                                         j = 0
-302                                         RSUpdater_FEA.AddNew
-                                    
-304                                         Do Until j = RSUpdater_FEA.Fields.Count
-
-                                                If Not RSUpdater_FEA.Fields(j).Name = "WKB" And Not RSUpdater_FEA.Fields(j).Name = "ORIG_ID" And Not Left(RSUpdater_FEA.Fields(j).Name, 1) = "_" Then
-
-306                                                 If RSUpdater_FEA.Fields(j).Name = "UID" Then
-308                                                     RSUpdater_FEA.Fields(j).Value = lMAX
-                                            
-                                                    Else
-310                                                     bCatchFailAddLocalValue_FEA = True
-312                                                     RSUpdater_FEA.Fields(j).Value = RSServerNewRecord_FEA.Fields(RSUpdater_FEA.Fields(j).Name).Value
-314                                                     bCatchFailAddLocalValue_FEA = False
-                                                    End If
-                                                End If
-
-316                                             j = j + 1
-                                            Loop
-                        
-318                                         j = 0
-320                                         RSUpdater_GEO.AddNew
-                                        
-322                                         Do Until j = RSUpdater_GEO.Fields.Count
-                                    
-324                                             If RSUpdater_GEO.Fields(j).Name = "UID" Then
-326                                                 RSUpdater_GEO.Fields(j).Value = lMAX
-328                                             ElseIf Not (bIncidents And RSUpdater_GEO.Fields(j).Name = "GEOMETRY") Then
-330                                                 bCatchFailAddLocalValue_GEO = True
-332                                                 RSUpdater_GEO.Fields(j).Value = RSServerNewRecord_GEO.Fields(RSUpdater_GEO.Fields(j).Name).Value
-334                                                 bCatchFailAddLocalValue_GEO = False
-                                                End If
-                                        
-336                                             j = j + 1
-                                            Loop
-                                    
-338                                         RSUpdater_FEA.UpdateBatch adAffectCurrent
-340                                         RSUpdater_GEO.UpdateBatch adAffectCurrent
-342                                         SynchHistoryAddNew cn, GetGuid, RSServerNewRecord_FEA.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA"), True, "true", sLocalSynchHistPrefix, sServerSequenceFound
-344                                         sWhenCurrent = sServerDateFound
-                                          '  bRecordsDownloaded = True
-                                            ' Report to client
-346                                         If Not m_bUseEvents Then
-348                                             If bIncidents Then
-                                                    m_lCountDownloaded = m_lCountDownloaded + 1
-350                                                 TxMsg CStr("**??New incident " & i & " of " & RSGUIDSNeedingDownloading.RecordCount & " and ID: " & RSServerNewRecord_FEA.Fields(sGUID).Value)
-352                                                 m_sIDs = RSServerNewRecord_FEA.Fields(sGUID).Value & "//" & m_sIDs
-                                                Else
-                                                    'TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") and UID: " & lMAX & " and  ID: " & RSServerNewRecord_FEA.Fields(sGUID).Value & " added")
-                                                    m_lCountDownloaded = m_lCountDownloaded + 1
-354                                                 TxMsg CStr("**??New record " & i & " of " & RSGUIDSNeedingDownloading.RecordCount & " for table: " & IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA") & " with ID: " & RSServerNewRecord_FEA.Fields(sGUID).Value)
-                                                End If
-    
-                                            Else
-356                                             RaiseEvent StatusEX(i, RSGUIDSNeedingDownloading.RecordCount, False, RSServerNewRecord_FEA.Fields(sGUID).Value)
-                                            End If
-    
-                                        Else
-                                    
-358                                         TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") with ID: " & RSServerNewRecord_FEA.Fields(sGUID).Value & " is already on local table [" & IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA") & "] adjusting SynchHistory accordingly....") ', True
-360                                         SynchHistoryAddNew cn, GetGuid, RSServerNewRecord_FEA.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA"), True, "true", sLocalSynchHistPrefix, sServerSequenceFound
-362                                         sWhenCurrent = sServerDateFound
-                                            
-                                        End If
-                                        
-364                                     RSServerNewRecord_FEA.MoveNext
-366                                     RSServerNewRecord_GEO.MoveNext
-                                    Loop
-                
-                                Else
-368                                 bLargePolygonDownloadFailed = True
-                                    'TxMsg "    --- closed RS made the download fail"
-370                                 TxMsg "    --- closed RS made the download fail", True
-372                                 TxMsg "    --- RSServerNewRecord_FEA.State = adStateClosed: " & (RSServerNewRecord_FEA.State = adStateClosed)
-374                                 TxMsg "    --- RSServerNewRecord_GEO.State = adStateClosed: " & (RSServerNewRecord_GEO.State = adStateClosed)
-376                                 GoTo cleanupandexit
-                                End If
-                                
-378                             RSUpdater_FEA.Close
-380                             RSUpdater_GEO.Close
-        
-                            Else
-                                
-382                             Set RSServerNewRecord = DownloadBatchRecordsFromServer(sUGName & sTableName, sAllGUIDSForDownload, sWebsite, sLocalSynchHistPrefix, sGUID)
-
-384                             If Not bBatchDownloadOK Then GoTo cleanupandexit
-                            
-386                             If Not RSServerNewRecord.State = adStateClosed Then
-
-388                                 If Not RSServerNewRecord.EOF Or Not RSServerNewRecord.BOF Then RSServerNewRecord.MoveFirst
-
-390                                 Do Until RSServerNewRecord.EOF
-
-392                                     iArrayIndex = 0
-                                        
-394                                     Do Until iArrayIndex >= UBound(sServerGUID)
-
-396                                         If sServerGUID(iArrayIndex) = RSServerNewRecord.Fields(sGUID).Value Then
-398                                             sServerDateFound = sServerDate(iArrayIndex)
-400                                             sServerSequenceFound = sServerSequence(iArrayIndex)
-                                            End If
-
-402                                         iArrayIndex = iArrayIndex + 1
-                                        Loop
-
-404                                     i = i + 1
-                                        '  iArrayIndex = iArrayIndex + 1
-
-406                                     If Left$(Replace$(sTableName, sLocalSynchHistPrefix, "", , , vbTextCompare), 4) = "link" Then
-                                        
-408                                         bMasterTableEntryExists = DoesFieldExistInTable(cn, sLocalSynchHistPrefix & "mastertable", "GUID1", RSServerNewRecord.Fields("GUID1").Value)
-                                    
-                                        Else
-                                    
-                                            'Override if link table not synching
-410                                         bMasterTableEntryExists = True
-                                    
-                                        End If
-                                    
-                                        'If Not RSUpdater.EOF Or Not RSUpdater.BOF Then RSUpdater.MoveFirst
-                                    
-412                                     If bMasterTableEntryExists Then
-                                            'RSUpdater.Move
-                                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                            'This IF statement block will help prevent duplication of records
-                                            'If Not RSUpdater.EOF Or Not RSUpdater.BOF Then RSUpdater.MoveFirst
-414                                         RSUpdater.Find "[" & sGUID & "] = '" & RSServerNewRecord.Fields(sGUID).Value & "'"
-                                            'RSUpdater.Filter = "[" & sGUID & "] = '" & RSServerNewRecord.Fields(sGUID).Value & "'"
-
-416                                         If RSUpdater.EOF Or RSUpdater.BOF Then
-
-418                                             With RSUpdater
-                    
-420                                                 j = 0
-422                                                 .AddNew
-
-424                                                 Do Until j = .Fields.Count
-
-                                                        If Not .Fields(j).Name = "WKB" And Not .Fields(j).Name = "ORIG_ID" And Not Left(.Fields(j).Name, 1) = "_" Then
-426                                                         If Not .Fields(j).Name = "UID" Then
-                                                                .Fields(j).Value = RSServerNewRecord.Fields(.Fields(j).Name).Value
-                                                            End If
-                                                        End If
-
-428                                                     j = j + 1
-                                                    Loop
-
-430                                                 .UpdateBatch adAffectCurrent
-
-                                                End With
-                                           
-432                                             SynchHistoryAddNew cn, GetGuid, RSServerNewRecord.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, sTableName, True, "true", sLocalSynchHistPrefix, sServerSequenceFound
-434                                             sWhenCurrent = sServerDateFound
-                                                'bRecordsDownloaded = True
-                                                
-                                                ' Report to client
-436                                             If Not m_bUseEvents Then
-                                                    m_lCountDownloaded = m_lCountDownloaded + 1
-                                                    
-438                                                 TxMsg CStr("**??New record " & i & " of " & RSGUIDSNeedingDownloading.RecordCount & " for table: " & sTableName & " with ID: " & RSServerNewRecord.Fields(sGUID).Value)
-
-                                                    'TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") and ID: " & RSServerNewRecord.Fields(sGUID).Value)
-                                                Else
-440                                                 RaiseEvent StatusEX(i, RSGUIDSNeedingDownloading.RecordCount, False, RSServerNewRecord.Fields(sGUID).Value)
-                                                End If
-                            
-                                            Else
-                                    
-442                                             TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") with ID: " & RSServerNewRecord.Fields(sGUID).Value & " is already on local table [" & sTableName & "] adjusting SynchHistory accordingly....") ', True
-444                                             SynchHistoryAddNew cn, GetGuid, RSServerNewRecord.Fields(sGUID).Value, "Synched Record", "", sUGName & " UG", sServerDateFound, sTableName, True, "true", sLocalSynchHistPrefix, sServerSequenceFound
-446                                             sWhenCurrent = sServerDateFound
-                                            End If
-                                    
-                                        Else
-
-448                                         TxMsg CStr("    --- record (" & i & " of " & RSGUIDSNeedingDownloading.RecordCount & ") with ID: " & RSServerNewRecord.Fields(sGUID).Value & " is does not have a mastertable record!  Not adding record to see if this gets resolved after a few synch cycles (if not, contact an oasis admin)..."), True
-                                    
-                                        End If
-                    
-450                                     RSServerNewRecord.MoveNext
-                                    Loop
-                
-                                Else
-
-452                                 sDebugInfo = "   --- closed RS made the download fail" & Chr(13) & "RSServerNewRecord.State = adStateClosed: " & (RSServerNewRecord.State = adStateClosed)
-454                                 TxMsg sDebugInfo, True
-456                                 GoTo cleanupandexit
-                                End If
-                                
-458                             RSUpdater.Close
-                
-                            End If
-                        
-460                         If i >= 9000 Then
-462                             TxMsg ">>>> Too many rows - next synch cycle will fetch more records for this table....", True
-                                Exit Do
-                            End If
-                
-                        Loop
-                        
-'464                     'If i > 0 Then
-'466                     If SynchHistoryOverview.NextSynchNextOpeation = NewOnly Then
-'468                         RSSynchHistoryOverview.Fields("sWhenMaxSearched").Value = sWhenCurrent
-'                        Else
-'470                         RSSynchHistoryOverview.Fields("sWhenMinSearched").Value = sWhenCurrent
-                        'End If
-
-'472                     RSSynchHistoryOverview.UpdateBatch adAffectCurrent
-                        'End If
-                        
-'474                     RSSynchHistoryOverview.Close
-                    End If
-    
-                End With
-        
-            Else
-478             GetSynchRecordsTOADD = True 'disable look for update and delete records
-            End If
-            
-            TxMsg "**??Scan complete for new records on the server table: " & sTableName & "......................", True
-            
-        End If
-      
-cleanupandexit:
-        
-480     '
-482     Set RSServerALLGUIDS = Nothing
-484     Set RSLocalALLGUIDS = Nothing
-486     Set RSGUIDSNeedingDownloading = Nothing
-488     Set RSServerNewRecord = Nothing
-490     Set RSServerNewRecord_FEA = Nothing
-492     Set RSServerNewRecord_GEO = Nothing
-494     Set RSUpdater = Nothing
-496     Set RSUpdater_GEO = Nothing
-498     Set RSUpdater_FEA = Nothing
-'500     Set RSSynchHistoryOverview = Nothing
-        
-        '<EhFooter>
-        Exit Function
-
-GetSynchRecordsTOADD_Err:
-        TxMsg "SynchWorker.GetSynchRecordsTOADD_Err: Fetching new records in table [" & sTableName & "] failed" & Chr(13) & "(" & Erl & ") " & Err.Description, True
-        On Error Resume Next
-        
-        If bCatchFailAddLocalValue_FEA Then
-            TxMsg "---   Server FieldName : " & RSUpdater_FEA.Fields(j).Name, True
-            TxMsg "---   Server Value     : " & RSServerNewRecord_FEA.Fields(RSUpdater_FEA.Fields(j).Name).Value, True
-
-            If Left(sTableName, Len("oincidents")) = "oincidents" Then TxMsg "---   [ID]: " & RSServerNewRecord_FEA.Fields("ID").Value, True
-        End If
-        
-        If bCatchFailAddLocalValue_GEO Then
-            TxMsg "---   Server FieldName : " & RSUpdater_GEO.Fields(j).Name, True
-            TxMsg "---   Server Value     : " & RSServerNewRecord_GEO.Fields(RSUpdater_GEO.Fields(j).Name).Value, True
-        End If
-        
-        If bCatchFailOpenRSUpdater_FEA Then
-            TxMsg "---   SELECT * FROM [" & sTableName & "_FEA] " & sAllGUIDSForDownload & ") ORDER BY [" & sGUID & "]", True
-        End If
-        
-        GoTo cleanupandexit
-        '</EhFooter>
-End Function
-
 Private Function GetSynchTablesToWipe(ByVal sWebsite As String, _
                                       cn As ADODB.Connection, _
                                       sPrefix As String)
@@ -2015,8 +1624,8 @@ Private Function GetSynchTablesToWipe(ByVal sWebsite As String, _
         Dim sSQL As String
         Dim bDropFlag As Boolean
     
-100     TxMsg "<<<<<<<<<<<<"
-102     TxMsg "<<< Scanning for tables to be wiped......................"
+100     TxMsg "<<<<<<<<<<<<", , True
+102     TxMsg "<<< Scanning for tables to be wiped......................", , True
 
 104     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
 106     sSQL = "SELECT * from [" & sPrefix & "SynchHistory] WHERE [sequence] < 0"
@@ -2059,7 +1668,6 @@ Private Function GetSynchTablesToWipe(ByVal sWebsite As String, _
 156                     TxMsg "!!! Wiping table: " & .Fields("sTableName").Value
 158                     cn.Execute "DELETE FROM [" & .Fields("sTableName").Value & "]"
 160                     cn.Execute "DELETE FROM [" & sPrefix & "SynchHistory] WHERE [sequence] > 0 AND [sTableName] = '" & .Fields("sTableName").Value & "'"
-                        cn.Execute "DELETE FROM [" & sPrefix & "SynchHistoryOverview] WHERE [sTableName] = '" & .Fields("sTableName").Value & "'"
             
                         If Right$(.Fields("sTableName").Value, 4) = "_FEA" Then
                             cn.Execute "DELETE FROM [" & Left$(.Fields("sTableName").Value, Len(.Fields("sTableName").Value) - 4) & "_GEO]"
@@ -2077,8 +1685,8 @@ Private Function GetSynchTablesToWipe(ByVal sWebsite As String, _
     
         End If
         
-168     TxMsg "<<< End scan for tables to be wiped......................"
-170     TxMsg "<<<<<<<<<<<<"
+168     TxMsg "<<< End scan for tables to be wiped......................", , True
+170     TxMsg "<<<<<<<<<<<<", , True
     
 172     Set RSServerSynchHistory = Nothing
 174     Set RSLocalSynchHistory = Nothing
@@ -2092,7 +1700,7 @@ GetSynchTablesToWipe_Err:
 End Function
 
 Private Function GetMaxUIDFromServerGEOTable(sTableName As String, _
-                                       sWebsite As String) As Long
+                                             sWebsite As String) As Long
         '<EhHeader>
         On Error GoTo GetMaxUIDFromServerGEOTable_Err
         '</EhHeader>
@@ -2151,14 +1759,14 @@ Private Function GetMaxUIDFromGEOTable(sTableName As String, _
 
 104     With RSLocalMaxUID
 
-            .Open "SELECT UID FROM [" & sTableName & "] WHERE UID = 1000000000", oCOnn, adOpenDynamic, adLockBatchOptimistic
-            
-            If .EOF Or .BOF Then
-            
-                GetMaxUIDFromGEOTable = 999999999
-            
-            Else
-                .Close
+'            .Open "SELECT UID FROM [" & sTableName & "] WHERE UID = 1000000000", oCOnn, adOpenDynamic, adLockBatchOptimistic
+'
+'            If .EOF Or .BOF Then
+'
+'                GetMaxUIDFromGEOTable = 999999999
+'
+'            Else
+'                .Close
 106             .Open "SELECT MAX(UID) FROM [" & sTableName & "] WHERE UID < 1000000000", oCOnn, adOpenDynamic, adLockBatchOptimistic
                 
 108             If Not .EOF And Not .BOF Then
@@ -2167,7 +1775,7 @@ Private Function GetMaxUIDFromGEOTable(sTableName As String, _
                     End If
                 End If
             
-            End If
+'            End If
         
 114         If .State = adStateOpen Then .Close
 
@@ -2185,1965 +1793,27 @@ GetMaxUIDFromGEOTable_Err:
         '</EhFooter>
 End Function
 
-Private Function GetAllGUIDsFromLocalDB(sTableName As String, _
-                                        sSynchHistory As String, _
-                                        oCN As ADODB.Connection, _
-                                        Operation As SynchOperation) As ADODB.Recordset
-        '<EhHeader>
-        On Error GoTo GetAllGUIDsFromLocalDB_Err
-        '</EhHeader>
-                                               
-        Dim sSQL As String
-        Dim oRS As ADODB.Recordset
-
-100     If Operation = Update Or Operation = Delete Then
-
-102         Select Case Operation
-                Case Update
-104                 sSQL = "SELECT max([sWhen]) FROM [" & sSynchHistory & "] WHERE ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sdelete]='false') AND ([sequence]>1) AND ([noconflict]='false') AND NOT ([noconflict]='local')"
-               
-106             Case Delete
-108                 sSQL = "SELECT max([sWhen]) FROM [" & sSynchHistory & "] WHERE ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sdelete]='true') AND ([noconflict]='false') AND NOT ([noconflict]='local')"
-            End Select
-    
-110         TxMsg ">>> GetAllGUIDsFromLocalDB (sWhen): " & sSQL, True, True
-112         Set oRS = New ADODB.Recordset
-114         oRS.Open sSQL, oCN, adOpenStatic, adLockReadOnly
-
-116         If Not oRS.EOF Then
-                m_sWhen = IIf(IsNull(oRS.Fields(0).Value), "", oRS.Fields(0).Value)
-                TxMsg ">>> m_sWhen: " & m_sWhen, True, True
-            End If
-            
-118         oRS.Close
-120         If Right(sTableName, 8) = "_Queries" Then m_sWhen = ""
-    
-        End If
-    
-122     If Operation = Add Then
-
-124         With SynchHistoryOverview
-            
-126             Select Case .NextSynchNextOpeation
-                    
-                    Case NewOnly
-128                     sSQL = "SELECT [sID], [sequence], [swhen] FROM [" & sSynchHistory & "] GROUP BY [sID], [sequence], [swhen], [sdelete], [sTableName], [updates] HAVING ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sdelete]='false') AND ([sWhen] >= '" & .sWhenMaxSearched & "') ORDER BY [sWhen]"
-                    
-130                 Case OldOnly
-132                     sSQL = "SELECT [sID], [sequence], [swhen] FROM [" & sSynchHistory & "] GROUP BY [sID], [sequence], [swhen], [sdelete], [sTableName], [updates] HAVING ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sdelete]='false') AND ([sWhen] <= '" & .sWhenMinSearched & "') ORDER BY [sWhen] DESC"
-
-134                 Case Else
-136                     sSQL = ""
-                End Select
-            
-            End With
-         
-138     ElseIf Operation = Update Then
-    
-140         sSQL = "SELECT [sID], [sequence], [swhen] FROM [" & sSynchHistory & "] GROUP BY [sID], [sequence], [swhen], [sdelete], [sTableName], [updates] HAVING ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sWhen] >= '" & m_sWhen & "') AND ([sdelete]='false') AND ([sequence]>1) ORDER BY [sWhen]"
-    
-142     ElseIf Operation = Delete Then
-    
-144         sSQL = "SELECT [sID], [sequence], [swhen] FROM [" & sSynchHistory & "] GROUP BY [sID], [sequence], [swhen], [sdelete], [sTableName], [updates] HAVING ([sTableName]='" & sTableName & "') AND ([updates]='true') AND ([sWhen] >= '" & m_sWhen & "') AND ([sdelete]='true') ORDER BY [sWhen]"
-                
-        End If
-    
-146     TxMsg ">>> GetAllGUIDsFromLocalDB: " & sSQL, True, True
-148     sDebugInfo = Chr(13) & sSQL
-150     Set oRS = New ADODB.Recordset
-152     oRS.Open sSQL, oCN, adOpenStatic, adLockReadOnly
-154     Set GetAllGUIDsFromLocalDB = oRS
-        
-        '<EhFooter>
-        Exit Function
-
-GetAllGUIDsFromLocalDB_Err:
-        Set GetAllGUIDsFromLocalDB = Nothing
-        TxMsg "GetAllGUIDsFromLocalDB_Err line " & Erl & " ... " & Err.Description, True
-        '</EhFooter>
-End Function
-
-'Private Function GetAllGUIDsFromServerDB(sTableName As String, _
-'                                         sGUIDFieldName As String, _
-'                                         sWhereClause As String, _
-'                                         sWebsite As String, _
-'                                         Optional bMergeCheck As Boolean = False) As ADODB.Recordset
-'
-'     MsgBox "you should Not Get here!"
-'
-'
-'    'Operation: The function returns a recordset containing a list of GUIDs in
-'    '           in the specified table which is located on a server database
-'    '
-'    'Assumption: The GUID field should be a unique field of type text
-'    'Assumption: The where clause MUST contain the command "WHERE" or be empty
-'
-''    Dim sSQL As String
-''    Dim i As Long
-''
-''    If Not bMergeCheck Then
-''        sSQL = "SELECT [" & sGUIDFieldName & "] FROM [" & sTableName & "] " & sWhereClause
-''    Else
-''        sSQL = "SELECT [" & sGUIDFieldName & "], [sequence], [swhen] FROM [" & sTableName & "] " & sWhereClause
-''    End If
-''
-''    sDebugInfo = Chr(13) & sSQL
-''    'TxMsg sSQL
-''    Set GetAllGUIDsFromServerDB = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-'
-'End Function
-
-Private Function GetAllGUIDsFromServerDB(sTableName As String, _
-                                         sSynchHistory As String, _
-                                         sWhenMin As String, _
-                                         sWebsite As String, _
-                                         Operation As SynchOperation) As ADODB.Recordset
-        '<EhHeader>
-        On Error GoTo GetAllGUIDsFromServerDB_Err
-        '</EhHeader>
-                                               
-        Dim sSQL As String
-        Dim lRowIndex As Long
-        Dim bBreakout As Boolean
-        Dim oRS As New ADODB.Recordset
-        Dim lCountOfRecords As Long
-        
-100     lRowIndex = 0
-102     bBreakout = False
-
-        Do
-108         sSQL = "SELECT * FROM (SELECT TOP 9000 [sID],[sGUID],[sTableName],[swhen],[sStatus],[sequence],[sBy],[sdelete],[updates],[noconflict],ROW_NUMBER() OVER (ORDER BY sWhen DESC) AS 'RowNumber'"
-110         sSQL = sSQL & " FROM [" & sSynchHistory & "] WHERE  sTablename = '" & sTableName & "'"
-            
-112         If Operation = Add Then
-
-114             With SynchHistoryOverview
-            
-116                 Select Case .NextSynchNextOpeation
-                    
-                        Case NewOnly
-                            sSQL = sSQL & " AND [sdelete] = 'false' AND [swhen] >= '" & .sWhenMaxSearched & "'"
-120                     Case OldOnly
-122                         sSQL = sSQL & " AND [sdelete] = 'false' AND [swhen] <= '" & IIf(Len(.sWhenMinSearched) > 0, .sWhenMinSearched, .sWhenMaxSearched) & "'"
-124                     Case Else
-126                         'sSQL = ""
-
-                    End Select
-            
-                End With
-
-128         ElseIf Operation = Update Then
-130             sSQL = sSQL & " AND [sequence] > 1 AND [sdelete] = 'false' AND [sWhen] >= '" & sWhenMin & "'"
-132         ElseIf Operation = Delete Then
-134             sSQL = sSQL & " AND [sdelete] = 'true' AND [sWhen] >= '" & sWhenMin & "'"
-            End If
-
-136         sSQL = sSQL & ") SynchHistoryAlias WHERE RowNumber between " & (1 + lRowIndex) & " and " & (3000 + lRowIndex)
-            
-            If Operation = Add And SynchHistoryOverview.NextSynchNextOpeation = OldOnly Then
-                sSQL = sSQL & " ORDER BY [sWhen] DESC"
-            Else
-                sSQL = sSQL & " ORDER BY [sWhen]"
-            End If
-
-138         TxMsg ">>> GetAllGUIDsFromServerDB: " & sSQL, True, True
-
-140         If Len(sSQL) > 5 Then
-142             sDebugInfo = Chr(13) & sSQL
-144             Set GetAllGUIDsFromServerDB = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-            End If
-            
-146         If GetAllGUIDsFromServerDB Is Nothing Then
-148             bBreakout = True
-150         ElseIf Not GetAllGUIDsFromServerDB.State = adStateOpen Then
-152             bBreakout = True
-            Else
-
-154             If GetAllGUIDsFromServerDB.EOF Then
-156                 bBreakout = True
-                Else
-
-158                 If lRowIndex = 0 Then
-160                     Set oRS = CloneRS(GetAllGUIDsFromServerDB, "RowNumber")
-162                     oRS.Open
-                    End If
-                    
-164                 lCountOfRecords = 0
-
-166                 Do Until GetAllGUIDsFromServerDB.EOF
-168                     lCountOfRecords = lCountOfRecords + 1
-170                     oRS.AddNew
-172                     oRS.Fields("sID").Value = GetAllGUIDsFromServerDB.Fields("sID").Value
-174                     oRS.Fields("sGUID").Value = GetAllGUIDsFromServerDB.Fields("sGUID").Value
-176                     oRS.Fields("sTableName").Value = GetAllGUIDsFromServerDB.Fields("sTableName").Value
-178                     oRS.Fields("swhen").Value = GetAllGUIDsFromServerDB.Fields("swhen").Value
-180                     oRS.Fields("sequence").Value = GetAllGUIDsFromServerDB.Fields("sequence").Value
-182                     oRS.Fields("sBy").Value = GetAllGUIDsFromServerDB.Fields("sBy").Value
-184                     oRS.Fields("sdelete").Value = GetAllGUIDsFromServerDB.Fields("sdelete").Value
-186                     oRS.Fields("updates").Value = GetAllGUIDsFromServerDB.Fields("updates").Value
-188                     oRS.Fields("noconflict").Value = GetAllGUIDsFromServerDB.Fields("noconflict").Value
-190                     GetAllGUIDsFromServerDB.MoveNext
-                    Loop
-                    
-                    'If Not oRS.EOF Or Not oRS.BOF Then oRS.MoveFirst
-192                 If lCountOfRecords < 3000 Then bBreakout = True
-                
-                End If
-
-            End If
-        
-194         lRowIndex = lRowIndex + 3000
-            
-196     Loop Until bBreakout
-
-198     Set GetAllGUIDsFromServerDB = oRS
-        
-        '<EhFooter>
-        Exit Function
-
-GetAllGUIDsFromServerDB_Err:
-        Set GetAllGUIDsFromServerDB = Nothing
-        TxMsg "GetAllGUIDsFromServerDB_Err line " & Erl & " ... " & Err.Description, True
-        '</EhFooter>
-End Function
-
-
-Private Function GetAllFieldsForGUIDOnServer(sTableName As String, _
-                                             sGUIDFieldName As String, _
-                                             sGUIDFieldValue As String, _
-                                             sWebsite As String) As ADODB.Recordset
-        '<EhHeader>
-        On Error GoTo GetAllFieldsForGUIDOnServer_Err
-        '</EhHeader>
-        
-        'Operation: The function returns a recordset with one record containing all fields
-        '           from the table on the server where the passed GUID matches the one
-        '           in that table
-        '
-        'Assumption: If UID is the GUID field name then it searches for a GUID of type long
-        '            otherwise it looks for a GUID of type text
-
-        Dim sSQL As String
-        
-100     If sGUIDFieldName = "UID" Then
-102         sSQL = "SELECT * FROM [" & sTableName & "] WHERE UID = " & sGUIDFieldValue
-        Else
-104         sSQL = "SELECT * FROM [" & sTableName & "] WHERE [" & sGUIDFieldName & "] = '" & sGUIDFieldValue & "'"
-        End If
-        
-        'TxMsg "GetAllFieldsForGUIDOnServer: " & sSQL
-        sDebugInfo = Chr(13) & sSQL
-
-106     Set GetAllFieldsForGUIDOnServer = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-        Set GetAllFieldsForGUIDOnServer.ActiveConnection = Nothing
-
-        '<EhFooter>
-        Exit Function
-
-GetAllFieldsForGUIDOnServer_Err:
-        Set GetAllFieldsForGUIDOnServer = Nothing
-        '</EhFooter>
-End Function
-
-Private Function DownloadBatchRecordsFromServer(ByVal sTableName As String, _
-                                                ByVal sSQL As String, _
-                                                ByVal sWebsite As String, _
-                                                ByVal sLocalSynchHistPrefix As String, _
-                                                ByVal sGUID As String) As ADODB.Recordset
-        '<EhHeader>
-        On Error GoTo DownloadBatchRecordsFromServer_Err
-        '</EhHeader>
-        Dim oRS As ADODB.Recordset
-        
-100     If sTableName = "oincidents_FEA" Then
-102         sSQL = "SELECT [UID], [ID], [NAME], [TYPE], [TARGET], [Dead], [Affected], [Violent], [Injured], [Incident_DATE], [TIME00], [Town], [District], [LocDesc], [Source], [Province], [DESCRIPTION], [Scoring], [Incident_DATESERIAL] FROM [oincidents] LEFT JOIN [SynchHistory] ON [oincidents].[ID] = [SynchHistory].[sID] " & sSQL
-104     ElseIf sTableName = "oincidents_GEO" Then
-106         sSQL = "SELECT [UID], [XMIN], [XMAX], [YMIN], [YMAX], 2 AS [SHAPETYPE] FROM [oincidents] LEFT JOIN [SynchHistory] ON [oincidents].[ID] = [SynchHistory].[sID] " & sSQL
-108     ElseIf Right$(sTableName, 4) = "_GEO" Then
-110         sSQL = "SELECT * FROM [" & sTableName & "] " & sSQL
-        ElseIf sTableName = m_StrRemoteTablePrefix & "Incidents_ChartSettings" Then
-111         sSQL = "SELECT [" & sTableName & "].* FROM [" & sTableName & "] LEFT JOIN [" & m_StrRemoteTablePrefix & "SynchHistory] ON [" & sTableName & "].[" & sGUID & "] = [" & m_StrRemoteTablePrefix & "SynchHistory].[sID] WHERE [" & m_StrRemoteTablePrefix & "SynchHistory].[sTableName] = 'Incidents_ChartSettings' " & IIf(Len(sSQL) > 3, Replace$(sSQL, "WHERE", "AND"), "")
-        ElseIf Right$(sTableName, 22) = "GeoBookMarksCategories" Or Right$(sTableName, 12) = "GeoBookMarks" Then
-112         sSQL = "SELECT [" & sTableName & "].* FROM [" & sTableName & "] LEFT JOIN [" & m_StrRemoteTablePrefix & "SynchHistory] ON [" & sTableName & "].[" & sGUID & "] = [" & m_StrRemoteTablePrefix & "SynchHistory].[sID] WHERE [" & m_StrRemoteTablePrefix & "SynchHistory].[sTableName] = '" & sTableName & "' " & IIf(Len(sSQL) > 3, Replace$(sSQL, "WHERE", "AND"), "")
-        Else
-113         sSQL = "SELECT [" & sTableName & "].* FROM [" & sTableName & "] LEFT JOIN [" & sLocalSynchHistPrefix & "SynchHistory] ON [" & sTableName & "].[" & sGUID & "] = [" & sLocalSynchHistPrefix & "SynchHistory].[sID] WHERE [" & sLocalSynchHistPrefix & "SynchHistory].[sTableName] = '" & sTableName & "' " & IIf(Len(sSQL) > 3, Replace$(sSQL, "WHERE", "AND"), "")
-        End If
-               
-114     TxMsg "DownloadBatchRecordsFromServer: " & sSQL, True, True
-116     sDebugInfo = Chr(13) & sSQL
-
-118     bIsDownloadingBatch = True
-120     Set oRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-        
-134     If oRS Is Nothing Then
-136         TxMsg "!!!!!!! Batch download failed for table [" & sTableName & "] :-(", True
-138         Set DownloadBatchRecordsFromServer = Nothing
-        Else
-140         Set DownloadBatchRecordsFromServer = oRS
-        End If
-
-142     bIsDownloadingBatch = False
-
-        '<EhFooter>
-        Exit Function
-
-DownloadBatchRecordsFromServer_Err:
-        Set DownloadBatchRecordsFromServer = Nothing
-        TxMsg "DownloadBatchRecordsFromServer_Err line " & Erl & " ... " & Err.Description, True
-        '</EhFooter>
-End Function
-    
-Private Function GetAllFieldsForIncidentGUIDOnServer_FEA(sID As String, _
-                                                         sWebsite As String) As ADODB.Recordset
-
-    Dim sSQL As String
-    Dim oRS As New ADODB.Recordset
-    
-    sSQL = "SELECT [UID], [ID], [NAME], [TYPE], [TARGET], [Dead], [Affected], [Violent], [Injured], [Incident_DATE], [TIME00], [Town], [District], [LocDesc], [Source], [Province], [DESCRIPTION], [Scoring], [Incident_DATESERIAL] FROM [oincidents] WHERE [ID] = '" & sID & "'"
-    Set oRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-    Set GetAllFieldsForIncidentGUIDOnServer_FEA = Nothing
-    
-    sDebugInfo = Chr(13) & sSQL
-    
-    If Not oRS.State = adStateClosed Then
-   
-        If Not oRS.EOF Then
-        
-            Set GetAllFieldsForIncidentGUIDOnServer_FEA = oRS
-   
-        End If
-        
-    End If
-
-End Function
-
-Private Function GetAllFieldsForIncidentGUIDOnServer_GEO(sID As String, _
-                                                         sWebsite As String) As ADODB.Recordset
-
-    Dim sSQL As String
-    Dim oRS As New ADODB.Recordset
-    
-    sSQL = "SELECT [UID], [XMIN], [XMAX], [YMIN], [YMAX], 2 AS [SHAPETYPE] FROM [oincidents] WHERE [ID] = '" & sID & "'"
-    Set oRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-    Set GetAllFieldsForIncidentGUIDOnServer_GEO = Nothing
-    
-    sDebugInfo = Chr(13) & sSQL
-    
-    If Not oRS.State = adStateClosed Then
-   
-        If Not oRS.EOF Then
-            Set GetAllFieldsForIncidentGUIDOnServer_GEO = oRS
-        End If
-    End If
-
-End Function
-
-Private Function GetAllFieldsForGUIDOnLocal(sTableName As String, _
-                                            sGUIDFieldName As String, _
-                                            sGUIDFieldValue As String, _
-                                            cn As ADODB.Connection) As ADODB.Recordset
-
-    Dim RSLocalGUIDs As ADODB.Recordset
-    Dim sSQL As String
-    Set RSLocalGUIDs = New ADODB.Recordset
-    Set GetAllFieldsForGUIDOnLocal = Nothing
-
-    With RSLocalGUIDs
-
-        If sGUIDFieldName = "UID" Then
-            sSQL = "SELECT * FROM [" & sTableName & "] WHERE UID = " & sGUIDFieldValue
-        Else
-            sSQL = "SELECT * FROM [" & sTableName & "] WHERE [" & sGUIDFieldName & "] = '" & sGUIDFieldValue & "'"
-        End If
-            
-        sDebugInfo = Chr(13) & sSQL
-
-        RSLocalGUIDs.Open sSQL, cn, adOpenDynamic, adLockBatchOptimistic
-    
-        If .State = adStateOpen Then
-            Set GetAllFieldsForGUIDOnLocal = RSLocalGUIDs
-        Else
-            TxMsg "RS did not load", True
-        End If
-        
-    End With
-    
-
-End Function
-
-'SELECT SynchHistory.[sID], SynchHistory.[sequence], SynchHistory.[swhen]
-'From SynchHistory
-'GROUP BY SynchHistory.[sID], SynchHistory.[sequence], SynchHistory.[swhen], SynchHistory.[sTableName]
-'HAVING (((SynchHistory.[sTableName])='oincidents') AND ((Max(SynchHistory.swhen))="1"));
-
-Private Function GetRSWithGUIDSFORDOWNLOAD(RSServerALLGUIDS As ADODB.Recordset, _
-                                           RSLocalALLGUIDS As ADODB.Recordset, _
-                                           Operation As SynchOperation) As ADODB.Recordset
-        '<EhHeader>
-        On Error GoTo GetRSWithGUIDSFORDOWNLOAD_Err
-        '</EhHeader>
-        
-        Dim lCount As Long
-        Dim sWhenCurrent As String
-
-100     If RSServerALLGUIDS Is Nothing Then
-102         Set GetRSWithGUIDSFORDOWNLOAD = Nothing
-104         TxMsg "    ... RSServerALLGUIDS Is Nothing!", True
-106     ElseIf RSLocalALLGUIDS Is Nothing Then
-108         Set GetRSWithGUIDSFORDOWNLOAD = RSServerALLGUIDS
-110         TxMsg "    ... RSLocalALLGUIDS Is Nothing!", True
-        Else
-        
-112         With RSLocalALLGUIDS
-
-114             If .State = adStateOpen And RSServerALLGUIDS.State = adStateOpen Then
-
-116                 If (Not .EOF Or Not .BOF) And (Not RSServerALLGUIDS.EOF Or Not RSServerALLGUIDS.BOF) Then
-
-118                     RSLocalALLGUIDS.MoveFirst
-                        
-122                     Do Until .EOF Or .BOF
-                            
-124                         If Not RSServerALLGUIDS.EOF Or Not RSServerALLGUIDS.BOF Then RSServerALLGUIDS.MoveFirst
-126                         RSServerALLGUIDS.Find "[sID] = '" & .Fields(0).Value & "'"
-                            
-128                         If Not RSServerALLGUIDS.EOF Then
-
-130                             If Operation = Update Then
-
-132                                 If RSServerALLGUIDS.Fields("sequence").Value < RSLocalALLGUIDS.Fields("sequence").Value Then
-
-134                                     RSServerALLGUIDS.Delete adAffectCurrent
-
-136                                 ElseIf RSServerALLGUIDS.Fields("sequence").Value = RSLocalALLGUIDS.Fields("sequence").Value Then
-
-138                                     If RSServerALLGUIDS.Fields("swhen").Value <= RSLocalALLGUIDS.Fields("swhen").Value Then
-
-140                                         RSServerALLGUIDS.Delete adAffectCurrent
-                                        Else
-                                            'TxMsg "   ------ NOT RSServerALLGUIDS.Fields('swhen').Value < RSLocalALLGUIDS.Fields('swhen').Value"
-                                            'TxMsg "   ------ RSServerALLGUIDS.Fields('swhen').Value: " & RSServerALLGUIDS.Fields("swhen").Value
-                                            'TxMsg "   ------ RSLocalALLGUIDS.Fields('swhen').Value:  " & RSLocalALLGUIDS.Fields("swhen").Value
-                                        End If
-
-                                    End If
-
-                                Else
-142                                 RSServerALLGUIDS.Delete adAffectCurrent
-                                End If
-
-                            End If
-                           
-144                         sWhenCurrent = RSLocalALLGUIDS.Fields("swhen").Value
-146                         .MoveNext
-                        Loop
-
-150                     If Not RSServerALLGUIDS.EOF Or Not RSServerALLGUIDS.BOF Then RSServerALLGUIDS.MoveFirst
-                        
-152                     If Operation = Add And RSServerALLGUIDS.RecordCount = 0 Then
-                        
-154                         TxMsg "!!!!!! Some records were not downloaded.  If this is a reoccurring message then it may be possible that all records on the server table do not exist on its corresponding SynchHistory table on the server.  If indeed this message reoccurs then please contact your OASIS administrator", True
-
-156                         If SynchHistoryOverview.NextSynchNextOpeation = NewOnly Then
-158                             SynchHistoryOverview.sWhenMaxSearched = sWhenCurrent
-                            Else
-160                             SynchHistoryOverview.sWhenMinSearched = sWhenCurrent
-                            End If
-                            
-                        Else
-162                         TxMsg ">>>> " & RSServerALLGUIDS.RecordCount & " record(s) are left after looking locally....", True, True
-                        End If
-
-                    End If
-                    
-164                 Set GetRSWithGUIDSFORDOWNLOAD = RSServerALLGUIDS
-                    
-                Else
-166                 Set GetRSWithGUIDSFORDOWNLOAD = Nothing
-                End If
-
-            End With
-
-        End If
-
-        '<EhFooter>
-        Exit Function
-
-GetRSWithGUIDSFORDOWNLOAD_Err:
-        TxMsg "GetRSWithGUIDSFORDOWNLOAD line " & Erl & " ... " & Err.Description, True
-        Resume Next
-        '</EhFooter>
-End Function
-
-Private Sub UploadTableChangesToServer(sLocalTableWithNewRecords As String, _
-                                       sLocalTableGUID As String, _
-                                       bIsGeo As Boolean, _
-                                       sWebsite As String, _
-                                       cn As ADODB.Connection, _
-                                       SynchOp As SynchOperation, _
-                                       Optional sLocalSynchHistPrefix As String = "")
-        '<EhHeader>
-        On Error GoTo UploadTableChangesToServer_Err
-        '</EhHeader>
-        
-        'Operation:     This sub identifies any pending records for sending to the server
-        '               Once identified they are uploaded to the server table and
-        '               SynchHistory is updated on the local and server database accordingly
-        '
-        'Assumption:    Field UID must be in the oincidents_FEA and oincidents_GEO table (if used)
-        'Note:          If sLocalTableWithNewRecords is geotable it should not have _FEA or _GEO entensionn in veriable
-        
-        'Dim MsXmlHttp As New MSXML2.ServerXMLHTTP40
-        'Dim MsXmlDoc As New MSXML2.DOMDocument
-        
-        Dim sResponse As String
-        Dim sField As String
-        Dim RSServerSynchHistory As New ADODB.Recordset
-        Dim RSServerTableToBeUpdated As New ADODB.Recordset
-        Dim RSServerTableToBeUpdated_FEA As New ADODB.Recordset
-        Dim RSServerTableToBeUpdated_GEO As New ADODB.Recordset
-        
-        Dim RSLocalSynchHistory As New ADODB.Recordset
-        Dim RSLocalTableRecordsToBeUploaded As New ADODB.Recordset
-        Dim RSLocalTableRecordsToBeUploaded_FEA As New ADODB.Recordset
-        Dim RSLocalTableRecordsToBeUploaded_GEO As New ADODB.Recordset
-
-        Dim j As Integer
-        Dim i As Integer
-        Dim sSQL As String
-        Dim bSuccess As Boolean
-        Dim sUserGroupPrefix As String
-        Dim bSSEValidation As Boolean
-        Dim bNewWasAdded As Boolean
-        Dim lUID As Long
-        Dim bUploadFailed As Boolean
-        Dim sGuidToDelete As String
-        Dim sServerTableName As String
-100     bUploadFailed = False
-        'Dim sID As String
-
-102     If sLocalSynchHistPrefix = "" And Not sLocalTableWithNewRecords = "Attachments" Then
-104         sUserGroupPrefix = m_StrRemoteTablePrefix
-        End If
-    
-106     TxMsg ">>>>>>>>>>>>"
-108     TxMsg ">>> Beginning scan for pending records to commit to server from table [" & sLocalTableWithNewRecords & "] ......................"
-
-110     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
-112     m_sIDs = ""
-    
-114     If Not sLocalSynchHistPrefix = "" And bIsGeo Then
-    
-            'Not incidents table & is geo table
-    
-116         If SynchOp = Delete Then
-118             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sdelete] = 'true' AND [sTableName] = '" & sLocalTableWithNewRecords & "_FEA'", cn, adOpenDynamic, adLockBatchOptimistic
-120         ElseIf SynchOp = Add Then
-122             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sdelete] = 'false' AND [sTableName] = '" & sLocalTableWithNewRecords & "_FEA'", cn, adOpenDynamic, adLockBatchOptimistic
-124         ElseIf SynchOp = Update Then
-126             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sequence] > 1 AND [sdelete] = 'false' AND [sTableName] = '" & sLocalTableWithNewRecords & "_FEA'", cn, adOpenDynamic, adLockBatchOptimistic
-            End If
-
-        Else
-
-128         If SynchOp = Delete Then
-130             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sdelete] = 'true' AND [sTableName] = '" & sLocalTableWithNewRecords & "'", cn, adOpenDynamic, adLockBatchOptimistic
-132         ElseIf SynchOp = Add Then
-134             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sdelete] = 'false' AND [sTableName] = '" & sLocalTableWithNewRecords & "'", cn, adOpenDynamic, adLockBatchOptimistic
-136         ElseIf SynchOp = Update Then
-138             RSLocalSynchHistory.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE [updates] = 'false' AND [sequence] > 1 AND [sdelete] = 'false' AND [sTableName] = '" & sLocalTableWithNewRecords & "'", cn, adOpenDynamic, adLockBatchOptimistic
-            End If
-        
-        End If
-        
-140     If Not RSLocalSynchHistory.State = adStateClosed Then
-
-142         If RSLocalSynchHistory.EOF Then
-                'TxMsg "dude8) RSLocalSynchHistory.EOF"
-                'TxMsg RSLocalSynchHistory.Source
-            Else
-     
-                ' Records are available for upload to the server
-144             TxMsg "    Records are available for commit to the server..........."
-
-146             Do Until RSLocalSynchHistory.EOF
-                    
-148                 bUploadFailed = False
-
-                    ' Point to the SynchHistory table to be updated on the server
-150                 If sLocalTableWithNewRecords = "oincidents" Then
-152                     sSQL = "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE sID = '" & RSLocalSynchHistory.Fields("sID").Value & "'"
-                    Else
-154                     sSQL = "SELECT * FROM [" & sLocalSynchHistPrefix & sUserGroupPrefix & "SynchHistory] WHERE sID = '" & RSLocalSynchHistory.Fields("sID").Value & "'"
-                    End If
-
-156                 Set RSServerSynchHistory = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-                   
-158                 If sLocalTableWithNewRecords = "oincidents" Then
-                
-                        ' Point to the table to be updated on the server
-160                     Set RSServerTableToBeUpdated = New ADODB.Recordset
-162                     sSQL = "SELECT * FROM oincidents WHERE [" & sLocalTableGUID & "] = '" & RSLocalSynchHistory.Fields("sID").Value & "'"
-164                     Set RSServerTableToBeUpdated = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-
-166                 ElseIf Not bIsGeo Then
-    
-                        ' Point to the table to be updated on the server
-168                     Set RSServerTableToBeUpdated = New ADODB.Recordset
-170                     sSQL = "SELECT " & GetAllFieldNamesForLocalTable(sLocalTableWithNewRecords, cn) & " FROM [" & sUserGroupPrefix & sLocalTableWithNewRecords & "] WHERE [" & sLocalTableGUID & "] = '" & RSLocalSynchHistory.Fields("sID").Value & "'"
-    'TxMsg sLocalTableWithNewRecords & "==== " & sSQL, True
-172                     Set RSServerTableToBeUpdated = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-                       
-                    Else
-
-                        ' Point to the FEA and GEO table to be updated on the server
-174                     Set RSServerTableToBeUpdated_FEA = New ADODB.Recordset
-176                     Set RSServerTableToBeUpdated_GEO = New ADODB.Recordset
-178                     sSQL = "SELECT " & GetAllFieldNamesForLocalTable(sLocalTableWithNewRecords & "_FEA", cn) & " FROM [" & sUserGroupPrefix & sLocalTableWithNewRecords & "_FEA] WHERE [" & sLocalTableGUID & "] = '" & RSLocalSynchHistory.Fields("sID").Value & "'"
-180                     Set RSServerTableToBeUpdated_FEA = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-
-182                     If Not RSServerTableToBeUpdated_FEA.EOF Then
-184                         sSQL = "SELECT * FROM [" & sUserGroupPrefix & sLocalTableWithNewRecords & "_GEO] WHERE UID = " & RSServerTableToBeUpdated_FEA.Fields("UID").Value
-186                         Set RSServerTableToBeUpdated_GEO = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-                        Else
-188                         sSQL = "SELECT * FROM [" & sUserGroupPrefix & sLocalTableWithNewRecords & "_GEO] WHERE UID = " & -66666666
-190                         Set RSServerTableToBeUpdated_GEO = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-                        End If
-                    
-                    End If
-                    
-192                 TxMsg "RSServerTableToBeUpdated SQL: " & sSQL
-
-194                 If Not sLocalTableWithNewRecords = "oincidents" And bIsGeo Then
-
-196                     If SynchOp = Delete Then
-
-                            ''' DELETE GEO-RECORD ON SERVER
-                        
-198                         i = i + 1
-200                         TxMsg "    --- (" & i & ") deleting id: " & RSLocalSynchHistory.Fields("sID").Value
-
-202                         If Not RSServerTableToBeUpdated_FEA.EOF Then RSServerTableToBeUpdated_FEA.Delete adAffectCurrent
-204                         If Not RSServerTableToBeUpdated_GEO.EOF Then RSServerTableToBeUpdated_GEO.Delete adAffectCurrent
-
-206                         j = 0
-
-208                         If RSServerSynchHistory.EOF Then RSServerSynchHistory.AddNew
-210                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-212                         RSLocalSynchHistory.Fields("updates").Value = "true"
-                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-
-214                         Do Until j = RSLocalSynchHistory.Fields.Count
-216                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-218                             j = j + 1
-                            Loop
-                        
-220                     ElseIf SynchOp = Update Then
-
-                            ''' UPDATE GEO-RECORD ON SERVER
-                            ''' This code block conforms with the SSE spec protocol (http://msdn.microsoft.com/en-us/xml/bb510102.aspx)
-                            
-222                         bSSEValidation = True
-
-224                         If Not RSServerSynchHistory.EOF Then
-                               
-226                             If RSLocalSynchHistory.Fields("sequence").Value < RSServerSynchHistory.Fields("sequence").Value Then
-                                        
-228                                 bSSEValidation = False
-
-230                             ElseIf RSLocalSynchHistory.Fields("sequence").Value = RSServerSynchHistory.Fields("sequence").Value Then
-
-232                                 If CalcServerDateTimeFromRFC3339(RSLocalSynchHistory.Fields("swhen").Value) <= RSServerSynchHistory.Fields("swhen").Value Then
-234                                     bSSEValidation = False
-                                    End If
-                                    
-                                End If
-                            
-                            Else
-236                             RSServerSynchHistory.AddNew
-                            End If
-                                    
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                        
-238                         If Not bSSEValidation Then
-                        
-240                             TxMsg "    !!! Record: " & RSLocalSynchHistory.Fields("sID").Value & " flagged on client database for upload is older than the server version - updating local SynchHistory accordingly", True
-                                'RSLocalSynchHistory.Delete adAffectCurrent
-242                             RSLocalSynchHistory.Fields("updates") = "true"
-244                             RSLocalSynchHistory.UpdateBatch
-                        
-                            Else
-    
-                                ' Get FEA table on local database
-246                             Set RSLocalTableRecordsToBeUploaded_FEA = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_FEA", sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-
-248                             If RSLocalTableRecordsToBeUploaded_FEA.State = adStateClosed Then
-                                    'TxMsg "dude3) RSLocalTableRecordsToBeUploaded_FEA.State = adStateClosed"
-                                Else
-                            
-250                                 If RSLocalTableRecordsToBeUploaded_FEA.EOF Then
-                                
-252                                     TxMsg "    --- Record: " & RSLocalSynchHistory.Fields("sID").Value & " does not exist on the local database - removing entry from SynchHistory", True
-254                                     RSLocalSynchHistory.Delete adAffectCurrent
-256                                     RSLocalSynchHistory.UpdateBatch
-                                    
-                                    Else
-
-                                        ' Get GEO table on local database
-258                                     Set RSLocalTableRecordsToBeUploaded_GEO = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_GEO", "UID", RSLocalTableRecordsToBeUploaded_FEA.Fields("UID").Value, cn)
-
-260                                     If RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed Then
-                                            'TxMsg "dude2) RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed"
-                                        Else
-                                    
-262                                         If RSLocalTableRecordsToBeUploaded_GEO.EOF Then
-                                        
-264                                             TxMsg "    --- Record: " & RSLocalSynchHistory.Fields("sID").Value & " altough FEA record exists the GEO record does not exist on the local database - removing entry from FEA and SynchHistory", True
-266                                             RSLocalSynchHistory.Delete adAffectCurrent
-268                                             RSLocalSynchHistory.UpdateBatch
-                                            
-                                                'FEA record without GEO! ......................................
-270                                             RSLocalTableRecordsToBeUploaded_FEA.Delete adAffectCurrent
-272                                             RSLocalTableRecordsToBeUploaded_FEA.UpdateBatch adAffectCurrent
-                                        
-                                            Else
-
-                                                ' All checks came up good and now you can upload pending records
-274                                             i = i + 1
-276                                             TxMsg "    --- (" & i & ") uploading id: " & RSLocalSynchHistory.Fields("sID").Value
-                                        
-278                                             If RSServerTableToBeUpdated_FEA.EOF Then
-280                                                 RSServerTableToBeUpdated_FEA.AddNew
-282                                                 RSServerTableToBeUpdated_GEO.AddNew
-284                                                 bNewWasAdded = True
-286                                                 lUID = GetMaxUIDFromServerGEOTable(sUserGroupPrefix & sLocalTableWithNewRecords & "_GEO", sWebsite) + 1
-                                                Else
-288                                                 bNewWasAdded = False
-                                                End If
-
-                                                ' Update the FEA record to the server
-290                                             j = 0
-
-292                                             Do Until j = RSLocalTableRecordsToBeUploaded_FEA.Fields.Count
-
-294                                                 sField = RSLocalTableRecordsToBeUploaded_FEA.Fields(j).Name
-                                             
-296                                                 If DoesFieldExistInRS(RSServerTableToBeUpdated_FEA, sField) Then
-
-298                                                     If bNewWasAdded And sField = "UID" Then
-300                                                         RSServerTableToBeUpdated_FEA.Fields(sField).Value = lUID
-302                                                     ElseIf Not sField = "UID" Then
-
-304                                                         If Len(RSLocalTableRecordsToBeUploaded_FEA.Fields(sField).Value) > 0 Then RSServerTableToBeUpdated_FEA.Fields(sField).Value = RSLocalTableRecordsToBeUploaded_FEA.Fields(sField).Value
-                                                        Else
-306                                                         RSServerTableToBeUpdated_FEA.Fields("UID").Value = RSServerTableToBeUpdated_FEA.Fields("UID").OriginalValue
-                                                        End If
-
-                                                    Else
-308                                                     TxMsg "!!!! Skipping update of field [" & sField & "] on server since it only exists on the client", True
-                                                    End If
-
-310                                                 j = j + 1
-                                                Loop
-                            
-                                                ' Update the GEO record to the server
-312                                             j = 0
-
-314                                             Do Until j = RSLocalTableRecordsToBeUploaded_GEO.Fields.Count
-
-316                                                 If bNewWasAdded And RSServerTableToBeUpdated_GEO.Fields(j).Name = "UID" Then
-318                                                     RSServerTableToBeUpdated_GEO.Fields(j).Value = lUID
-
-320                                                 ElseIf Not RSServerTableToBeUpdated_GEO.Fields(j).Name = "UID" Then
-
-322                                                     If Not (sLocalTableWithNewRecords = "oincidents" And RSServerTableToBeUpdated_GEO.Fields(j).Name = "GEOMETRY") Then
-324                                                         RSServerTableToBeUpdated_GEO.Fields(j).Value = RSLocalTableRecordsToBeUploaded_GEO.Fields(j).Value
-                                                        End If
-                                                    End If
-                                                
-326                                                 j = j + 1
-                                                Loop
-                                    
-                                                ' Add the SynchHistory record to the server
-328                                             j = 0
-
-330                                             If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
-332                                             RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-334                                             RSLocalSynchHistory.Fields("updates").Value = "true"
-                                                RSLocalSynchHistory.Fields("noconflict").Value = "false"
-
-336                                             Do Until j = RSLocalSynchHistory.Fields.Count
-338                                                 RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-340                                                 j = j + 1
-                                                Loop
-
-                                            End If
-
-                                        End If
-                                    
-                                    End If
-                                End If
-                            
-                            End If
-
-342                     ElseIf SynchOp = Add And RSServerTableToBeUpdated_FEA.EOF Then
-
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' ADD GEO-RECORD TO SERVER
-                            '''
-
-                            ' Get FEA table on local database
-344                         Set RSLocalTableRecordsToBeUploaded_FEA = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_FEA", sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-
-346                         If Not RSLocalTableRecordsToBeUploaded_FEA.State = adStateClosed Then
-
-348                             If RSLocalTableRecordsToBeUploaded_FEA.EOF Then
-
-350                                 TxMsg "    --- Record " & RSLocalSynchHistory.Fields("sID").Value & " does not exist on the local database - updating local SynchHistory accordingly", True
-352                                 RSLocalSynchHistory.Delete adAffectCurrent
-354                                 RSLocalSynchHistory.UpdateBatch
-                                
-                                Else
-                                
-                                    ' Get GEO table on local database
-356                                 Set RSLocalTableRecordsToBeUploaded_GEO = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_GEO", "UID", RSLocalTableRecordsToBeUploaded_FEA.Fields("UID").Value, cn)
-
-358                                 If RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed Then
-                                
-                                        'T'xMsg "dude1) RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed"
-                                
-                                    Else
-
-360                                     If RSLocalTableRecordsToBeUploaded_GEO.EOF Then
-                                    
-362                                         TxMsg "    --- Record: " & RSLocalSynchHistory.Fields("sID").Value & " altough FEA record exists the GEO record does not exist on the local database - removing entry from FEA and SynchHistory", True
-364                                         RSLocalSynchHistory.Delete adAffectCurrent
-366                                         RSLocalSynchHistory.UpdateBatch
-                                        
-                                            'FEA record without GEO! ......................................
-368                                         RSLocalTableRecordsToBeUploaded_FEA.Delete adAffectCurrent
-370                                         RSLocalTableRecordsToBeUploaded_FEA.UpdateBatch adAffectCurrent
-                                    
-                                        Else
-
-                                            ' All checks came up good and now you can upload pending records
-372                                         i = i + 1
-374                                         TxMsg "--- (" & i & ") uploading id: " & RSLocalSynchHistory.Fields("sID").Value
-376                                         lUID = GetMaxUIDFromServerGEOTable(sUserGroupPrefix & sLocalTableWithNewRecords & "_GEO", sWebsite) + 1
-                                        
-                                            ' Add the FEA record to the server
-378                                         RSServerTableToBeUpdated_FEA.AddNew
-380                                         j = 0
-
-382                                         Do Until j = RSLocalTableRecordsToBeUploaded_FEA.Fields.Count
-                                            
-384                                             sField = RSLocalTableRecordsToBeUploaded_FEA.Fields(j).Name
-                                             
-386                                             If DoesFieldExistInRS(RSServerTableToBeUpdated_FEA, sField) Then
-                                            
-388                                                 If Not sField = "ORIG_ID" Then
-390                                                     If sField = "UID" Then
-392                                                         RSServerTableToBeUpdated_FEA.Fields(sField).Value = lUID
-                                                        Else
-394                                                         If Len(RSLocalTableRecordsToBeUploaded_FEA.Fields(sField).Value) > 0 Then RSServerTableToBeUpdated_FEA.Fields(sField).Value = RSLocalTableRecordsToBeUploaded_FEA.Fields(sField).Value
-                                                        End If
-                                                    End If
-                                                
-                                                Else
-396                                                 TxMsg "!!!! Skipping update of field [" & sField & "] on server since it only exists on the client", True
-                                                End If
-
-                                                ''''
-                                            
-                                                'RSServerTableToBeUpdated_FEA.Fields(j).Value = RSLocalTableRecordsToBeUploaded_FEA.Fields(j).Value
-398                                             j = j + 1
-                                            Loop
-                            
-                                            ' Add the GEO record to the server
-400                                         RSServerTableToBeUpdated_GEO.AddNew
-402                                         j = 0
-
-404                                         Do Until j = RSLocalTableRecordsToBeUploaded_GEO.Fields.Count
-                                            
-                                                ''''
-                                        
-406                                             If RSServerTableToBeUpdated_GEO.Fields(j).Name = "UID" Then
-408                                                 RSServerTableToBeUpdated_GEO.Fields(j).Value = lUID
-                                                Else
-410                                                 RSServerTableToBeUpdated_GEO.Fields(j).Value = RSLocalTableRecordsToBeUploaded_GEO.Fields(j).Value
-                                                End If
-                                                
-                                                ''''
-                                                
-                                                'Else
-                                                '   TxMsg "!!!! Skipping update of field [" & sField & "] on server since it only exists on the client", True
-                                                'End If
-                                            
-                                                'RSServerTableToBeUpdated_GEO.Fields(j).Value = RSLocalTableRecordsToBeUploaded_GEO.Fields(j).Value
-412                                             j = j + 1
-                                            Loop
-                                    
-                                            ' Add the SynchHistory record to the server
-414                                         j = 0
-416                                         RSServerSynchHistory.AddNew
-418                                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-420                                         RSLocalSynchHistory.Fields("updates").Value = "true"
-                                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-                                            
-422                                         Do Until j = RSLocalSynchHistory.Fields.Count
-424                                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-
-426                                             j = j + 1
-                                            Loop
-                                            
-428                                         RSServerSynchHistory.Fields("updates").Value = "true"
-                                            
-                                        End If
-
-                                    End If
-                                    
-                                End If
-                            End If
-
-                        Else
-                                
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' GEO-RECORD ALREADY EXISTS ON THE SERVER - CANNOT ADD
-                            '''
-430                         i = i + 1
-432                         TxMsg "    --- add aborted: Record " & i & " with id: " & RSLocalSynchHistory.Fields("sID").Value & " is already on the server - adjusting SynchHistory accordingly" ', True
-434                         RSLocalSynchHistory.Fields("updates").Value = "true"
-436                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-                        
-                        End If
-
-                    Else
-                    
-438                     If SynchOp = Add And RSServerTableToBeUpdated.EOF Then
-                            
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' ADD RECORD TO SERVER
-                            '''
-                        
-                            'TxMsg "add RECORD ON SERVER"
-                                
-                            ' Get the table on local database
-440                         If Not sLocalTableWithNewRecords = "oincidents" Then
-442                             Set RSLocalTableRecordsToBeUploaded = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords, sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-                            Else
-444                             Set RSLocalTableRecordsToBeUploaded = GetAllFieldsForGUIDOnLocal("oincidents_FEA", sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-                            End If
-
-446                         If RSLocalTableRecordsToBeUploaded.State = adStateClosed Then
-
-448                             TxMsg "!!! RSLocalTableRecordsToBeUploaded.State = adStateClosed ", True
-                            Else
-
-450                             If RSLocalTableRecordsToBeUploaded.EOF Then
-                            
-452                                 TxMsg "    --- Record " & RSLocalSynchHistory.Fields("sID").Value & " does not exist on the local database - updating local SynchHistory accordingly", True
-454                                 RSLocalSynchHistory.Delete adAffectCurrent
-456                                 RSLocalSynchHistory.UpdateBatch
-                            
-                                Else
-
-458                                 bSuccess = False
-                                
-460                                 If Not sLocalTableWithNewRecords = "oincidents" Then
-
-                                        ' If the table is not incidents then all checks came up good
-                                        ' and now you can upload pending records
-462                                     RSServerTableToBeUpdated.AddNew
-464                                     j = 0
-
-466                                     Do Until j = RSLocalTableRecordsToBeUploaded.Fields.Count
-
-468                                         sField = RSLocalTableRecordsToBeUploaded.Fields(j).Name
-                                             
-470                                         If DoesFieldExistInRS(RSServerTableToBeUpdated, sField) Then
-
-472                                             If Not sField = "UID" Then
-474                                                 If Len(RSLocalTableRecordsToBeUploaded.Fields(sField).Value) > 0 Then RSServerTableToBeUpdated.Fields(sField).Value = RSLocalTableRecordsToBeUploaded.Fields(sField).Value
-                                                Else
-476                                                 TxMsg "Skipping UID update on server since it should be an autonum field....."
-                                                End If
-                                            
-                                            Else
-478                                             TxMsg "!!!! Skipping update of field [" & sField & "] on server since it only exists on the client", True
-                                            End If
-
-480                                         j = j + 1
-                                        Loop
-
-482                                     bSuccess = True
-                            
-                                    Else
-                                
-                                        ' The table is incidents - we need to get the local GEO table too
-484                                     Set RSLocalTableRecordsToBeUploaded_FEA = RSLocalTableRecordsToBeUploaded
-486                                     Set RSLocalTableRecordsToBeUploaded_GEO = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_GEO", "UID", RSLocalTableRecordsToBeUploaded.Fields("UID").Value, cn)
-
-488                                     If Not RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed Then
-490                                         If Not RSLocalTableRecordsToBeUploaded_GEO.EOF Then
-                                        
-                                                ' All checks came up good and now you can upload pending records
-492                                             With RSServerTableToBeUpdated
-                                            
-494                                                 lUID = GetMaxUIDFromServerGEOTable("oincidents", sWebsite) + 1
-                                
-496                                                 .AddNew
-
-498                                                 'If InStr(LCase(sWebsite), "afghanistan") = 0 Then
-
-500                                                     '.Fields("UID").Value = lUID 'RSLocalTableRecordsToBeUploaded_FEA.Fields("UID").Value
-                                                        
-                                                    'Else
-                                                    
-502                                                     TxMsg "Bypassing update of server UID this should be done automatically on the server using 'identity' spec on the column."
-                                                        
-                                                    'End If
-                                                    
-504                                                 .Fields("ID").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("id").Value
-506                                                 .Fields("NAME").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Name").Value
-508                                                 .Fields("TYPE").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Type").Value
-510                                                 .Fields("TARGET").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Target").Value
-512                                                 .Fields("Dead").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Dead").Value
-514                                                 .Fields("Affected").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Affected").Value
-516                                                 .Fields("Violent").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Violent").Value
-518                                                 .Fields("Injured").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Injured").Value
-520                                                 .Fields("Incident_DATE").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Incident_DATE").Value
-522                                                 .Fields("TIME00").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("TIME00").Value
-524                                                 .Fields("LocDesc").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("LocDesc").Value
-526                                                 .Fields("Source").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Source").Value
-528                                                 .Fields("Town").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Town").Value
-530                                                 .Fields("District").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("District").Value
-532                                                 .Fields("Province").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Province").Value
-534                                                 .Fields("DESCRIPTION").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Description").Value
-536                                                 .Fields("Scoring").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Scoring").Value
-538                                                 .Fields("Incident_DATESERIAL").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Incident_DATESERIAL").Value
-    
-                                                    '.Fields("UID").Value = lUID 'RSLocalTableRecordsToBeUploaded_GEO.Fields("UID").Value
-540                                                 .Fields("XMIN").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("XMin").Value
-542                                                 .Fields("XMAX").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("XMax").Value
-544                                                 .Fields("YMIN").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("YMin").Value
-546                                                 .Fields("YMAX").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("YMax").Value
-                 
-                                                End With
-                                            
-548                                             bSuccess = True
-                        
-                                            End If
-                                        End If
-                                
-                                    End If
-                                
-550                                 If bSuccess Then
-                                
-552                                     i = i + 1
-554                                     TxMsg "--- (" & i & ") uploading id: " & RSLocalSynchHistory.Fields("sID").Value
-                                            
-556                                     j = 0
-558                                     RSServerSynchHistory.AddNew
-560                                     RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-562                                     RSLocalSynchHistory.Fields("updates").Value = "true"
-                                        RSLocalSynchHistory.Fields("noconflict").Value = "false"
-    
-564                                     Do Until j = RSLocalSynchHistory.Fields.Count
-566                                         RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-568                                         j = j + 1
-                                        Loop
-                                        
-570                                     If RSServerSynchHistory.Fields("sTableName").Value = "GeoBookMarks" Then
-572                                         RSServerSynchHistory.Fields("sTableName").Value = m_StrRemoteTablePrefix & RSServerSynchHistory.Fields("sTableName").Value
-                                        End If
-                                
-                                    End If
-                        
-                                End If
-
-                            End If
-                        
-574                     ElseIf SynchOp = Update Then
-
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' UPDATE RECORD TO SERVER
-                            '''
-                        
-                            'TxMsg "update RECORD ON SERVER"
-                                
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            '' This code block conforms with the SSE spec protocol
-                            '' http://msdn.microsoft.com/en-us/xml/bb510102.aspx
-                            ''
-                               
-576                         bSSEValidation = True
-
-578                         If Not RSServerSynchHistory.EOF Then
-                               
-580                             If RSLocalSynchHistory.Fields("sequence").Value < RSServerSynchHistory.Fields("sequence").Value Then
-                                        
-582                                 bSSEValidation = False
-                                
-584                             ElseIf RSLocalSynchHistory.Fields("sequence").Value = RSServerSynchHistory.Fields("sequence").Value Then
-                            
-586                                 If CalcServerDateTimeFromRFC3339(RSLocalSynchHistory.Fields("swhen").Value) <= RSServerSynchHistory.Fields("swhen").Value Then
-588                                     bSSEValidation = False
-                                    End If
-                                    
-                                End If
-                            
-                            Else
-590                             RSServerSynchHistory.AddNew
-                            End If
-                                    
-                            ''
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-592                         If Not bSSEValidation Then
-                        
-594                             TxMsg "    !!! Record: " & RSLocalSynchHistory.Fields("sID").Value & " flagged on client database for upload is older than the server version - updating local SynchHistory accordingly", True
-                                'RSLocalSynchHistory.Delete adAffectCurrent
-596                             RSLocalSynchHistory.Fields("updates") = "true"
-598                             RSLocalSynchHistory.UpdateBatch
-                        
-                            Else
-
-600                             If RSServerTableToBeUpdated.EOF Then
-602                                 RSServerTableToBeUpdated.AddNew
-                                End If
-                        
-                                ' Get the table on local database
-604                             If Not sLocalTableWithNewRecords = "oincidents" Then
-606                                 Set RSLocalTableRecordsToBeUploaded = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords, sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-                                Else
-608                                 Set RSLocalTableRecordsToBeUploaded = GetAllFieldsForGUIDOnLocal("oincidents_FEA", sLocalTableGUID, RSLocalSynchHistory.Fields("sID").Value, cn)
-                                End If
-
-610                             If Not RSLocalTableRecordsToBeUploaded.State = adStateClosed Then
-
-612                                 If RSLocalTableRecordsToBeUploaded.EOF Then
-
-                                        'does not exist
-614                                     TxMsg "    --- Record: " & RSLocalSynchHistory.Fields("sID").Value & " does not exist on the local database - removing entry from SynchHistory", True
-616                                     RSLocalSynchHistory.Delete adAffectCurrent
-618                                     RSLocalSynchHistory.UpdateBatch
-                                
-                                    Else
-
-620                                     bSuccess = False
-                                
-622                                     If Not sLocalTableWithNewRecords = "oincidents" Then
-
-                                            ' If the table is not incidents then all checks came up good
-                                            ' and now you can upload pending records
-624                                         j = 0
-
-626                                         Do Until j = RSLocalTableRecordsToBeUploaded.Fields.Count
-
-628                                             sField = RSLocalTableRecordsToBeUploaded.Fields(j).Name
-                                                
-630                                             If DoesFieldExistInRS(RSServerTableToBeUpdated, sField) Then
-
-632                                                 If Not sField = "UID" Then 'And Not InStr(LCase(sWebsite), "nomad") > 0 Then
-634                                                     If Len(RSLocalTableRecordsToBeUploaded.Fields(sField).Value) > 0 Then RSServerTableToBeUpdated.Fields(sField).Value = RSLocalTableRecordsToBeUploaded.Fields(sField).Value
-                                                    Else
-636                                                     TxMsg "Skipping UID update on server since it should be an autonum field....."
-                                                    End If
-                                                
-                                                Else
-638                                                 TxMsg "!!!! Skipping update of field [" & sField & "] on server since it only exists on the client", True
-                                                End If
-
-640                                             j = j + 1
-                                            Loop
-
-642                                         bSuccess = True
-                            
-                                        Else
-                                
-                                            ' The table is incidents - we need to get the local GEO table too
-644                                         Set RSLocalTableRecordsToBeUploaded_FEA = RSLocalTableRecordsToBeUploaded
-646                                         Set RSLocalTableRecordsToBeUploaded_GEO = GetAllFieldsForGUIDOnLocal(sLocalTableWithNewRecords & "_GEO", "UID", RSLocalTableRecordsToBeUploaded.Fields("UID").Value, cn)
-
-648                                         If Not RSLocalTableRecordsToBeUploaded_GEO.State = adStateClosed Then
-650                                             If Not RSLocalTableRecordsToBeUploaded_GEO.EOF Then
-                                        
-                                                    ' All checks came up good and now you can upload pending records
-652                                                 With RSServerTableToBeUpdated
-                                
-                                                        '.Fields("UID").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("UID").Value
-654                                                     .Fields("ID").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("id").Value
-656                                                     .Fields("NAME").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Name").Value
-658                                                     .Fields("TYPE").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Type").Value
-660                                                     .Fields("TARGET").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Target").Value
-662                                                     .Fields("Dead").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Dead").Value
-664                                                     .Fields("Affected").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Affected").Value
-666                                                     .Fields("Violent").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Violent").Value
-668                                                     .Fields("Injured").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Injured").Value
-670                                                     .Fields("Incident_DATE").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Incident_DATE").Value
-672                                                     .Fields("TIME00").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("TIME00").Value
-674                                                     .Fields("LocDesc").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("LocDesc").Value
-676                                                     .Fields("Source").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Source").Value
-678                                                     .Fields("Town").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Town").Value
-680                                                     .Fields("District").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("District").Value
-682                                                     .Fields("Province").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Province").Value
-684                                                     .Fields("DESCRIPTION").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Description").Value
-686                                                     .Fields("Scoring").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Scoring").Value
-688                                                     .Fields("Incident_DATESERIAL").Value = RSLocalTableRecordsToBeUploaded_FEA.Fields("Incident_DATESERIAL").Value
-    
-                                                        '.Fields("UID").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("UID").Value
-690                                                     .Fields("XMIN").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("XMin").Value
-692                                                     .Fields("XMAX").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("XMax").Value
-694                                                     .Fields("YMIN").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("YMin").Value
-696                                                     .Fields("YMAX").Value = RSLocalTableRecordsToBeUploaded_GEO.Fields("YMax").Value
-                 
-                                                    End With
-                                            
-698                                                 bSuccess = True
-                        
-                                                End If
-                                            End If
-                                
-                                        End If
-                                
-700                                     If bSuccess Then
-                                
-702                                         i = i + 1
-704                                         TxMsg "    --- (" & i & ") uploading id: " & RSLocalSynchHistory.Fields("sID").Value
-                                            
-706                                         j = 0
-
-708                                         If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
-710                                         RSLocalSynchHistory.Fields("updates").Value = "true"
-712                                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-                                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-                                            
-714                                         Do Until j = RSLocalSynchHistory.Fields.Count
-716                                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-718                                             j = j + 1
-                                            Loop
-                                
-                                        End If
-                        
-                                    End If
-
-                                End If
-                            
-                            End If
-
-720                     ElseIf SynchOp = Delete Then
-
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' DELETE RECORD ON SERVER
-                            '''
-                        
-                            'TxMsg "DELETE RECORD ON SERVER"
-                                
-722                         i = i + 1
-724                         TxMsg "    --- (" & i & ") deleting id: " & RSLocalSynchHistory.Fields("sID").Value, True
-726                         sGuidToDelete = RSLocalSynchHistory.Fields("sID").Value
-
-728                         If Not RSServerTableToBeUpdated.EOF Then
-730                             RSServerTableToBeUpdated.Delete adAffectCurrent
-                            End If
-                        
-                            ' Add the SynchHistory record to the server
-732                         j = 0
-
-734                         If RSServerSynchHistory.EOF Or RSServerSynchHistory.BOF Then RSServerSynchHistory.AddNew
-736                         RSLocalSynchHistory.Fields("updates").Value = "true"
-738                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-
-740                         Do Until j = RSLocalSynchHistory.Fields.Count
-742                             RSServerSynchHistory.Fields(j).Value = RSLocalSynchHistory.Fields(j).Value
-744                             j = j + 1
-                            Loop
-                        
-                        Else
-                            
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            ''' RECORD ALREADY EXISTS ON SERVER
-                            '''
-                        
-746                         i = i + 1
-
-748                         If SynchOp = Delete Then
-750                             TxMsg "    --- delete ABORTED: Record " & i & " with id: " & RSLocalSynchHistory.Fields("sID").Value & "is not on the server - adjusting SynchHistory accordingly" ', True
-752                         ElseIf SynchOp = Add Then
-754                             TxMsg "    --- add ABORTED: Record " & i & " with id: " & RSLocalSynchHistory.Fields("sID").Value & " is already on the server - adjusting SynchHistory accordingly" ', True
-756                         ElseIf SynchOp = Update Then
-758                             TxMsg "    --- update ABORTED: Record " & i & " with id: " & RSLocalSynchHistory.Fields("sID").Value & " is not on the server - adjusting SynchHistory accordingly" ', True
-                            Else
-                                'TxMsg "undude"
-                            End If
-
-760                         RSLocalSynchHistory.Fields("updates").Value = "true"
-762                         RSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
-                            RSLocalSynchHistory.Fields("noconflict").Value = "false"
-764                         RSLocalSynchHistory.UpdateBatch adAffectCurrent
-
-                        End If
-                
-                    End If
-                
-766                 If Not bUploadFailed Then
-                        '''''
-
-                        'Commit to server
-768                     If sLocalTableWithNewRecords = "oincidents" Or Not bIsGeo Then
-
-770                         RSServerTableToBeUpdated.Filter = adFilterPendingRecords
-                            'MsXmlHttp.Open "POST", sWebsite & "oasisuploader.asp", False
-                            'RSServerTableToBeUpdated.Save MsXmlDoc, 1
-
-                            'If m_bProxyEnabled Then MsXmlHttp.setProxy 2, m_sProxyIP & ":" & m_sProxyPort
-                            'MsXmlHttp.send MsXmlDoc
-772                         sResponse = SaveServerRSCompressed(sWebsite, RSServerTableToBeUpdated)
-
-774                         If Not sResponse = "Data Updated" Then
-776                             bUploadFailed = True
-778                             TxMsg "    --- Error updating RSServerTableToBeUpdated: " & sResponse, True
-                                '746                         ElseIf InStr(LCase(sWebsite), "nomad") > 0 Then
-                                '
-                                '748                             TxMsg "NOMAD commit to i-mogene server....."
-                                '
-                                '                                If SynchOp = Delete Then
-                                '                                    bUploadFailed = Not CommitXML2Nomad("http://nomad.i-mogene.org/NomadWs/" & OASIS2NomadTable(sUserGroupPrefix & sLocalTableWithNewRecords) & "/" & sGuidToDelete, "", "oasis", "oasisoasis", m_bProxyEnabled, m_sProxyIP & ":" & m_sProxyPort, True)
-                                '                                Else
-                                '                                    bUploadFailed = Not ConvertOASIS2Nomad(RSServerTableToBeUpdated, OASIS2NomadTable(sUserGroupPrefix & sLocalTableWithNewRecords), OASIS2NomadTable(sUserGroupPrefix & sLocalTableWithNewRecords) & "_", sLocalTableWithNewRecords, Replace(LCase(m_StrLocalConnectionString), "oasisclient.mdb", "\dynamicdata\NOMADOASIS.mdb"), "http://nomad.i-mogene.org/NomadWs", OASIS2NomadTable(sUserGroupPrefix & sLocalTableWithNewRecords), "oasis", "oasisoasis", m_bProxyEnabled, m_sProxyIP & ":" & m_sProxyPort)
-                                '                                End If
-                                '
-                                '                                If bUploadFailed Then TxMsg "!!!   Commit to i-mogen server failed!"
-                        
-                            End If
-                        
-780                         If RSServerTableToBeUpdated.State = adStateOpen Then RSServerTableToBeUpdated.Close
-
-                        Else
-782                         RSServerTableToBeUpdated_FEA.Filter = adFilterPendingRecords
-                            'MsXmlHttp.Open "POST", sWebsite & "oasisuploader.asp", 0
-                            'RSServerTableToBeUpdated_FEA.Save MsXmlDoc, 1
-
-                            'If m_bProxyEnabled Then MsXmlHttp.setProxy 2, m_sProxyIP & ":" & m_sProxyPort
-                            'MsXmlHttp.send MsXmlDoc
-784                         sResponse = SaveServerRSCompressed(sWebsite, RSServerTableToBeUpdated_FEA)
-786                         RSServerTableToBeUpdated_FEA.Close
-
-788                         If Not sResponse = "Data Updated" Then
-790                             bUploadFailed = True
-792                             TxMsg "    --- Error updating RSServerTableToBeUpdated_FEA: " & sResponse, True
-                            Else
-794                             RSServerTableToBeUpdated_GEO.Filter = adFilterPendingRecords
-                                'MsXmlHttp.Open "POST", sWebsite & "oasisuploader.asp", 0
-                                'RSServerTableToBeUpdated_GEO.Save MsXmlDoc, 1
-
-                                'If m_bProxyEnabled Then MsXmlHttp.setProxy 2, m_sProxyIP & ":" & m_sProxyPort
-                                'MsXmlHttp.send MsXmlDoc
-796                             sResponse = SaveServerRSCompressed(sWebsite, RSServerTableToBeUpdated_GEO)
-798                             RSServerTableToBeUpdated_GEO.Close
-
-800                             If Not sResponse = "Data Updated" Then
-802                                 bUploadFailed = True
-804                                 TxMsg "    --- Error updating RSServerTableToBeUpdated_GEO: " & sResponse, True
-                                End If
-                            End If
-                    
-                        End If
-                    End If
-                        
-806                 If Not bUploadFailed Then
-
-808                     RSLocalSynchHistory.UpdateBatch adAffectCurrent
-                        
-                        '794                     If Not InStr(UCase(sWebsite), "/NOMAD") > 0 Then
-                        
-810                     RSServerSynchHistory.Filter = adFilterPendingRecords
-812                     sResponse = SaveServerRSCompressed(sWebsite, RSServerSynchHistory)
-                        '                        Else
-                        '
-                        '806                         TxMsg "Skipping SynchHistory update for server on NOMAD - server db trigger takes care of this"
-                        '                        End If
-
-814                     RSServerSynchHistory.Close
-
-816                     If Not sResponse = "Data Updated" Then
-818                         TxMsg "    --- Error updating RSServerSynchHistory: " & sResponse, True
-                        End If
-                
-                    Else
-820                     RSServerSynchHistory.Close
-                    End If
-
-822                 RSLocalSynchHistory.MoveNext
-                
-                Loop
-
-            End If
-            
-824         TxMsg "--- Finished commiting pending records to server from table " & sLocalTableWithNewRecords & "......................"
-    
-        End If
-        
-        'Set MsXmlHttp = Nothing
-        'Set MsXmlDoc = Nothing
-826     Set RSServerSynchHistory = Nothing
-828     Set RSServerTableToBeUpdated = Nothing
-830     Set RSServerTableToBeUpdated_FEA = Nothing
-832     Set RSServerTableToBeUpdated_GEO = Nothing
-834     Set RSLocalSynchHistory = Nothing
-836     Set RSLocalTableRecordsToBeUploaded = Nothing
-838     Set RSLocalTableRecordsToBeUploaded_FEA = Nothing
-840     Set RSLocalTableRecordsToBeUploaded_GEO = Nothing
-        'TxMsg "UploadTableChangesToServer line(" & Erl & ") " & Err.Description
-       
-        
-        '<EhFooter>
-        Exit Sub
-
-UploadTableChangesToServer_Err:
-
-            TxMsg "UploadTableChangesToServer_Err: (" & Erl & ") " & Err.Description, True, True
-      
-        '</EhFooter>
-End Sub
-
 Private Function DoesFieldExistInRS(oRS As ADODB.Recordset, _
                                     sField As String) As Boolean
 
     On Error GoTo hell
+
     DoesFieldExistInRS = True
     
     Dim fField As ADODB.Field
     Set fField = oRS.Fields(sField)
+
     If fField Is Nothing Then GoTo hell
     Exit Function
 hell:
+
     DoesFieldExistInRS = False
 
 End Function
 
-Private Sub GetSynchRecordsTODELETE(ByVal sTableName As String, _
-                                    ByVal sGUID As String, _
-                                    bIsGeotable As Boolean, _
-                                    sWebsite As String, _
-                                    cn As ADODB.Connection, _
-                                    Optional sLocalSynchHistPrefix As String = "")
-        '<EhHeader>
-        On Error GoTo GetSynchRecordsTODELETE_Err
-        '</EhHeader>
-                                      
-        'Operation: This sub fetches a list of GUIDs from the server SynchHistory table and
-        '           also from the local SynchHistory table.  Both lists of GUIDs are compared
-        '           and any missing on the local table denote records needing deletion on the
-        '           local table.  These records are deleted locally.
-
-        Dim RSServerALLGUIDSFORDELETION As New ADODB.Recordset
-        Dim RSLocalALLGUIDSDELETED As New ADODB.Recordset
-        Dim RSGUIDSNeedingDeleting As New ADODB.Recordset
-    
-        Dim RSUpdater As New ADODB.Recordset
-        Dim RSUpdater_GEO As New ADODB.Recordset
-        Dim RSUpdater_FEA As New ADODB.Recordset
-        Dim bIncidents As Boolean
-    
-        Dim i As Long
-        Dim j As Long
-        Dim lIndex As Long
-        Dim sUserGroupPrefix As String
-        Dim lCountOfNonRecords As Long
-        Dim sQueryName As String
-        
-100     lCountOfNonRecords = 0
-        
-102     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
-104     If sTableName = "oincidents" Then bIncidents = True
-106     If sLocalSynchHistPrefix = "" And Not bIncidents And Not sTableName = "Attachments" Then
-108         sUserGroupPrefix = m_StrRemoteTablePrefix
-        End If
-
-        ' And Not sTableName = "GeoBookMarks" And Not sTableName = "GeoBookmarksCategories" And Not sTableName = "Incidents_ChartSettings"
-        
-110     'TxMsg ">>>>>>>>>>>>"
-112     TxMsg "**??Scaning for deletions flagged on server table [" & sUserGroupPrefix & sTableName & "] ......................", True
-        'Set RSServerALLGUIDSFORDELETION = GetAllGUIDsFromServerDB(sLocalSynchHistPrefix & sUserGroupPrefix & "SynchHistory", "sID", "WHERE sdelete = 'true' AND [sTableName] = '" & sTableName & "'", sWebsite)
-
-116     'Set RSLocalALLGUIDSDELETED = GetAllGUIDsFromLocalDB(sLocalSynchHistPrefix & "SynchHistory", "sID", "WHERE [updates] = 'true' AND [sdelete] = 'true' AND [sTableName] = '" & sTableName & "' ORDER BY [sWhen] DESC", cn)
-        Set RSLocalALLGUIDSDELETED = GetAllGUIDsFromLocalDB(sTableName, sLocalSynchHistPrefix & "SynchHistory", cn, Delete)
-        Set RSServerALLGUIDSFORDELETION = GetAllGUIDsFromServerDB(sTableName, sLocalSynchHistPrefix & sUserGroupPrefix & "SynchHistory", m_sWhen, sWebsite, Delete)
-118     Set RSGUIDSNeedingDeleting = GetRSWithGUIDSFORDOWNLOAD(RSServerALLGUIDSFORDELETION, RSLocalALLGUIDSDELETED, Delete)
-    
-120     If bIsGeotable Then
-
-122         If Right$(sTableName, 4) = "_FEA" Or Right$(sTableName, 4) = "_GEO" Then
-124             sTableName = Left$(sTableName, Len(sTableName) - 4)
-            End If
-            
-126         RSUpdater_GEO.Open "SELECT * FROM [" & sTableName & "_GEO]", cn, adOpenDynamic, adLockBatchOptimistic
-128         RSUpdater_FEA.Open "SELECT * FROM [" & sTableName & "_FEA]", cn, adOpenDynamic, adLockBatchOptimistic
-
-        Else
-
-130         RSUpdater.Open "SELECT * FROM [" & sTableName & "]", cn, adOpenDynamic, adLockBatchOptimistic
-
-        End If
-
-        'Cycle through the RSGUIDSNeedingDeleting and get each record
-132     With RSGUIDSNeedingDeleting
-    
-134         If Not .State = adStateClosed Then
-
-136             If (bIsGeotable And Not RSUpdater_FEA.State = adStateClosed And Not RSUpdater_GEO.State = adStateClosed) Or (Not bIsGeotable And Not RSUpdater.State = adStateClosed) Then
-        
-138                 If Not .BOF Or Not .EOF Then .MoveFirst
-                
-140                 Do Until .EOF
-
-142                     If i = 0 Then TxMsg .RecordCount & " records identifed for deletion......................"
-144                     i = i + 1
-                        
-                        'Get new record from server
-146                     If bIncidents Or bIsGeotable Then
-
-
-148                         If Not RSUpdater_FEA.EOF Or Not RSUpdater_FEA.BOF Then
-                                RSUpdater_FEA.MoveFirst
-150                             RSUpdater_FEA.Find "[" & sGUID & "] = '" & .Fields(0).Value & "'"
-                            End If
-
-152                         If Not RSUpdater_FEA.EOF Then
-                        
-154                             If Not RSUpdater_GEO.EOF Or Not RSUpdater_GEO.BOF Then RSUpdater_GEO.MoveFirst
-156                             RSUpdater_GEO.Filter = "UID = " & RSUpdater_FEA.Fields("UID").Value
-
-158                             If Not RSUpdater_GEO.EOF Then
-160                                 RSUpdater_GEO.Delete adAffectCurrent
-162                                 RSUpdater_GEO.UpdateBatch
-                                End If
-
-164                             RSUpdater_FEA.Delete adAffectCurrent
-166                             RSUpdater_FEA.UpdateBatch
-
-                                ' Report to client
-168                             If Not m_bUseEvents Then
-170                                 TxMsg CStr("**??deleted record " & i & " of " & .RecordCount & " and ID: " & .Fields(0).Value & " from " & sTableName)
-                                Else
-172                                 RaiseEvent StatusEX(i, .RecordCount, False, .Fields(0).Value)
-                                End If
-
-                            Else
-                            
-174                             lCountOfNonRecords = lCountOfNonRecords + 1
-
-176                             If lCountOfNonRecords = 11 Then TxMsg "    --- THERE SEEMS TO BE A LOT OF THESE..... SPEEDING UP THE PROCESS...."
-178                             If lCountOfNonRecords > 10 Then
-180                                 TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " for deletion - updating SynchHistory accordingly!"), False
-                                Else
-182                                 TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " for deletion - updating SynchHistory accordingly!"), True
-                                End If
-                            
-                            End If
-                            
-184                         'RSUpdater_FEA.Filter = ""
-186                         'RSUpdater_GEO.Filter = ""
-
-188                         SynchHistoryDelete cn, GetGuid, .Fields(0).Value, "Synched Record", "", sUserGroupPrefix & " UG", RSGUIDSNeedingDeleting.Fields("sWhen").Value, IIf(sLocalSynchHistPrefix = "", sTableName, sTableName & "_FEA"), True, "true", sLocalSynchHistPrefix
-        
-                        Else
-
-                            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                            'This IF statement block will help prevent duplication of records
-190                         If Not RSUpdater.EOF Or Not RSUpdater.BOF Then
-                                RSUpdater.MoveFirst
-192                             RSUpdater.Find sGUID & " = '" & .Fields(0).Value & "'"
-                            End If
-                            
-194                         If Not RSUpdater.EOF And Not RSUpdater.BOF Then
-
-                                sQueryName = ""
-                                If Right(sTableName, 8) = "_Queries" Then
-                                    TxMsg "!!! Since this is the queries table the corresponding query will also be deleted....", True
-                                    sQueryName = RSUpdater.Fields("QueryName").Value
-                                End If
-
-196                             With RSUpdater
-198                                 .Delete adAffectCurrent
-200                                 .UpdateBatch
-                                End With
-
-                                ' Report to client
-202                             If Not m_bUseEvents Then
-204                                 TxMsg CStr("**??deleted record " & i & " of " & .RecordCount & " and ID: " & .Fields(0).Value & " from " & sTableName)
-                                Else
-206                                 RaiseEvent StatusEX(i, .RecordCount, False, .Fields(0).Value)
-                                End If
-                            
-                            Else
-                            
-208                             lCountOfNonRecords = lCountOfNonRecords + 1
-
-210                             If lCountOfNonRecords = 11 Then TxMsg "    --- THERE SEEMS TO BE A LOT OF THESE..... SPEEDING UP THE PROCESS...."
-212                             If lCountOfNonRecords > 10 Then
-214                                 TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " for deletion - updating SynchHistory accordingly!"), False
-                                Else
-216                                 TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " for deletion - updating SynchHistory accordingly!"), True
-                                End If
-                            
-                            End If
-
-218                         'RSUpdater.Filter = ""
-220                         SynchHistoryDelete cn, GetGuid, .Fields(0).Value, "Synched Record", "", sUserGroupPrefix & " UG", RSGUIDSNeedingDeleting.Fields("sWhen").Value, sTableName, True, "true", sLocalSynchHistPrefix, sQueryName
-                
-                        End If
-                    
-222                     .MoveNext
-                      
-                    Loop
-        
-                Else
-224                 TxMsg "GetSynchRecordsTODELETE_Err: closed state of destination RS made the delete operation fail", True
-                End If
-                
-            End If
-    
-        End With
-        
-226     TxMsg "**??Finished deletion of records on local table " & sTableName & "......................", True
-228     'TxMsg "<<<<<<<<<<<<"
-        
-230     Set RSServerALLGUIDSFORDELETION = Nothing
-232     Set RSLocalALLGUIDSDELETED = Nothing
-234     Set RSGUIDSNeedingDeleting = Nothing
-    
-236     Set RSUpdater = Nothing
-238     Set RSUpdater_GEO = Nothing
-240     Set RSUpdater_FEA = Nothing
-    
-        'TxMsg "GetSynchRecordsTODELETE_Err: (" & Erl & ") " & Err.Description
-        '<EhFooter>
-        Exit Sub
-
-GetSynchRecordsTODELETE_Err:
-        TxMsg "GetSynchRecordsTODELETE_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Sub
-
-Private Sub GetSynchRecordsTOUPDATE(ByVal sTableName As String, _
-                                    ByVal sGUID As String, _
-                                    bIsGeotable As Boolean, _
-                                    sWebsite As String, _
-                                    cn As ADODB.Connection, _
-                                    Optional sLocalSynchHistPrefix As String = "")
-        '<EhHeader>
-        On Error GoTo GetSynchRecordsTOUPDATE_Err
-        '</EhHeader>
-                                      
-        'Operation: This sub fetches a list of GUIDs from the server SynchHistory table and
-        '           also from the local SynchHistory table.  Both lists of GUIDs are compared
-        '           and any missing on the local table denote records needing deletion on the
-        '           local table.  These records are deleted locally.
-    
-        Dim RSServerALLGUIDSFOREDIT As New ADODB.Recordset
-        Dim RSLocalALLGUIDSEDITED As New ADODB.Recordset
-        Dim RSGUIDSNeedingEditing As New ADODB.Recordset
-    
-        Dim RSServerNewRecord As New ADODB.Recordset
-        Dim RSServerNewRecord_FEA As New ADODB.Recordset
-        Dim RSServerNewRecord_GEO As New ADODB.Recordset
-
-        Dim RSUpdater As New ADODB.Recordset
-        Dim RSUpdater_GEO As New ADODB.Recordset
-        Dim RSUpdater_FEA As New ADODB.Recordset
-
-        Dim bIncidents As Boolean
-        Dim bAddedNew As Boolean
-        Dim bRSServerNewRecord_FEAisEOF As Boolean
-        Dim bRSServerNewRecord_GEOisEOF As Boolean
-        
-        Dim lUID As Long
-        
-        Dim i As Long
-        Dim j As Long
-        Dim jField As Integer
-        Dim sUserGroupPrefix As String
-        
-100     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
-102     If sTableName = "oincidents" Then bIncidents = True
-104     If sLocalSynchHistPrefix = "" And Not bIncidents And Not sTableName = "Attachments" Then
-106         sUserGroupPrefix = m_StrRemoteTablePrefix
-        End If
-
-        ' And Not sTableName = "GeoBookMarks" And Not sTableName = "GeoBookmarksCategories" And Not sTableName = "Incidents_ChartSettings"
-        
-108     'TxMsg ">>>>>>>>>>>>"
-110     TxMsg "**??Beginning scan for updates flagged on server table " & sUserGroupPrefix & sTableName & "......................", True
-
-        'Set RSServerALLGUIDSFOREDIT = GetAllGUIDsFromServerDB(sLocalSynchHistPrefix & sUserGroupPrefix & "SynchHistory", "sID", "WHERE sdelete = 'false' AND sequence > 1 AND [sTableName] = '" & sTableName & "'", sWebsite, True)
-    '114     Set RSLocalALLGUIDSEDITED = GetAllGUIDsFromLocalDB(sLocalSynchHistPrefix & "SynchHistory", "sID", "WHERE [updates] = 'true' AND [sequence] > 1 AND [sTableName] = '" & sTableName & "' ORDER BY [sWhen] DESC", cn, True)
-112     Set RSLocalALLGUIDSEDITED = GetAllGUIDsFromLocalDB(sTableName, sLocalSynchHistPrefix & "SynchHistory", cn, Update)
-118     Set RSServerALLGUIDSFOREDIT = GetAllGUIDsFromServerDB(sTableName, sLocalSynchHistPrefix & sUserGroupPrefix & "SynchHistory", m_sWhen, sWebsite, Update)
-122     Set RSGUIDSNeedingEditing = GetRSWithGUIDSFORDOWNLOAD(RSServerALLGUIDSFOREDIT, RSLocalALLGUIDSEDITED, Update)
-
-124     If bIsGeotable Then
-
-126         If Right$(sTableName, 4) = "_FEA" Or Right$(sTableName, 4) = "_GEO" Then
-128             sTableName = Left$(sTableName, Len(sTableName) - 4)
-            End If
-            
-130         RSUpdater_GEO.Open "SELECT * FROM [" & sTableName & "_GEO]", cn, adOpenDynamic, adLockBatchOptimistic
-132         RSUpdater_FEA.Open "SELECT * FROM [" & sTableName & "_FEA]", cn, adOpenDynamic, adLockBatchOptimistic
-
-        Else
-
-134         RSUpdater.Open "SELECT * FROM [" & sTableName & "]", cn, adOpenDynamic, adLockBatchOptimistic
-
-        End If
-
-        'Cycle through the RSGUIDSNeedingEditing and get each record
-136     With RSGUIDSNeedingEditing
-    
-138         If Not .State = adStateClosed Then
-
-140             If (bIsGeotable And Not RSUpdater_FEA.State = adStateClosed And Not RSUpdater_GEO.State = adStateClosed) Or (Not bIsGeotable And Not RSUpdater.State = adStateClosed) Then
-        
-142                 If Not .EOF Or Not .BOF Then .MoveFirst
-                
-144                 Do Until .EOF
-
-146                     If i = 0 Then TxMsg "    " & .RecordCount & " record(s) identifed for updating ......................"
-148                     i = i + 1
-                        
-                        'Get new record from server
-150                     If bIncidents Or bIsGeotable Then
-                         
-152                         If bIncidents Then
-154                             Set RSServerNewRecord_FEA = GetAllFieldsForIncidentGUIDOnServer_FEA(.Fields(0).Value, sWebsite)
-                            Else
-156                             Set RSServerNewRecord_FEA = GetAllFieldsForGUIDOnServer(sUserGroupPrefix & sTableName & "_FEA", sGUID, .Fields(0).Value, sWebsite)
-                            End If
-                            
-158                         bRSServerNewRecord_GEOisEOF = True
-160                         bRSServerNewRecord_FEAisEOF = True
-                      
-162                         If Not RSServerNewRecord_FEA.State = adStateClosed Then
-
-164                             If Not RSServerNewRecord_FEA.EOF Or Not RSServerNewRecord_FEA.BOF Then
-166                                 RSServerNewRecord_FEA.MoveFirst
-
-168                                 If bIncidents Then
-
-170                                     Set RSServerNewRecord_GEO = GetAllFieldsForIncidentGUIDOnServer_GEO(.Fields(0).Value, sWebsite)
-                                    Else
-                                   
-172                                     Set RSServerNewRecord_GEO = GetAllFieldsForGUIDOnServer(sUserGroupPrefix & sTableName & "_GEO", "UID", RSServerNewRecord_FEA.Fields("UID").Value, sWebsite)
-                                    End If
-                                    
-174                                 bRSServerNewRecord_GEOisEOF = RSServerNewRecord_GEO.EOF
-176                                 bRSServerNewRecord_FEAisEOF = False
-                                
-                                Else
-178                                 bRSServerNewRecord_GEOisEOF = True
-180                                 bRSServerNewRecord_FEAisEOF = True
-                                End If
-
-                            Else
-                            
-182                             TxMsg CStr("    ---(at line 152) RSServerNewRecord_FEA.State = adStateClosed!"), True
-                            
-                            End If
-
-184                         If Not RSUpdater_FEA.EOF Or Not RSUpdater_FEA.BOF Then RSUpdater_FEA.MoveFirst
-186                         RSUpdater_FEA.Filter = "[" & sGUID & "] = '" & .Fields(0).Value & "'"
-                           
-188                         If Not bRSServerNewRecord_FEAisEOF And Not bRSServerNewRecord_GEOisEOF Then
-                      
-190                             If RSUpdater_FEA.EOF Then
-                        
-192                                 RSUpdater_FEA.AddNew
-194                                 RSUpdater_GEO.AddNew
-196                                 bAddedNew = True
-198                                 lUID = GetMaxUIDFromGEOTable(sTableName & "_GEO", cn) + CLng(1)
-                            
-                                Else
-                         
-200                                 bAddedNew = False
-
-202                                 If Not RSUpdater_GEO.EOF Or Not RSUpdater_GEO.BOF Then RSUpdater_GEO.MoveFirst
-204                                 RSUpdater_GEO.Filter = "UID = " & RSUpdater_FEA.Fields("UID").Value
-206                                 lUID = RSUpdater_FEA.Fields("UID").Value
-                                
-                                End If
-                            
-208                             If bAddedNew Or Not RSUpdater_GEO.EOF Then
-              
-210                                 jField = 0 ' why was the 7????
-    
-212                                 Do Until jField >= RSUpdater_GEO.Fields.Count
-                                
-214                                     If RSUpdater_GEO.Fields(jField).Name = "UID" Then
-    
-216                                         RSUpdater_GEO.Fields(jField).Value = lUID
-    
-218                                     ElseIf Not RSUpdater_GEO.Fields(jField).Name = "UID" And Not RSUpdater_GEO.Fields(jField).Name = "ORIG_ID" Then
-
-220                                         If Not (bIncidents And RSUpdater_GEO.Fields(jField).Name = "GEOMETRY") Then
-222                                             RSUpdater_GEO.Fields(jField).Value = RSServerNewRecord_GEO.Fields(RSUpdater_GEO.Fields(jField).Name).Value
-                                            End If
-                                            
-                                        End If
-                                     
-224                                     jField = jField + 1
-                                    Loop
-    
-226                                 RSUpdater_GEO.UpdateBatch adAffectCurrent
-                            
-228                                 jField = 0
-
-230                                 Do Until jField >= RSUpdater_FEA.Fields.Count
-                               
-232                                     If Not RSUpdater_FEA.Fields(jField).Name = "UID" Then
-
-234                                         RSUpdater_FEA.Fields(jField).Value = RSServerNewRecord_FEA.Fields(RSUpdater_FEA.Fields(jField).Name).Value
-                                        Else
-236                                         RSUpdater_FEA.Fields("UID").Value = lUID
-                                        End If
-                                    
-238                                     jField = jField + 1
-                                    Loop
-
-240                                 RSUpdater_FEA.UpdateBatch adAffectCurrent
-                                Else
-
-242                                 TxMsg "Check out on local: " & RSUpdater_GEO.Filter
-
-                                End If
-
-244                             RSUpdater_FEA.Filter = ""
-246                             RSUpdater_GEO.Filter = ""
-
-248                             If Not sLocalSynchHistPrefix = "" Then
-250                                 sTableName = sTableName & "_FEA"
-                                End If
-
-252                             SynchHistoryEdit cn, GetGuid, .Fields(0).Value, "Synched Record", "", sUserGroupPrefix & " UG", RSGUIDSNeedingEditing.Fields("sWhen").Value, sTableName, True, "true", sLocalSynchHistPrefix, RSGUIDSNeedingEditing.Fields("sequence").Value
-
-                                ' Report to client
-254                             If Not m_bUseEvents Then
-256                                 TxMsg CStr("**??updated record " & i & " of " & .RecordCount & " and ID: " & .Fields(0).Value & " from " & sTableName)
-                                Else
-258                                 RaiseEvent StatusEX(i, .RecordCount, False, .Fields(0).Value)
-                                End If
-                            
-260                             If Not sLocalSynchHistPrefix = "" Then
-262                                 sTableName = Left$(sTableName, Len(sTableName) - 4)
-                                End If
-
-                            Else
-264                             TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " on the server for update!"), True
-
-266                             If Not sLocalSynchHistPrefix = "" Then
-268                                 sTableName = sTableName & "_FEA"
-                                End If
-
-270                             SynchHistoryDeleteFromServer sWebsite, .Fields(0).Value, sTableName, sLocalSynchHistPrefix
-
-272                             If Not sLocalSynchHistPrefix = "" Then
-274                                 sTableName = Left$(sTableName, Len(sTableName) - 4)
-                                End If
-                            End If
-        
-                        Else
-                    
-276                         Set RSServerNewRecord = GetAllFieldsForGUIDOnServer(sUserGroupPrefix & sTableName, sGUID, .Fields(0).Value, sWebsite)
-
-278                         If Not RSUpdater.EOF Or Not RSUpdater.BOF Then RSUpdater.MoveFirst
-280                         RSUpdater.Filter = sGUID & " = '" & .Fields(0).Value & "'"
-                        
-282                         If Not RSServerNewRecord.EOF Then
-                                
-284                             If RSUpdater.EOF Then
-286                                 RSUpdater.AddNew
-                                End If
-
-288                             jField = 0
-
-290                             Do Until jField = RSUpdater.Fields.Count
-                                    'TxMsg "was: " & RSUpdater.Fields(jField).Value
-                                    'TxMsg "will be: " & RSServerNewRecord.Fields(RSUpdater.Fields(jField).Name).Value
-
-292                                 If Not RSUpdater.Fields(jField).Name = "UID" And Not (RSUpdater.Fields(jField).Name = "ID" And sTableName = "GeoBookMarks") Then
-    
-294                                     If RSUpdater.Fields(jField).Name = "OCTSetting" Then
-296                                         RSUpdater.Fields(jField).Value = AsciiToBinary(RSServerNewRecord.Fields(RSUpdater.Fields(jField).Name).Value)
-                                        ElseIf Not RSUpdater.Fields(jField).Name = "ORIG_ID" Then
-298                                         RSUpdater.Fields(jField).Value = RSServerNewRecord.Fields(RSUpdater.Fields(jField).Name).Value
-                                        End If
-
-
-                                    End If
-
-300                                 jField = jField + 1
-                                Loop
-
-302                             RSUpdater.UpdateBatch adAffectCurrent
-304                             RSUpdater.Filter = ""
-306                             SynchHistoryEdit cn, GetGuid, .Fields(0).Value, "Synched Record", "", sUserGroupPrefix & " UG", RSGUIDSNeedingEditing.Fields("sWhen").Value, sTableName, True, "true", sLocalSynchHistPrefix, RSGUIDSNeedingEditing.Fields("sequence").Value
-
-                                ' Report to client
-308                             If Not m_bUseEvents Then
-310                                 TxMsg CStr("**??updated record " & i & " of " & .RecordCount & " and ID: " & .Fields(0).Value & " from " & sTableName)
-                                Else
-312                                 RaiseEvent StatusEX(i, .RecordCount, False, .Fields(0).Value)
-                                End If
-
-                            Else
-                        
-314                             TxMsg CStr("    --- could not locate ID: " & .Fields(0).Value & " on the server for update!"), True
-316                             SynchHistoryDeleteFromServer sWebsite, .Fields(0).Value, sTableName, sLocalSynchHistPrefix
-                            
-                            End If
-                
-                        End If
-                    
-318                     .MoveNext
-                      
-                    Loop
-        
-                Else
-320                 TxMsg "GetSynchRecordsTODELETE_Err: closed state of destination RS made the delete operation fail", True
-                End If
-                
-            End If
-    
-        End With
-        
-322     TxMsg "**??Finished update of records on local table " & sTableName & "......................", True
-324     'TxMsg "<<<<<<<<<<<<"
-    
-326     Set RSServerALLGUIDSFOREDIT = Nothing
-328     Set RSLocalALLGUIDSEDITED = Nothing
-330     Set RSGUIDSNeedingEditing = Nothing
-    
-332     Set RSServerNewRecord = Nothing
-334     Set RSServerNewRecord_FEA = Nothing
-336     Set RSServerNewRecord_GEO = Nothing
-    
-338     Set RSUpdater = Nothing
-340     Set RSUpdater_GEO = Nothing
-342     Set RSUpdater_FEA = Nothing
-    
-        'TxMsg "GetSynchRecordsTOUPDATE_Err: (" & Erl & ") " & Err.Description
-        '<EhFooter>
-        Exit Sub
-
-GetSynchRecordsTOUPDATE_Err:
-        TxMsg "GetSynchRecordsTOUPDATE_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Sub
-
 Function URLEncode(strWhat As String) As String
 
-  Dim i As Long
+    Dim i As Long
 
     strWhat = Replace$(strWhat, "%", "%25")
 
@@ -4159,7 +1829,9 @@ Function URLEncode(strWhat As String) As String
 
 End Function
 
-Private Sub PrepareHttpComms(oHttp As WinHttpRequest, sWebsite As String, bUpload As Boolean)
+Private Sub PrepareHttpComms(oHttp As WinHttpRequest, _
+                             sWebsite As String, _
+                             bUpload As Boolean)
         '<EhHeader>
         On Error GoTo PrepareHttpComms_Err
         '</EhHeader>
@@ -4167,12 +1839,13 @@ Private Sub PrepareHttpComms(oHttp As WinHttpRequest, sWebsite As String, bUploa
 100     oHttp.abort
         Set oHttp = Nothing
         Set oHttp = New WinHttpRequest
+
 102     If m_bProxyEnabled Then oHttp.setProxy HTTPREQUEST_PROXYSETTING_PROXY, m_sProxyIP & ":" & m_sProxyPort, "*.microsoft.com"
 104     oHttp.setTimeouts -1, 360000, 360000, 360000
 106     oHttp.Option(WinHttpRequestOption_EnableHttp1_1) = False
 108     oHttp.Option(WinHttpRequestOption_SslErrorIgnoreFlags) = 13056  'dec equivalent to hex 0x3300
 110     oHttp.Open "POST", sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", False
-       ' TxMsg ">>>>> Server ASP: " & sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", True, True
+        ' TxMsg ">>>>> Server ASP: " & sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", True, True
 114     oHttp.setRequestHeader "Content-type", "application/x-www-form-urlencoded;charset=UTF-8"
 116     oHttp.setRequestHeader "Expires", "0"
 118     oHttp.setRequestHeader "Cache-Control", "no-cache"
@@ -4186,23 +1859,6 @@ PrepareHttpComms_Err:
         TxMsg "!!     -- PrepareHttpComms_Err: (" & Erl & ") " & Err.Description, True
         Resume Next
         '</EhFooter>
-End Sub
-
-Private Sub GetNumberOfBatchToDownload(sWebsite As String)
-
-    Dim sResponse As String
-    sResponse = OpenServerResponseCompressed(sWebsite, "batchcounttodownload", "")
-    
-    If Len(sResponse) > 0 Then
-        lBatchCountToDownload = CLng(sResponse)
-        TxMsg "*** " & lBatchCountToDownload & " records will be downloaded in batch"
-    Else
-        lBatchCountToDownload = 200
-        TxMsg "*** compression.txt is not working on server.  The default " & lBatchCountToDownload & " records will be downloaded in batch", True
-    End If
-    
-    'TxMsg "********************************************************************************************"
-
 End Sub
 
 Private Function RecordsetFromXMLString(sXML As String) As ADODB.Recordset
@@ -4239,194 +1895,1021 @@ RecordsetFromXMLString_Err:
         '</EhFooter>
 End Function
 
-Private Sub SynchDDWithServer(sTableNamePrefix As String, _
-                              sWebsite As String, _
-                              cn As ADODB.Connection)
+Private Function SynchDDWithServer2(sTableNamePrefix As String, _
+                                    sWebsite As String, _
+                                    cn As ADODB.Connection) As Boolean
         '<EhHeader>
-        On Error GoTo SynchDDWithServer_Err
+        On Error GoTo SynchDDWithServer2_Err
+        '</EhHeader>
+        
+        'return true = all records downloaded for the tableset
+        
+        Dim oRS_GEO As ADODB.Recordset
+        Dim lUID As Long
+        Dim sResponse As String
+        Dim lMismatchIndex As Long
+        Dim lNumRecordsLocal As Long
+        Dim lLowVal As Long
+        Dim lHighVal As Long
+        Dim i As Long
+        Dim iTablename As Long
+        Dim l As Long
+        Dim oRSLocal As ADODB.Recordset
+        Dim oRSLocal_GEO As ADODB.Recordset
+        Dim oRSServer As ADODB.Recordset
+        Dim oRSServer_GEO As ADODB.Recordset
+        Dim oRSLocalSynchHistory As ADODB.Recordset
+        Dim oRSServerSynchHistory As ADODB.Recordset
+        Dim sSynchHistName As String
+        Dim bGetServer As Boolean
+        Dim bGetLocal As Boolean
+        Dim sIDs() As String
+        Dim sTableNames() As String
+        Dim sTableName As String
+        Dim sSQL As String
+        Dim sSQLCommand As String
+        Dim bServerWinner As Boolean
+        Dim bSame As Boolean
+        Dim oSynchOperations() As SynchOperations
+        Dim sLastOperation As String
+        Dim sCurrentOperation As String
+        Dim sGUIDName As String
+        Dim lNumSynchRecords As Long
+        Dim lNumCurrentSynchRecords As Long
+        Dim bIsGeoTable As Boolean
+    
+        Dim oRSMerged As New ADODB.Recordset
+100     oRSMerged.Fields.Append "sID", adVarChar, 255
+102     oRSMerged.Fields.Append "sGUID", adVarChar, 255
+104     oRSMerged.Fields.Append "sTableName", adVarChar, 255
+106     oRSMerged.Fields.Append "sWhen", adVarChar, 255
+108     oRSMerged.Fields.Append "Sequence", adBigInt
+110     oRSMerged.Fields.Append "sDelete", adVarChar, 255
+112     oRSMerged.Fields.Append "Updates", adVarChar, 255
+114     oRSMerged.Fields.Append "OnServer", adBoolean
+116     oRSMerged.Fields.Append "ToAddLocal", adBoolean
+118     oRSMerged.Fields.Append "ToUpdateLocal", adBoolean
+120     oRSMerged.Fields.Append "ToDeleteLocal", adBoolean
+122     oRSMerged.Fields.Append "ToAddServer", adBoolean
+124     oRSMerged.Fields.Append "ToUpdateServer", adBoolean
+126     oRSMerged.Fields.Append "ToDeleteServer", adBoolean
+128     oRSMerged.Open
+    
+130     sSynchHistName = sTableNamePrefix & "SynchHistory"
+132     m_sIDs = ""
+
+        'GetSynchTablesToWipe sWebsite, cn, sTableNamePrefix
+134     lMismatchIndex = CompareSynchHashes(sSynchHistName, cn)
+136     lNumSynchRecords = lMismatchIndex * 200
+        
+138     If lMismatchIndex > -1 Then
+    
+140         SynchDDWithServer2 = False
+            'TxMsg "??---- There are about " & lNumSynchRecords & " records to synch in this batch", True
+    
+142         lLowVal = (lMismatchIndex * 200) - 199
+144         lHighVal = lMismatchIndex * 200
+146         lNumRecordsLocal = 0
+        
+148         Set oRSLocal = New ADODB.Recordset
+150         oRSLocal.Open "SELECT * FROM [" & sSynchHistName & "] ORDER BY [stablename], [sID]", cn, adOpenDynamic, adLockBatchOptimistic
+
+152         If lLowVal > 1 Then oRSLocal.Move (lLowVal - 1)
+        
+154         Set oRSServer = OpenServerRSCompressed(sWebsite, "ID", "SELECT * FROM [" & sSynchHistName & "] ORDER BY stablename, sID OFFSET " & (lLowVal - 1) & " ROWS FETCH NEXT 200 ROWS ONLY")
+
+156         Do Until (oRSLocal.EOF) Or (lNumRecordsLocal >= 200)
+        
+158             With oRSLocal
+    
+160                 oRSMerged.AddNew
+162                 oRSMerged.Fields("sID").Value = .Fields("sID").Value
+164                 oRSMerged.Fields("sGUID").Value = .Fields("sGUID").Value
+166                 oRSMerged.Fields("sTableName").Value = .Fields("sTableName").Value
+168                 oRSMerged.Fields("sWhen").Value = .Fields("sWhen").Value
+170                 oRSMerged.Fields("Sequence").Value = .Fields("Sequence").Value
+172                 oRSMerged.Fields("sDelete").Value = .Fields("sDelete").Value
+174                 oRSMerged.Fields("Updates").Value = .Fields("Updates").Value
+176                 oRSMerged.Fields("OnServer").Value = False
+    
+                End With
+                    
+178             oRSLocal.MoveNext
+180             lNumRecordsLocal = lNumRecordsLocal + 1
+            
+            Loop
+            
+182         Set oRSLocal = Nothing
+            
+184         Do Until (oRSServer.EOF)
+        
+186             With oRSServer
+    
+188                 oRSMerged.AddNew
+190                 oRSMerged.Fields("sID").Value = .Fields("sID").Value
+192                 oRSMerged.Fields("sGUID").Value = .Fields("sGUID").Value
+194                 oRSMerged.Fields("sTableName").Value = .Fields("sTableName").Value
+196                 oRSMerged.Fields("sWhen").Value = .Fields("sWhen").Value
+198                 oRSMerged.Fields("Sequence").Value = .Fields("Sequence").Value
+200                 oRSMerged.Fields("sDelete").Value = .Fields("sDelete").Value
+202                 oRSMerged.Fields("Updates").Value = .Fields("Updates").Value
+204                 oRSMerged.Fields("OnServer").Value = True
+    
+                End With
+
+206             oRSServer.MoveNext
+            Loop
+            
+208         Set oRSServer = Nothing
+        
+210         oRSMerged.Sort = "sID"
+
+212         If oRSMerged.RecordCount > 0 Then oRSMerged.MoveFirst
+214         ReDim sIDs(201)
+216         sIDs(0) = ""
+218         iTablename = 1
+220         i = 1
+        
+222         Do Until oRSMerged.EOF Or (i > 200)
+        
+224             If oRSMerged.Fields("sID").Value <> sIDs(i - 1) Then
+226                 sIDs(i) = oRSMerged.Fields("sID").Value
+                    'TxMsg CStr(i) & " -- " & sIDs(i), True
+228                 i = i + 1
+                End If
+            
+230             oRSMerged.MoveNext
+        
+            Loop
+        
+232         bSame = False
+234         l = 1
+
+236         Do Until l = i Or oRSMerged.RecordCount = 0
+               
+238             oRSMerged.MoveFirst
+240             oRSMerged.Filter = "[sID] = '" & sIDs(l) & "'"
+                'TxMsg CStr(l) & " -- " & sIDs(l) & " --- count: " & oRSMerged.RecordCount, True
+            
+242             If oRSMerged.RecordCount = 1 Then
+
+                    'either new record or local or server
+244                 If oRSMerged.Fields("OnServer").Value = True Then
+                
+246                     If oRSMerged.Fields("sDelete").Value = "true" Then
+                            'Delete record on local
+248                         oRSMerged.Fields("ToAddLocal").Value = False
+250                         oRSMerged.Fields("ToUpdateLocal").Value = False
+252                         oRSMerged.Fields("ToDeleteLocal").Value = True
+254                         oRSMerged.Fields("ToAddServer").Value = False
+256                         oRSMerged.Fields("ToUpdateServer").Value = False
+258                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        Else
+                            'Add new record to local
+260                         oRSMerged.Fields("ToAddLocal").Value = True
+262                         oRSMerged.Fields("ToUpdateLocal").Value = False
+264                         oRSMerged.Fields("ToDeleteLocal").Value = False
+266                         oRSMerged.Fields("ToAddServer").Value = False
+268                         oRSMerged.Fields("ToUpdateServer").Value = False
+270                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        End If
+                    
+                    Else
+                    
+272                     If oRSMerged.Fields("sDelete").Value = "true" Then
+                            'Delete record on server
+274                         oRSMerged.Fields("ToAddLocal").Value = False
+276                         oRSMerged.Fields("ToUpdateLocal").Value = False
+278                         oRSMerged.Fields("ToDeleteLocal").Value = False
+280                         oRSMerged.Fields("ToAddServer").Value = False
+282                         oRSMerged.Fields("ToUpdateServer").Value = False
+284                         oRSMerged.Fields("ToDeleteServer").Value = True
+                        Else
+                            'Add new record to server
+286                         oRSMerged.Fields("ToAddLocal").Value = False
+288                         oRSMerged.Fields("ToUpdateLocal").Value = False
+290                         oRSMerged.Fields("ToDeleteLocal").Value = False
+292                         oRSMerged.Fields("ToAddServer").Value = True
+294                         oRSMerged.Fields("ToUpdateServer").Value = False
+296                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        End If
+                    
+                    End If
+                
+                Else
+
+                    'need to compare both records
+                    Dim oRecordLocal As New ADODB.Recordset
+                    Dim oRecordServer As New ADODB.Recordset
+                
+298                 If oRSMerged.Fields("OnServer").Value = True Then
+300                     Set oRecordServer = CloneRecordFromRS(oRSMerged)
+302                     oRSMerged.MoveNext
+304                     Set oRecordLocal = CloneRecordFromRS(oRSMerged)
+                    Else
+306                     Set oRecordLocal = CloneRecordFromRS(oRSMerged)
+308                     oRSMerged.MoveNext
+310                     Set oRecordServer = CloneRecordFromRS(oRSMerged)
+                    End If
+                
+312                 bSame = False
+314                 oRSMerged.MoveFirst
+                
+316                 If oRecordLocal.Fields("sequence").Value = oRecordServer.Fields("sequence").Value Then
+
+318                     If oRecordLocal.Fields("sWhen").Value = oRecordServer.Fields("sWhen").Value Then
+320                         oRSMerged.Delete
+322                         oRSMerged.MoveNext
+324                         oRSMerged.Delete
+326                     ElseIf oRecordLocal.Fields("sWhen").Value > oRecordServer.Fields("sWhen").Value Then
+
+328                         If oRSMerged.Fields("OnServer").Value Then
+330                             oRSMerged.Delete
+332                             oRSMerged.MoveNext
+                            Else
+334                             oRSMerged.MoveNext
+336                             oRSMerged.Delete
+338                             oRSMerged.MovePrevious
+                            End If
+                            
+340                         If oRecordLocal.Fields("sdelete").Value = "true" Then
+
+342                             oRSMerged.Fields("ToAddLocal").Value = False
+344                             oRSMerged.Fields("ToUpdateLocal").Value = False
+346                             oRSMerged.Fields("ToDeleteLocal").Value = False
+348                             oRSMerged.Fields("ToAddServer").Value = False
+350                             oRSMerged.Fields("ToUpdateServer").Value = False
+352                             oRSMerged.Fields("ToDeleteServer").Value = True
+
+                            Else
+                            
+354                             oRSMerged.Fields("ToAddLocal").Value = False
+356                             oRSMerged.Fields("ToUpdateLocal").Value = False
+358                             oRSMerged.Fields("ToDeleteLocal").Value = False
+360                             oRSMerged.Fields("ToAddServer").Value = False
+362                             oRSMerged.Fields("ToUpdateServer").Value = True
+364                             oRSMerged.Fields("ToDeleteServer").Value = False
+                            
+                            End If
+
+                        Else
+
+366                         If Not oRSMerged.Fields("OnServer").Value Then
+368                             oRSMerged.Delete
+370                             oRSMerged.MoveNext
+                            Else
+372                             oRSMerged.MoveNext
+374                             oRSMerged.Delete
+376                             oRSMerged.MovePrevious
+                            End If
+
+378                         If oRecordServer.Fields("sdelete").Value = "true" Then
+                            
+380                             oRSMerged.Fields("ToAddLocal").Value = False
+382                             oRSMerged.Fields("ToUpdateLocal").Value = False
+384                             oRSMerged.Fields("ToDeleteLocal").Value = True
+386                             oRSMerged.Fields("ToAddServer").Value = False
+388                             oRSMerged.Fields("ToUpdateServer").Value = False
+390                             oRSMerged.Fields("ToDeleteServer").Value = False
+
+                            Else
+
+392                             oRSMerged.Fields("ToAddLocal").Value = False
+394                             oRSMerged.Fields("ToUpdateLocal").Value = True
+396                             oRSMerged.Fields("ToDeleteLocal").Value = False
+398                             oRSMerged.Fields("ToAddServer").Value = False
+400                             oRSMerged.Fields("ToUpdateServer").Value = False
+402                             oRSMerged.Fields("ToDeleteServer").Value = False
+
+                            End If
+
+                        End If
+                    
+404                 ElseIf oRecordLocal.Fields("sequence").Value > oRecordServer.Fields("sequence").Value Then
+
+406                     If oRSMerged.Fields("OnServer").Value Then
+408                         oRSMerged.Delete
+410                         oRSMerged.MoveNext
+                        Else
+412                         oRSMerged.MoveNext
+414                         oRSMerged.Delete
+416                         oRSMerged.MovePrevious
+                        End If
+
+418                     If oRecordLocal.Fields("sdelete") = "true" Then
+420                         oRSMerged.Fields("ToAddLocal").Value = False
+422                         oRSMerged.Fields("ToUpdateLocal").Value = False
+424                         oRSMerged.Fields("ToDeleteLocal").Value = False
+426                         oRSMerged.Fields("ToAddServer").Value = False
+428                         oRSMerged.Fields("ToUpdateServer").Value = False
+430                         oRSMerged.Fields("ToDeleteServer").Value = True
+                        Else
+432                         oRSMerged.Fields("ToAddLocal").Value = False
+434                         oRSMerged.Fields("ToUpdateLocal").Value = False
+436                         oRSMerged.Fields("ToDeleteLocal").Value = False
+438                         oRSMerged.Fields("ToAddServer").Value = False
+440                         oRSMerged.Fields("ToUpdateServer").Value = True
+442                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        End If
+                                
+                    Else
+
+444                     If Not oRSMerged.Fields("OnServer").Value Then
+446                         oRSMerged.Delete
+448                         oRSMerged.MoveNext
+                        Else
+450                         oRSMerged.MoveNext
+452                         oRSMerged.Delete
+454                         oRSMerged.MovePrevious
+                        End If
+
+456                     If oRecordServer.Fields("sdelete") = "true" Then
+458                         oRSMerged.Fields("ToAddLocal").Value = False
+460                         oRSMerged.Fields("ToUpdateLocal").Value = False
+462                         oRSMerged.Fields("ToDeleteLocal").Value = True
+464                         oRSMerged.Fields("ToAddServer").Value = False
+466                         oRSMerged.Fields("ToUpdateServer").Value = False
+468                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        Else
+470                         oRSMerged.Fields("ToAddLocal").Value = False
+472                         oRSMerged.Fields("ToUpdateLocal").Value = True
+474                         oRSMerged.Fields("ToDeleteLocal").Value = False
+476                         oRSMerged.Fields("ToAddServer").Value = False
+478                         oRSMerged.Fields("ToUpdateServer").Value = False
+480                         oRSMerged.Fields("ToDeleteServer").Value = False
+                        End If
+                                
+                    End If
+
+                End If
+            
+482             l = l + 1
+484             oRSMerged.Filter = adFilterNone
+            
+            Loop
+            
+486         If oRSMerged.RecordCount = 0 Then
+            
+488             TxMsg ">>>> No records left - both server and local sets match", True
+            
+            Else
+        
+490             oRSMerged.MoveFirst
+492             oRSMerged.Filter = adFilterNone
+494             oRSMerged.Sort = "sTableName"
+            
+496             If oRSMerged.RecordCount > 0 Then
+498                 oRSMerged.MoveFirst
+                    'TxMsg "oRSMerged.Fields(ToUpdateServer).Value: " & oRSMerged.Fields("ToUpdateServer").Value, True
+                    'TxMsg "oRSMerged.Fields(ToUpdateLocal).Value: " & oRSMerged.Fields("ToUpdateLocal").Value, True
+                End If
+
+                'TxMsg "### " & oRSMerged.RecordCount & " records need attention", True
+    
+500             ReDim sTableNames(1)
+502             iTablename = 1
+504             i = 1
+        
+506             Do Until oRSMerged.EOF
+            
+508                 If oRSMerged.Fields("sTableName").Value <> sTableNames(iTablename - 1) Then
+510                     ReDim Preserve sTableNames(iTablename + 1)
+512                     sTableNames(iTablename) = oRSMerged.Fields("sTableName").Value
+514                     iTablename = iTablename + 1
+                        'TxMsg "### sTableName: " & oRSMerged.Fields("sTableName").Value, True
+                    End If
+            
+516                 oRSMerged.MoveNext
+        
+                Loop
+            
+518             iTablename = iTablename - 1
+520             ReDim oSynchOperations(1)
+
+                'TxMsg "### tables: " & CStr(iTablename), True
+            
+                'sTableNames()                      = Tables to be checked
+                'oRSMerged.Fields("ToAddLocal")     = Add record from server to local
+                'oRSMerged.Fields("ToAddServer")    = Add record from local to server
+                'oRSMerged.Fields("ToUpdateLocal")  = Update local record from server
+                'oRSMerged.Fields("ToUpdateServer") = Update server record from local
+                'oRSMerged.Fields("ToDeleteLocal")  = Delete local record
+                'oRSMerged.Fields("ToDeleteServer") = Delete server record
+            
+                ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                'Now fetch records from local which need to be sent to the server
+            
+522             oRSMerged.Filter = adFilterNone
+524             oRSMerged.Filter = "[ToAddServer] = true OR [ToUpdateServer] = true OR [ToAddLocal] = true OR [ToUpdateLocal] = true OR [ToDeleteServer] = true OR [ToDeleteLocal] = true"
+526             oRSMerged.Sort = "[sTableName],[ToAddServer] DESC,[ToUpdateServer] DESC, [ToAddLocal] DESC, [ToUpdateLocal] DESC,[ToDeleteServer] DESC,[ToDeleteLocal] DESC"
+
+528             If Not oRSMerged.RecordCount = 0 Then oRSMerged.MoveFirst
+                'oRSMerged.Filter = "[ToAddServer] = true OR [ToUpdateServer] = true OR [ToAddLocal] = true OR [ToUpdateLocal] = true OR [ToDeleteServer] = true OR [ToDeleteLocal] = true"
+530             i = 1
+532             sSQL = ""
+
+                'TxMsg "### before working on commits (oRSMerged.RecordCount) = " & oRSMerged.RecordCount, True
+
+534             If Not oRSMerged.EOF Then
+                
+                    Do
+
+536                     With oRSMerged
+538                         sGUIDName = IIf(InStr(.Fields("sTableName").Value, "_link") > 1, "[GUID2]", IIf(.Fields("sTableName").Value = "oincidents", "[ID]", "[GUID1]"))
+                            '  lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+                    
+540                         If Not i = 1 Then .MoveNext
+                
+542                         If Not oRSMerged.EOF Then
+544                             sCurrentOperation = .Fields("sTableName").Value & CStr(.Fields("ToAddLocal").Value) & CStr(.Fields("ToAddServer").Value) & CStr(.Fields("ToUpdateLocal").Value) & CStr(.Fields("ToUpdateServer").Value) & CStr(.Fields("ToDeleteLocal").Value) & CStr(.Fields("ToDeleteServer").Value)
+                            Else
+546                             sCurrentOperation = "LastRecord"
+                            End If
+
+                            'TxMsg "### loop on oRSMerged", True
+
+                            'New table different from last record
+548                         If (sCurrentOperation = "LastRecord") Or (Not i = 1 And Not sCurrentOperation = sLastOperation) Then
+                    
+                                'TxMsg "### working on commits", True
+                    
+                                'Perform operations so we can perform this operation
+550                             If Not i = 1 Then .MovePrevious
+552                             If Right(.Fields("sTableName").Value, 4) = "_FEA" Then bIsGeoTable = True
+                            
+                                ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                                'Get local and server recordsets for tables and synchhistory
+554                             sSQLCommand = "SELECT * FROM [" & .Fields("sTableName").Value & "] WHERE" & Replace(sSQL, "[sID]", sGUIDName)
+556                             Set oRSLocal = New ADODB.Recordset
+558                             oRSLocal.Open sSQLCommand, cn, adOpenDynamic, adLockBatchOptimistic
+                                If .Fields("sTableName").Value = "Incidents_ChartSettings" Or .Fields("sTableName").Value = "GeoBookmarks" Or .Fields("sTableName").Value = "GeoBookmarksCategories" Then
+                                    sSQLCommand = "SELECT * FROM [" & m_StrRemoteTablePrefix & .Fields("sTableName").Value & "] WHERE" & Replace(sSQL, "[sID]", sGUIDName)
+                                End If
+560                             Set oRSServer = OpenServerRSCompressed(sWebsite, "ID", sSQLCommand)
+                          
+562                             sSQLCommand = "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE" & sSQL
+564                             Set oRSLocalSynchHistory = New ADODB.Recordset
+566                             oRSLocalSynchHistory.Open sSQLCommand, cn, adOpenDynamic, adLockBatchOptimistic
+568                             Set oRSServerSynchHistory = OpenServerRSCompressed(sWebsite, "ID", sSQLCommand)
+                            
+570                             If bIsGeoTable Then
+
+572                                 sSQL = ""
+
+574                                 Do Until oRSServer.EOF
+576                                     sSQL = sSQL & " OR [UID]=" & oRSServer.Fields("UID").Value
+578                                     oRSServer.MoveNext
+                                    Loop
+
+580                                 If Len(sSQL) > 2 Then
+582                                     sSQL = Right(sSQL, Len(sSQL) - 4)
+584                                     sSQL = "WHERE " & sSQL
+                                    End If
+
+586                                 If oRSServer.RecordCount > 0 Then oRSServer.MoveFirst
+
+588                                 sSQLCommand = "SELECT * FROM [" & Left(.Fields("sTableName").Value, Len(.Fields("sTableName").Value) - 4) & "_GEO] " & sSQL
+                                    'TxMsg Right(sSQLCommand, 50), True
+590                                 Set oRSLocal_GEO = New ADODB.Recordset
+592                                 oRSLocal_GEO.Open sSQLCommand, cn, adOpenDynamic, adLockBatchOptimistic
+594                                 Set oRSServer_GEO = OpenServerRSCompressed(sWebsite, "ID", sSQLCommand)
+                                End If
+                                
+                                ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                            
+596                             If .Fields("ToAddLocal").Value = True Then
+
+                                    'TxMsg "### ToAddLocal", True
+                                
+                                    'Add to local from server
+598                                 If oRSServerSynchHistory.RecordCount > 0 Then oRSServerSynchHistory.MoveFirst
+
+600                                 Do Until oRSServerSynchHistory.EOF
+602                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+604                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") appending record to local table [" & oRSServerSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSServerSynchHistory.Fields("sID").Value
+                                
+606                                     oRSLocal.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+                                        'TxMsg sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'", True
+608                                     oRSServer.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+610                                     oRSLocalSynchHistory.Filter = "[sID] = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+                                    
+612                                     If Not oRSServer.EOF Then
+                                            
+614                                         If oRSLocal.EOF Then
+616                                             oRSLocal.AddNew
+
+618                                             If bIsGeoTable Then oRSLocal_GEO.AddNew
+                                            Else
+
+620                                             If bIsGeoTable Then oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+                                            End If
+
+622                                         UpdateRSRecordSingle oRSServer, oRSLocal
+                                            
+624                                         If bIsGeoTable Then
+626                                             oRSServer_GEO.Filter = "UID = " & oRSServer.Fields("UID").Value
+
+628                                             If oRSLocal_GEO.EOF Then oRSLocal_GEO.AddNew
+630                                             UpdateRSRecordSingle oRSServer_GEO, oRSLocal_GEO
+632                                             Set oRS_GEO = New ADODB.Recordset
+634                                             oRS_GEO.Open "SELECT max(UID) from " & .Fields("sTableName").Value, cn, adOpenDynamic, adLockBatchOptimistic
+
+636                                             If oRS_GEO.EOF Then
+638                                                 lUID = 1
+640                                             ElseIf IsNull(oRS_GEO.Fields(0).Value) Then
+642                                                 lUID = 1
+                                                Else
+644                                                 lUID = oRS_GEO.Fields(0).Value + 1
+                                                End If
+
+646                                             oRS_GEO.Close
+648                                             oRSLocal.Fields("UID").Value = lUID
+650                                             oRSLocal_GEO.Fields("UID").Value = lUID
+652                                             oRSLocal_GEO.UpdateBatch
+                                            End If
+
+654                                         oRSLocal.UpdateBatch adAffectCurrent
+                                            If Right$(.Fields("sTableName").Value, 7) = "Queries" Then CreateQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, oRSLocal.Fields("QuerySQL").Value, cn, sWebsite
+                                        
+656                                         If oRSLocalSynchHistory.EOF Then
+658                                             oRSLocalSynchHistory.AddNew
+                                            Else
+                                                'ERROR: synchhistory record exists - allow override
+                                            End If
+                                        
+660                                         UpdateRSRecordSingle oRSServerSynchHistory, oRSLocalSynchHistory
+662                                         oRSLocalSynchHistory.Fields("sBy").Value = "New synch'd down on " & RFC3339DateTime
+664                                         oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+                            
+                                        Else
+                                            'ERROR: server record does not exist only in SynchHistory table
+                                            '>> may need to wipe the synchhistory row on the server
+                                        End If
+                                    
+666                                     oRSServerSynchHistory.MoveNext
+                                    
+                                    Loop
+                                
+                                End If
+
+668                             If .Fields("ToAddServer").Value = True Then
+
+                                    'TxMsg "### ToAddServer", True
+                               
+                                    'Add to server from local
+670                                 If oRSLocalSynchHistory.RecordCount > 0 Then oRSLocalSynchHistory.MoveFirst
+
+672                                 Do Until oRSLocalSynchHistory.EOF
+674                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+676                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") appending record to server table [" & oRSLocalSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSLocalSynchHistory.Fields("sID").Value
+
+678                                     oRSLocal.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+680                                     oRSServer.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+682                                     oRSServerSynchHistory.Filter = "[sID] = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+                                    
+684                                     If Not oRSLocal.EOF Then
+                                            
+686                                         If oRSServer.EOF Then
+688                                             oRSServer.AddNew
+                                            Else
+                                                'allow override
+                                            End If
+
+690                                         UpdateRSRecordSingle oRSLocal, oRSServer
+
+                                            If bIsGeoTable Then
+                                            If Not oRSLocal_GEO.RecordCount = 0 Then oRSLocal_GEO.MoveFirst
+694                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+
+                                                sResponse = ""
+
+                                                If Not oRSLocal_GEO.EOF Then
+
+                                                    oRSServer_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+
+696                                                 If oRSServer_GEO.EOF Then oRSServer_GEO.AddNew
+698                                                 UpdateRSRecordSingle oRSLocal_GEO, oRSServer_GEO
+700                                                 lUID = GetMaxUIDFromServerGEOTable(.Fields("sTableName").Value, sWebsite) + 1
+702                                                 oRSServer.Fields("UID").Value = lUID
+704                                                 oRSServer_GEO.Fields("UID").Value = lUID
+706                                                 sResponse = SaveServerRSCompressed(sWebsite, oRSServer_GEO)
+
+                                                Else
+                                                    TxMsg "!!! Corresponding GEO record for UID " & oRSLocal.Fields("UID").Value & " was not found", True
+                                                End If
+
+                                            Else
+708                                             sResponse = "Data Updated"
+                                            End If
+
+710                                         If Not sResponse = "Data Updated" Then
+
+712                                             TxMsg "    --- Error updating oRSServer_GEO: " & sResponse, True
+
+                                            Else
+
+714                                             sResponse = SaveServerRSCompressed(sWebsite, oRSServer)
+
+716                                             If Not sResponse = "Data Updated" Then
+
+718                                                 TxMsg "    --- Error updating oRSServer: " & sResponse, True
+                                        
+                                                Else
+
+720                                                 If oRSServerSynchHistory.EOF Then
+722                                                     oRSServerSynchHistory.AddNew
+                                                    Else
+                                                        'ERROR: synchhistory record exists - allow override
+                                                    End If
+                                            
+724                                                 oRSLocalSynchHistory.Fields("updates").Value = "true"
+726                                                 oRSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+728                                                 UpdateRSRecordSingle oRSLocalSynchHistory, oRSServerSynchHistory
+730                                                 oRSServerSynchHistory.Fields("sBy").Value = "New synch'd up on " & CalcServerDateTime(Now())
+732                                                 sResponse = SaveServerRSCompressed(sWebsite, oRSServerSynchHistory)
+
+734                                                 If Not sResponse = "Data Updated" Then
+736                                                     TxMsg "    --- Error updating oRSServerSynchHistory: " & sResponse, True
+                                                    Else
+738                                                     oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+                                                    End If
+                                        
+                                                End If
+                                        
+                                            End If
+
+                                        Else
+                                            'ERROR: local record does not exist only in SynchHistory table
+                                            '>> may need to wipe the synchhistory row on local
+                                        End If
+                                    
+740                                     oRSLocalSynchHistory.MoveNext
+                                    
+                                    Loop
+                                
+                                End If
+
+742                             If .Fields("ToUpdateLocal").Value = True Then
+                                    'TxMsg "### ToUpdateLocal", True
+
+                                    'Update local from server
+744                                 If oRSServerSynchHistory.RecordCount > 0 Then oRSServerSynchHistory.MoveFirst
+
+746                                 Do Until oRSServerSynchHistory.EOF
+
+748                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+750                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") updating record to local table [" & oRSServerSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSServerSynchHistory.Fields("sID").Value
+                                
+752                                     oRSLocal.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+754                                     oRSServer.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+756                                     oRSLocalSynchHistory.Filter = "[sID] = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+                                    
+758                                     If Not oRSServer.EOF Then
+                                            
+760                                         If oRSLocal.EOF Then
+762                                             oRSLocal.AddNew
+
+764                                             If bIsGeoTable Then oRSLocal_GEO.AddNew
+                                            Else
+
+766                                             If bIsGeoTable Then oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+                                            End If
+
+768                                         UpdateRSRecordSingle oRSServer, oRSLocal
+
+770                                         If bIsGeoTable Then
+772                                             oRSServer_GEO.Filter = "UID = " & oRSServer.Fields("UID").Value
+
+774                                             If oRSLocal_GEO.EOF Then oRSLocal_GEO.AddNew
+776                                             UpdateRSRecordSingle oRSServer_GEO, oRSLocal_GEO
+778                                             Set oRS_GEO = New ADODB.Recordset
+780                                             oRS_GEO.Open "SELECT max(UID) from " & .Fields("sTableName").Value, cn, adOpenDynamic, adLockBatchOptimistic
+
+782                                             If oRS_GEO.EOF Then
+784                                                 lUID = 1
+                                                Else
+
+786                                                 lUID = oRS_GEO.Fields(0).Value + 1
+                                                End If
+
+788                                             oRS_GEO.Close
+790                                             oRSLocal.Fields("UID").Value = lUID
+792                                             oRSLocal_GEO.Fields("UID").Value = lUID
+794                                             oRSLocal_GEO.UpdateBatch
+                                            End If
+
+796                                         oRSLocal.UpdateBatch adAffectCurrent
+                                            If Right$(.Fields("sTableName").Value, 7) = "Queries" Then CreateQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, oRSLocal.Fields("QuerySQL").Value, cn, sWebsite
+                                            
+798                                         If oRSLocalSynchHistory.EOF Then
+800                                             oRSLocalSynchHistory.AddNew
+                                            Else
+                                                'ERROR: synchhistory record exists - allow override
+                                            End If
+                                        
+802                                         UpdateRSRecordSingle oRSServerSynchHistory, oRSLocalSynchHistory
+804                                         oRSLocalSynchHistory.Fields("sBy").Value = "Update synch'd down on " & RFC3339DateTime
+806                                         oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+                                    
+                                        Else
+                                            'ERROR: server record does not exist only in SynchHistory table
+                                            '>> may need to wipe the synchhistory row on the server
+                                        End If
+                                    
+808                                     oRSServerSynchHistory.MoveNext
+                                    
+                                    Loop
+                                
+                                End If
+
+810                             If .Fields("ToUpdateServer").Value = True Then
+                                    'TxMsg "### ToUpdateServer", True
+
+                                    'Update server from local
+812                                 If oRSLocalSynchHistory.RecordCount > 0 Then oRSLocalSynchHistory.MoveFirst
+
+814                                 Do Until oRSLocalSynchHistory.EOF
+816                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+818                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") updating record to server table [" & oRSLocalSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSLocalSynchHistory.Fields("sID").Value
+
+820                                     oRSLocal.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+822                                     oRSServer.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+824                                     oRSServerSynchHistory.Filter = "[sID] = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+                                        
+826                                     If Not oRSLocal.EOF Then
+                                            
+828                                         If oRSServer.EOF Then oRSServer.AddNew
+830                                         UpdateRSRecordSingle oRSLocal, oRSServer
+                                        
+832                                         If bIsGeoTable Then
+834                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+
+836                                             If oRSServer_GEO.EOF Then oRSServer_GEO.AddNew
+838                                             UpdateRSRecordSingle oRSLocal_GEO, oRSServer_GEO
+840                                             lUID = GetMaxUIDFromServerGEOTable(.Fields("sTableName").Value, sWebsite) + 1
+842                                             oRSServer.Fields("UID").Value = lUID
+844                                             oRSServer_GEO.Fields("UID").Value = lUID
+846                                             sResponse = SaveServerRSCompressed(sWebsite, oRSServer_GEO)
+                                            Else
+848                                             sResponse = "Data Updated"
+                                            End If
+                                        
+850                                         If Not sResponse = "Data Updated" Then
+
+852                                             TxMsg "    --- Error updating oRSServer: " & sResponse, True
+                                        
+                                            Else
+                                        
+854                                             sResponse = SaveServerRSCompressed(sWebsite, oRSServer)
+
+856                                             If Not sResponse = "Data Updated" Then
+
+858                                                 TxMsg "    --- Error updating oRSServer: " & sResponse, True
+                                        
+                                                Else
+
+860                                                 If oRSServerSynchHistory.EOF Then
+862                                                     oRSServerSynchHistory.AddNew
+                                                    Else
+                                                        'ERROR: synchhistory record exists - allow override
+                                                    End If
+                                            
+864                                                 oRSLocalSynchHistory.Fields("updates").Value = "true"
+866                                                 oRSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+868                                                 UpdateRSRecordSingle oRSLocalSynchHistory, oRSServerSynchHistory
+870                                                 oRSServerSynchHistory.Fields("sBy").Value = "Update synch'd up on " & CalcServerDateTime(Now())
+872                                                 sResponse = SaveServerRSCompressed(sWebsite, oRSServerSynchHistory)
+
+874                                                 If Not sResponse = "Data Updated" Then
+876                                                     TxMsg "    --- Error updating oRSServerSynchHistory: " & sResponse, True
+                                                    Else
+878                                                     oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+                                                    End If
+                                        
+                                                End If
+                                        
+                                            End If
+                                        
+                                        Else
+                                            'ERROR: server record does not exist only in SynchHistory table
+                                            '>> may need to wipe the synchhistory row on the server
+                                        End If
+                                    
+880                                     oRSLocalSynchHistory.MoveNext
+                                    
+                                    Loop
+                                
+                                End If
+
+882                             If .Fields("ToDeleteLocal").Value = True Then
+                                    'TxMsg "### ToDeleteLocal", True
+                                
+                                    'Delete local
+884                                 If oRSServerSynchHistory.RecordCount > 0 Then oRSServerSynchHistory.MoveFirst
+
+886                                 Do Until oRSServerSynchHistory.EOF
+888                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+890                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") deleting record from local table [" & oRSServerSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSServerSynchHistory.Fields("sID").Value
+
+892                                     oRSLocal.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+894                                     oRSServer.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+896                                     oRSLocalSynchHistory.Filter = "[sID] = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
+                                    
+898                                     If Not oRSServer.EOF Then
+                                            'ERROR: server record exist - it should not!
+                                            'TODO: clean up the records table
+                                            'oRSServer.Delete adAffectCurrent
+                                        End If
+
+900                                     If Not oRSLocal.EOF Then
+
+902                                         If bIsGeoTable Then
+904                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+
+906                                             If Not oRSLocal_GEO.EOF Then oRSLocal.Delete adAffectCurrent
+908                                             oRSLocal_GEO.UpdateBatch
+                                            End If
+
+910                                         oRSLocal.Delete adAffectCurrent
+912                                         oRSLocal.UpdateBatch adAffectCurrent
+                                            If Right$(.Fields("sTableName").Value, 7) = "Queries" Then DropLocalQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, cn
+                                        End If
+
+914                                     If oRSLocalSynchHistory.EOF Then
+916                                         oRSLocalSynchHistory.AddNew
+                                        Else
+                                            'Synchhistory record exists - allow override
+                                        End If
+                                        
+918                                     UpdateRSRecordSingle oRSServerSynchHistory, oRSLocalSynchHistory
+920                                     oRSLocalSynchHistory.Fields("sBy").Value = "Delete synch'd down on " & RFC3339DateTime
+922                                     oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+
+924                                     oRSServerSynchHistory.MoveNext
+                                    
+                                    Loop
+
+                                End If
+
+926                             If .Fields("ToDeleteServer").Value = True Then
+                                    'TxMsg "### ToDeleteServer", True
+
+                                    'Delete server
+928                                 If oRSLocalSynchHistory.RecordCount > 0 Then oRSLocalSynchHistory.MoveFirst
+
+930                                 Do Until oRSLocalSynchHistory.EOF
+932                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
+934                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") deleting record from server table [" & oRSLocalSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSLocalSynchHistory.Fields("sID").Value
+
+936                                     oRSLocal.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+938                                     oRSServer.Filter = sGUIDName & " = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+940                                     oRSServerSynchHistory.Filter = "[sID] = '" & oRSLocalSynchHistory.Fields("sID").Value & "'"
+                                        
+942                                     If Not oRSLocal.EOF Then
+                                            'ERROR: local record exists! It should be deleted. Deleting...
+944                                         oRSLocal.Delete adAffectCurrent
+946                                         oRSLocal.UpdateBatch adAffectCurrent
+                                        End If
+
+948                                     If Not oRSServer.EOF Then
+                                    
+950                                         If bIsGeoTable Then
+952                                             oRSServer_GEO.Filter = "UID = " & oRSServer.Fields("UID").Value
+
+954                                             If Not oRSServer_GEO.EOF Then
+956                                                 oRSServer_GEO.Delete adAffectCurrent
+958                                                 sResponse = SaveServerRSCompressed(sWebsite, oRSServer_GEO)
+                                                Else
+960                                                 sResponse = "Data Updated"
+                                                End If
+
+                                            Else
+962                                             sResponse = "Data Updated"
+                                            End If
+                                    
+964                                         If sResponse = "Data Updated" Then
+966                                             oRSServer.Delete adAffectCurrent
+968                                             sResponse = SaveServerRSCompressed(sWebsite, oRSServer)
+                                            End If
+                                        
+                                        End If
+                                        
+970                                     If sResponse = "Data Updated" Then
+                                    
+972                                         If oRSServerSynchHistory.EOF Then
+974                                             oRSServerSynchHistory.AddNew
+                                            Else
+                                                'Synchhistory record exists - allow override
+                                            End If
+                                            
+976                                         oRSLocalSynchHistory.Fields("updates").Value = "true"
+978                                         oRSLocalSynchHistory.Fields("sWhen").Value = CalcServerDateTime(Now())
+980                                         UpdateRSRecordSingle oRSLocalSynchHistory, oRSServerSynchHistory
+982                                         oRSServerSynchHistory.Fields("sBy").Value = "Delete synch'd up on " & CalcServerDateTime(Now())
+984                                         sResponse = SaveServerRSCompressed(sWebsite, oRSServerSynchHistory)
+
+986                                         If Not sResponse = "Data Updated" Then
+988                                             TxMsg "    --- Error updating oRSServerSynchHistory: " & sResponse, True
+                                            Else
+990                                             oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+                                            End If
+                                    
+                                        Else
+                                    
+992                                         TxMsg "    --- Error deleting from oRSServer: " & sResponse, True
+                                        End If
+                                    
+994                                     oRSLocalSynchHistory.MoveNext
+                                    
+                                    Loop
+                                
+                                End If
+                            
+996                             .MoveNext
+998                             i = 1
+1000                            sSQL = ""
+                
+                            End If
+                        
+1002                        If Not .EOF Then
+                    
+1004                            If i = 1 Then
+1006                                sSQL = sSQL & " [sID] = '" & oRSMerged.Fields("sID").Value & "'"
+                                Else
+1008                                sSQL = sSQL & " OR [sID] = '" & oRSMerged.Fields("sID").Value & "'"
+                                End If
+                    
+                                'Prepare for the next loop
+1010                            i = i + 1
+1012                            sLastOperation = sCurrentOperation
+                        
+                            End If
+                        
+                        End With
+
+1014                Loop Until oRSMerged.EOF
+
+                End If
+            
+            End If
+
+        Else
+1016        SynchDDWithServer2 = True
+        End If
+
+        'TxMsg "SynchDDWithServer2_Err: (" & Erl & ") " & Err.Description, True
+        '<EhFooter>
+        Exit Function
+
+SynchDDWithServer2_Err:
+        TxMsg "SynchDDWithServer2_Err: (" & Erl & ") " & Err.Description, True
+        '</EhFooter>
+End Function
+
+Private Sub UpdateRSRecordSingle(RSSource As ADODB.Recordset, _
+                                 RSDest As ADODB.Recordset)
+        '<EhHeader>
+        On Error GoTo UpdateRSRecordSingle_Err
         '</EhHeader>
 
-        Dim sLocalTableName As String
-        Dim RSLocalSynchHistory As New ADODB.Recordset
-        Dim RSServerSynchHistory As New ADODB.Recordset
-        Dim bAddNew As Boolean
-        Dim bUpdate As Boolean
-        Dim bDelete As Boolean
-        Dim sLocalTableGUID As String
-        Dim bIsGeo As Boolean
-        Dim sSQL As String
-        Dim sTableNames() As String
+        Dim uUID As Long
+        uUID = -1
         Dim i As Long
-        Dim sRetVal As String
-        Dim SynchOp As SynchOperation
-        Dim sTableNameSmall As String
-        Dim lOldNumBatchDownload As Long
-        Dim bNewRecordsFetched As Boolean
+100     i = 0
     
-100     TxMsg ">>>>>>>>>>>>"
-102     TxMsg ">>> Beginning synchronisation for dynamic database: " & sTableNamePrefix & "......................"
+102     Do Until i = RSDest.Fields.Count
+    
+104         If Not RSDest.Fields(i).Name = "WKB" And Not RSDest.Fields(i).Name = "ORIG_ID" Then
+106             If DoesFieldExistInRS(RSSource, RSDest.Fields(i).Name) Then
 
-104     If Not Mid$(sWebsite, Len(sWebsite)) = "/" Then sWebsite = sWebsite & "/"
-106     m_sIDs = ""
-
-156     Set RSLocalSynchHistory = Nothing
-
-        ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-        ' DOWNLOAD DATA
-        
-158     GetSynchTablesToWipe sWebsite, cn, sTableNamePrefix
-        
-160     sRetVal = GetTableNames(cn, sTableNamePrefix)
-162     sTableNames = Split(sRetVal, ",", , vbTextCompare)
-        
-164     i = UBound(sTableNames)
-        bRecordsDownloaded = False
-
-166     Do Until i = -1 'UBound(sTableNames) + 1
-          
-168         sTableNameSmall = Right$(sTableNames(i), Len(sTableNames(i)) - Len(sTableNamePrefix))
-
-170         If Left$(sTableNameSmall, 4) = "link" Then
-172             sLocalTableGUID = "GUID2"
-            Else
-174             sLocalTableGUID = "GUID1"
-            End If
-            
-            'If Not Right(sTableNames(i), 13) = "ChartSettings" And Not Right(sTableNames(i), 7) = "Queries" Then
-            'sTableNames(i) = sTableNames(i) & "_GEO"
-            'End If
-            
-176         If Not Right$(sTableNames(i), 12) = "SynchHistory" And Not Right$(sTableNames(i), 20) = "SynchHistoryOverview" And Not Right$(sTableNames(i), 4) = "_GEO" Then
-
-178             If Right$(sTableNames(i), 4) = "_FEA" Then
-180                 bIsGeo = True
-                    ' sTableNames(i) = Left$(sTableNames(i), Len(sTableNames(i)) - 4)
-                Else
-182                 bIsGeo = False
-                End If
-                
-186             lOldNumBatchDownload = lBatchCountToDownload
-188             bLargePolygonDownloadFailed = False
-                
-190             bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
-
-                If SynchHistoryOverview.NextSynchNextOpeation = NewOnly And Not bNewRecordsFetched Then GetSynchRecordsTODELETE sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix
-                
-                '                If SynchHistoryOverview.NextSynchNextOpeation = NewOnly And m_lCountDownloaded = 0 Then
-                '                    TxMsg "!!!! Next synch operation is still set to NewOnly but no records were downloaded!  Adjusting SynchHistoryOverview", True, True
-                '                    cn.Execute "UPDATE [" & sTableNamePrefix & "SynchHistoryOverview] SET sWhenMaxSearched = sWhenMinSearched WHERE [sTablename] = '" & sTableNames(i) & "'"
-                '
-                '                End If
-                '
-                '192             Do While SynchHistoryOverview.NextSynchNextOpeation = NewOnly 'And bNewRecordsFetched
-                '194                 bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
-                '                Loop
-                                                  
-                'need to check this logic
-                If Not SynchHistoryOverview.NextSynchNextOpeation = DoNotSynch And Not SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then
-                    GetSynchRecordsTODELETE sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix
-                End If
-
-                '''''''''
-                
-196             If bLargePolygonDownloadFailed Then
-                
-198                 If bIsGeo And lBatchCountToDownload > 5 Then
-200                     If IsGeoTablePoly(sTableNames(i), cn) Then
-202                         lBatchCountToDownload = 5
-204                         TxMsg "!!!! Detected polygon / polyline download issue - setting batch download to 5 a time"
-                        End If
-                    End If
-                
-206                 bNewRecordsFetched = GetSynchRecordsTOADD(sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix)
-208                 bLargePolygonDownloadFailed = False
+108                 If Not IsNull(RSSource.Fields(RSDest.Fields(i).Name).Value) Then
+110                     If Not (Right$(RSDest.Source, 4) = "_FEA" And RSDest.Fields(i).Name = "UID") Then
+                        
+112                         RSDest.Fields(i).Value = RSSource.Fields(RSDest.Fields(i).Name).Value
+114                         ' TxMsg RSDest.Fields(i).Name, True
                     
-                End If
-                
-210             If SynchHistoryOverview.NextSynchNextOpeation = EditsOnly Then GetSynchRecordsTOUPDATE sTableNames(i), sLocalTableGUID, bIsGeo, sWebsite, cn, sTableNamePrefix
-                
-212             If Right$(sTableNames(i), 8) = "_Queries" Then
-214                 If CompareQueries(sWebsite, sTableNamePrefix, cn) = False Then
-216                     TxMsg "!!!!!! Update of queries failed", True
-                    Else
-218                     'TxMsg ">>>>>> Update of queries succeeded", True
+                        End If
+                   
                     End If
+
+116             ElseIf RSDest.Fields(i).Name = "oincidents_FEA.UID" Or RSDest.Fields(i).Name = "oincidents_GEO.UID" Then
+                    If uUID = -1 Then uUID = GetMaxUIDFromGEOTable("oincidents_GEO", RSDest.ActiveConnection) + CLng(1)
+118                 RSDest.Fields(i).Value = uUID 'RSSource.Fields("UID").Value
+120                 'TxMsg RSDest.Fields(i).Name, True
+                ElseIf RSDest.Fields(i).Name = "SHAPETYPEFORINCIDENTS" Then
+                    RSDest.Fields(i).Value = 2
                 End If
-                
-220             lBatchCountToDownload = lOldNumBatchDownload
-                
             End If
 
-222         i = i - 1
+122         i = i + 1
+        
         Loop
-        
-        TxMsg "**??Updating extents for queries......................", True
-        FixLocalQueriesExtents cn, sTableNamePrefix
-        
-        If Not bRecordsDownloaded Then
-        
-            Set RSLocalSynchHistory = Nothing
-            ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-            'UPLOAD DATA...............................
-            '
-            'RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sdelete] DESC", cn, adOpenDynamic, adLockBatchOptimistic
-108         RSLocalSynchHistory.Open "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE [updates] = 'false' ORDER BY [sTableName] DESC", cn, adOpenDynamic, adLockBatchOptimistic
-        
-110         If Not RSLocalSynchHistory.State = adStateClosed Then
 
-112             If RSLocalSynchHistory.EOF = False Then
-
-114                 TxMsg "Records are pending update to server..........."
-
-116                 Do Until RSLocalSynchHistory.EOF
-
-118                     If RSLocalSynchHistory.Fields("sdelete").Value = "true" Then
-120                         SynchOp = Delete
-                        Else
-
-122                         If RSLocalSynchHistory.Fields("sequence").Value > 1 Then
-124                             SynchOp = Update
-126                         ElseIf RSLocalSynchHistory.Fields("sequence").Value = 1 Then
-128                             SynchOp = Add
-                            End If
-                        End If
-
-130                     sLocalTableName = RSLocalSynchHistory.Fields("sTableName").Value
-132                     sTableNameSmall = Right$(sLocalTableName, Len(sLocalTableName) - Len(sTableNamePrefix))
-
-134                     If Left$(sTableNameSmall, 4) = "link" Then
-136                         sLocalTableGUID = "GUID2"
-                        Else
-138                         sLocalTableGUID = "GUID1"
-                        End If
-
-140                     If Left$(Replace(sLocalTableName, sTableNamePrefix, "", , , vbTextCompare), 4) = "link" Then sLocalTableGUID = "GUID2"
-142                     bIsGeo = False
-
-144                     If Right$(sLocalTableName, 4) = "_FEA" Then
-146                         bIsGeo = True
-148                         sLocalTableName = Left$(sLocalTableName, Len(sLocalTableName) - 4)
-                        End If
-                    
-150                     UploadTableChangesToServer sLocalTableName, sLocalTableGUID, bIsGeo, sWebsite, cn, SynchOp, sTableNamePrefix
-152                     RSLocalSynchHistory.MoveFirst
-154                     RSLocalSynchHistory.Requery
-                
-                    Loop
-
-                End If
-
-            End If
-        
-        End If
-        
-224     TxMsg "**??Finished synchronisation of dynamic database: " & sTableNamePrefix & "......................", True
-226     TxMsg ">>>>>>>>>>>>"
         '<EhFooter>
         Exit Sub
 
-SynchDDWithServer_Err:
-        TxMsg "SynchDDWithServer_Err: (" & Erl & ") " & Err.Description, True
+UpdateRSRecordSingle_Err:
+        TxMsg "UpdateRSRecordSingle_Err: (" & Erl & ") " & Err.Description, True
         '</EhFooter>
 End Sub
 
@@ -4459,182 +2942,6 @@ Private Function IsGeoTablePoly(sTableName As String, _
 
 IsGeoTablePoly_Err:
         TxMsg "IsGeoTablePoly_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Function
-
-Private Function GetTableNames(oCOnn As ADODB.Connection, _
-                               sTablePreFix As String)
-        '<EhHeader>
-        On Error GoTo GetTableNames_Err
-        '</EhHeader>
- 
-        Dim oDB As adox.Catalog
-        Dim itbl As adox.Table
- 
-100     Set oDB = New adox.Catalog
-102     Set itbl = New adox.Table
-104     Set oDB.ActiveConnection = oCOnn
-106     GetTableNames = ""
-
-108     For Each itbl In oDB.Tables
-
-110         If InStr(1, itbl.Name, sTablePreFix) > 0 Then
-    
-112             If bSQLServerInUse Then
-114                 If itbl.Type = "TABLE" Then GetTableNames = GetTableNames & itbl.Name & ","
-                Else
-                
-116                 If Not itbl.Properties("Jet OLEDB:Create Link") = True Then
-                        'get linked table
-118                     If itbl.Type = "TABLE" Then GetTableNames = GetTableNames & itbl.Name & ","
-                    End If
-                
-                End If
-                
-            End If
-
-        Next
-        
-        'GetTableNames = GetTableNames & sTablePrefix & "ChartSettings,"
-        
-120     Set oDB = Nothing
-122     Set itbl = Nothing
-
-124     If Len(GetTableNames) > 0 Then GetTableNames = Left$(GetTableNames, Len(GetTableNames) - 1)
-
-        '<EhFooter>
-        Exit Function
-
-GetTableNames_Err:
-        TxMsg "GetTableNames_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Function
-
-Public Function SynchHistoryEdit(oCN As ADODB.Connection, _
-                                 sNewGUID As String, _
-                                 sID As String, _
-                                 sTitle As String, _
-                                 sDescription As String, _
-                                 sBy As String, _
-                                 sRFC3339DateTime As String, _
-                                 sTableName As String, _
-                                 bIsGeoLayer As Boolean, _
-                                 supdates As String, _
-                                 Optional sLocalSynchHistPrefix As String = "", _
-                                 Optional lSequence As Long = 0)
-        '<EhHeader>
-        On Error GoTo SynchHistoryEdit_Err
-        '</EhHeader>
-        
-        Dim i As Long
-        Dim j As Long
-
-100     SynchHistoryEdit = False
-    
-        Dim oRS As New ADODB.Recordset
-        Dim oRSQuery As ADODB.Recordset
-102     oRS.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE sID = '" & sID & "' AND sTableName = '" & sTableName & "' ORDER by [sequence] DESC", oCN, adOpenDynamic, adLockBatchOptimistic
-
-104     With oRS
- 
-106         If .State = adStateOpen Then
-    
-108             If Not .EOF Then
-
-                    '.Fields("sID").Value = sID
-110                 .Fields("sGUID").Value = sNewGUID
-112                 .Fields("sTableName").Value = sTableName
-114                 .Fields("swhen").Value = sRFC3339DateTime
-116                 .Fields("sStatus").Value = "pending"
-
-118                 If lSequence = 0 Then
-120                     .Fields("sequence").Value = CLng(.Fields("sequence").Value) + 1
-                    Else
-122                     .Fields("sequence").Value = lSequence
-                    End If
-                    
-124                 .Fields("sBy").Value = "[" & sTitle & "] " & sDescription & " (" & sBy & ")"
-126                 .Fields("sdelete").Value = "false"
-128                 .Fields("updates").Value = supdates
-130                 .Fields("noconflict").Value = "false"
-132                 .UpdateBatch adAffectCurrent
-
-134                 If Right(sTableName, 8) = "_Queries" Then
-                    
-136                     Set oRSQuery = New ADODB.Recordset
-
-138                     With oRSQuery
-                        
-140                         .Open "SELECT * FROM [" & sTableName & "] WHERE GUID1 = '" & sID & "'", oCN, adOpenDynamic, adLockBatchOptimistic
-
-142                         If Not .EOF Then
-
-144                             i = LocateIndexOfQuery(LocalQueries, sLocalSynchHistPrefix & .Fields("QueryName").Value)
-146                             j = LocateIndexOfQuery(DefinedDDQueries, sLocalSynchHistPrefix & .Fields("QueryName").Value)
-                    
-148                             If i > 0 And j > 0 Then
-                                
-152                                 DefinedDDQueries.Queries(j).bEdited = True
-154                                 TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for edit", True
-                                
-156                             ElseIf j > 0 Then
-                                
-160                                 DefinedDDQueries.Queries(j).bNew = True
-162                                 TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for addition", True
-                                    
-                                Else
-                                    TxMsg "!!!!!! Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] is not in the local database or in [" & sLocalSynchHistPrefix & "Queries] table - edit failed", True
-                                End If
-
-                                'CompareQueries sWebsite, sPrefix, oCN
-                                'DropLocalQuery sLocalSynchHistPrefix & .Fields("QueryName").Value, oCN, sLocalSynchHistPrefix
-                                'CreateQuery sLocalSynchHistPrefix & .Fields("QueryName").Value, .Fields("QuerySQL").Value, oCN
-                                
-                            End If
-
-164                         .Close
-                        End With
-                        
-166                     Set oRSQuery = Nothing
-                        
-                    End If
-                    
-168                 If .RecordCount > 1 Then
-                    
-170                     TxMsg "!!!!!!!!!!!! (SynchHistoryEdit) Something dodgy is going on the table: [" & sLocalSynchHistPrefix & "SynchHistory].  There should be only 1 record with sID: " & sID & " for tablename [" & sTableName & "] but there are actually " & .RecordCount & "!!!  The additional records will be deleted.  If this error message persists please contact an OASIS Developer", True
-                        
-172                     .MoveNext
-
-174                     Do Until .EOF
-176                         .Delete adAffectCurrent
-178                         .UpdateBatch adAffectCurrent
-180                         .MoveNext
-                        Loop
-                            
-                    End If
-                    
-182                 SynchHistoryEdit = True
-            
-                Else
-                      
-184                 TxMsg "!!!!!!!!!!!! (SynchHistoryEdit) Something dodgy is going on the table: [" & sLocalSynchHistPrefix & "SynchHistory].  There should be a record with sID: " & sID & " for tablename [" & sTableName & "] but it is missing!!!  This record will be created.  If this error message persists please contact an OASIS Developer" ', True
-186                 SynchHistoryAddNew oCN, sNewGUID, sID, sTitle, sDescription, sBy, sRFC3339DateTime, sTableName, bIsGeoLayer, supdates, sLocalSynchHistPrefix
-188                 SynchHistoryEdit = SynchHistoryEdit(oCN, sNewGUID, sID, sTitle, sDescription, sBy, sRFC3339DateTime, sTableName, bIsGeoLayer, supdates, sLocalSynchHistPrefix)
-        
-                End If
-
-            End If
-        
-        End With
-        
-190     Set oRS = Nothing
-        
-        '<EhFooter>
-        Exit Function
-
-SynchHistoryEdit_Err:
-        SynchHistoryEdit = False
-        Set oRS = Nothing
         '</EhFooter>
 End Function
 
@@ -4705,340 +3012,6 @@ Public Function CalcServerDateTimeFromRFC3339(sDate As String) As String
 
 End Function
 
-Public Function SynchHistoryDelete(oCN As ADODB.Connection, _
-                                   sNewGUID As String, _
-                                   sID As String, _
-                                   sTitle As String, _
-                                   sDescription As String, _
-                                   sBy As String, _
-                                   sRFC3339DateTime As String, _
-                                   sTableName As String, _
-                                   bIsGeoLayer As Boolean, _
-                                   supdates As String, _
-                                   Optional sLocalSynchHistPrefix As String = "", _
-                                   Optional sQueryToDelete As String = "")
-        '<EhHeader>
-        On Error GoTo SynchHistoryDelete_Err
-        '</EhHeader>
-        
-100     SynchHistoryDelete = False
-        
-        Dim oRS As New ADODB.Recordset
-        Dim oRSQuery As New ADODB.Recordset
-        Dim j As Long
-102     oRS.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE sID = '" & sID & "' AND sTableName = '" & sTableName & "' ORDER by [sequence] DESC", oCN, adOpenDynamic, adLockBatchOptimistic
-
-104     With oRS
- 
-106         If .State = adStateOpen Then
-    
-108             If Not .EOF Then
-
-                    '.Fields("sID").Value = sID
-110                 .Fields("sGUID").Value = sNewGUID
-112                 .Fields("sTableName").Value = sTableName
-114                 .Fields("swhen").Value = sRFC3339DateTime
-116                 .Fields("sStatus").Value = "pending"
-118                 .Fields("sequence").Value = CLng(.Fields("sequence").Value) + 1
-120                 .Fields("sBy").Value = "[" & sTitle & "] " & sDescription & " (" & sBy & ")"
-122                 .Fields("sdelete").Value = "true"
-124                 .Fields("updates").Value = supdates
-126                 .Fields("noconflict").Value = "false"
-128                 .UpdateBatch adAffectCurrent
-
-130                 If Len(sQueryToDelete) > 0 Then
-
-                        j = LocateIndexOfQuery(DefinedDDQueries, sLocalSynchHistPrefix & .Fields("QueryName").Value)
-                             
-                        If j > 0 Then
-                                
-                            DefinedDDQueries.Queries(j).bDelete = True
-                            TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for deletion", True
-                                    
-                        End If
-                        
-                    End If
-                    
-146                 If .RecordCount > 1 Then
-                    
-148                     TxMsg "!!!!!!!!!!!! (SynchHistoryDelete) Something dodgy is going on the table: [" & sLocalSynchHistPrefix & "SynchHistory].  There should be only 1 record with sID: " & sID & " for tablename [" & sTableName & "] but there are actually " & .RecordCount & "!!!  The additional records will be deleted.  If this error message persists please contact an OASIS Developer", True
-                        
-150                     .MoveNext
-
-152                     Do Until .EOF
-154                         .Delete adAffectCurrent
-156                         .UpdateBatch adAffectCurrent
-158                         .MoveNext
-                        Loop
-                            
-                    End If
-                    
-160                 SynchHistoryDelete = True
-            
-                Else
-            
-                    'TxMsg "!!!!!!!!!!!! (SynchHistoryDelete) Something dodgy is going on the table: [" & sLocalSynchHistPrefix & "SynchHistory].  There should be a record with sID: " & sID & " for tablename [" & sTableName & "] but it is missing!!!  This record will be created.  If this error message persists please contact an OASIS Developer"
-162                 SynchHistoryAddNew oCN, sNewGUID, sID, sTitle, sDescription, sBy, sRFC3339DateTime, sTableName, bIsGeoLayer, supdates, sLocalSynchHistPrefix
-164                 SynchHistoryDelete = SynchHistoryDelete(oCN, sNewGUID, sID, sTitle, sDescription, sBy, sRFC3339DateTime, sTableName, bIsGeoLayer, supdates, sLocalSynchHistPrefix)
-            
-                End If
-    
-            End If
-        
-        End With
-        
-166     Set oRS = Nothing
-        
-        '<EhFooter>
-        Exit Function
-
-SynchHistoryDelete_Err:
-        SynchHistoryDelete = False
-        Set oRS = Nothing
-        '</EhFooter>
-End Function
-
-Public Function SynchHistoryAddNew(oCN As ADODB.Connection, _
-                                   sNewGUID As String, _
-                                   sID As String, _
-                                   sTitle As String, _
-                                   sDescription As String, _
-                                   sBy As String, _
-                                   sRFC3339DateTime As String, _
-                                   ByVal sTableName As String, _
-                                   bIsGeoLayer As Boolean, _
-                                   supdates As String, _
-                                   Optional sLocalSynchHistPrefix As String = "", _
-                                   Optional lSequenceOverride = 1)
-        '<EhHeader>
-        On Error GoTo SynchHistoryAddNew_Err
-        '</EhHeader>
-
-100     SynchHistoryAddNew = False
-
-        Dim i As Long
-        Dim j As Long
-        Dim oRS As New ADODB.Recordset
-        Dim oRSQuery As ADODB.Recordset
-        
-102     oRS.Open "SELECT * FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE sID = '" & sID & "' AND sTableName = '" & sTableName & "'", oCN, adOpenDynamic, adLockBatchOptimistic
-
-104     With oRS
- 
-106         If .State = adStateOpen Then
-    
-108             If .RecordCount > 0 Then
-                    
-110                 TxMsg "    !!! (SynchHistoryAddNew) Something dodgy is going on the table: [" & sLocalSynchHistPrefix & "SynchHistory].  There should be 0 record with sID: " & sID & " for tablename [" & sTableName & "] but there are actually " & .RecordCount & "!!!  These records will be deleted.  If this error message persists please contact an OASIS Developer", True
-
-112                 Do Until .EOF
-114                     .Delete adAffectCurrent
-116                     .UpdateBatch adAffectCurrent
-118                     .MoveNext
-                    Loop
-                            
-                End If
-    
-120             If .EOF Then
-                    
-122                 .AddNew
-124                 .Fields("sID").Value = sID
-126                 .Fields("sGUID").Value = sNewGUID
-128                 .Fields("sTableName").Value = sTableName
-130                 .Fields("swhen").Value = sRFC3339DateTime
-132                 .Fields("sStatus").Value = "pending"
-134                 .Fields("sequence").Value = lSequenceOverride
-136                 .Fields("sBy").Value = "[" & sTitle & "] " & sDescription & " (" & sBy & ")"
-138                 .Fields("sdelete").Value = "false"
-140                 .Fields("updates").Value = supdates
-142                 .Fields("noconflict").Value = "false"
-144                 .UpdateBatch adAffectCurrent
-146                 SynchHistoryAddNew = True
-
-148                 If Right(sTableName, 8) = "_Queries" Then
-                    
-150                     Set oRSQuery = New ADODB.Recordset
-
-152                     With oRSQuery
-                        
-154                         .Open "SELECT * FROM [" & sTableName & "] WHERE GUID1 = '" & sID & "'", oCN, adOpenDynamic, adLockBatchOptimistic
-
-156                         If Not .EOF Then
-
-158                             i = LocateIndexOfQuery(LocalQueries, sLocalSynchHistPrefix & .Fields("QueryName").Value)
-160                             j = LocateIndexOfQuery(DefinedDDQueries, sLocalSynchHistPrefix & .Fields("QueryName").Value)
-                    
-162                             If i > 0 And j > 0 Then
-                                
-164                                 DefinedDDQueries.Queries(j).bEdited = True
-166                                 TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for edit", True
-                                
-168                             ElseIf j > 0 Then
-                                
-170                                 DefinedDDQueries.Queries(j).bNew = True
-172                                 TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for addition", True
-                                    
-                                Else
-                                
-174                                 ReDim Preserve DefinedDDQueries.Queries(UBound(DefinedDDQueries.Queries) + 1)
-176                                 DefinedDDQueries.Queries(UBound(DefinedDDQueries.Queries)).Name = sLocalSynchHistPrefix & .Fields("QueryName").Value
-
-178                                 If bSQLServerInUse Then
-180                                     DefinedDDQueries.Queries(UBound(DefinedDDQueries.Queries)).sSQL = .Fields("QueryMSSQL").Value
-                                    Else
-182                                     DefinedDDQueries.Queries(UBound(DefinedDDQueries.Queries)).sSQL = .Fields("QuerySQL").Value
-                                    End If
-
-184                                 DefinedDDQueries.Queries(UBound(DefinedDDQueries.Queries)).bNew = True
-                                
-186                                 TxMsg ">>>>>> Query [" & sLocalSynchHistPrefix & .Fields("QueryName").Value & "] flagged for addition", True
-
-                                End If
-
-                                'CreateQuery sLocalSynchHistPrefix & .Fields("QueryName").Value, .Fields("QuerySQL").Value, oCN
-
-                            End If
-
-188                         .Close
-                        End With
-                        
-190                     Set oRSQuery = Nothing
-                        
-                    End If
-                    
-                End If
-    
-            Else
-            
-192             TxMsg "    !!! (SynchHistoryAddNew) Table [" & sLocalSynchHistPrefix & "SynchHistory] failed to open", True
-            
-            End If
-        
-        End With
-        
-194     Set oRS = Nothing
-        Set oRSQuery = Nothing
-        
-        '<EhFooter>
-        Exit Function
-
-SynchHistoryAddNew_Err:
-        SynchHistoryAddNew = False
-        Set oRS = Nothing
-        '</EhFooter>
-End Function
-
-Public Sub SynchHistoryDeleteFromServer(sWebsite As String, _
-                                        sGUID As String, _
-                                        sTableName As String, _
-                                        sLocalSynchHistPrefix As String)
-        '<EhHeader>
-        On Error GoTo SynchHistoryDeleteFromServer_Err
-        '</EhHeader>
-
-        Dim oRS As New ADODB.Recordset
-        Dim sSQL As String
-        Dim sResponse As String
-
-100     sSQL = "SELECT [sID] FROM [" & sLocalSynchHistPrefix & "SynchHistory] WHERE sID = '" & sGUID & "' AND sTableName = '" & sTableName & "'"
-102     Set oRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-
-104     If Not oRS.EOF Or Not oRS.BOF Then
-106         oRS.Delete adAffectCurrent
-            sResponse = SaveServerRSCompressed(sWebsite, oRS)
-        
-114         If sResponse = "Data Updated" Then
-116             TxMsg "    --- The invalid update flagged on server has been removed", True
-            Else
-                TxMsg "    --- The invalid update flagged on server could not be removed: " & sResponse, True
-            End If
-        End If
-        
-118     If oRS.State = adStateOpen Then oRS.Close
-120     Set oRS = Nothing
-    
-        '<EhFooter>
-        Exit Sub
-
-SynchHistoryDeleteFromServer_Err:
-        TxMsg "SynchHistoryDeleteFromServer_Err: (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Sub
-
-Private Function DoesFieldExistInTable(oCN As ADODB.Connection, _
-                                       sTableName As String, _
-                                       sFieldName As String, _
-                                       sFieldValue As String) As Boolean
-
-    Dim oRS As New ADODB.Recordset
-    Dim sSQL As String
-    
-    sSQL = "SELECT [" & sFieldName & "] FROM [" & sTableName & "] WHERE [" & sFieldName & "] = '" & sFieldValue & "'"
-    
-    'TxMsg "DoesFieldExistInTable: " & sSQL
-    oRS.Open sSQL, oCN, adOpenDynamic, adLockBatchOptimistic
-
-    DoesFieldExistInTable = False
-    
-    If oRS.State = adStateOpen Then
-    
-        If Not oRS.EOF Then DoesFieldExistInTable = True
-        oRS.Close
-        
-    End If
-    
-    Set oRS = Nothing
-
-End Function
-
-'Private Function RemoveWhereValueExists(mConn As ADODB.Connection, _
-'                                        sValue As String, _
-'                                        sFieldName As String, _
-'                                        sTableName As String) As Boolean
-'
-'    Dim sTableNameStripped As String
-'    Dim bIsMasterTable As Boolean
-'    Dim bIsDDDefTable As Boolean
-'    Dim bIsLinkedTable As Boolean
-'    Dim sTitle As String
-'    Dim oRS As New ADODB.Recordset
-'
-'    sTableNameStripped = Right$(sTableName, Len(sTableName) - Len(DDDefCurrent.prefix))
-'
-'    If Left$(sTableNameStripped, 2) = "dd" Then
-'        bIsDDDefTable = True
-'        sTitle = "DD ddDef "
-'    End If
-'
-'    If Left$(sTableNameStripped, 4) = "link" Then
-'        bIsLinkedTable = True
-'        sTitle = "DD linktable "
-'    End If
-'
-'    If sTableNameStripped = "mastertable" Then
-'        bIsMasterTable = True
-'        sTitle = "DD mastertable "
-'    End If
-'
-'    With oRS
-'
-'        .Open "SELECT * FROM [" & sTableName & "] WHERE [" & sFieldName & "] = '" & sValue & "'", mConn, adOpenDynamic, adLockBatchOptimistic
-'
-'        Do Until .EOF
-'            'SynchHistoryDelete mConn, GetGuid, .Fields(1).Value, sTitle & "Delete", g_sRemoteTablePrefix, g_sUserName, CalcServerDateTime(now()), sTableName, False, "false", DDDefCurrent.prefix
-'
-'            .Delete adAffectCurrent
-'            .UpdateBatch adAffectCurrent
-'
-'            .MoveNext
-'        Loop
-'
-'    End With
-'
-'    Set oRS = Nothing
-'
-'End Function
-
 Public Function RunDDSchemaCompare(sWebsite As String, _
                                    sPrefix As String, _
                                    oCN As ADODB.Connection) As Boolean
@@ -5061,18 +3034,11 @@ Public Function RunDDSchemaCompare(sWebsite As String, _
 112     TxMsg ">>> Getting remote tables ......................", True
 114     If sUG = "" Then RemoteTables = GetRemoteTables(sWebsite, sPrefix)
 
-116     TxMsg ">>> Getting defined queries from [" & sPrefix & "Queries] table ......................", True
-118     DefinedDDQueries = GetDefinedQueries(oCN, sPrefix)
-
 120     TxMsg ">>> Getting local tables ......................", True
 122     If sUG = "" Then LocalTables = GetLocalTables(oCN, sPrefix)
 
-124     TxMsg ">>> Getting local queries ......................", True
-126     LocalQueries = GetLocalQueries(oCN, sPrefix)
-        
 128     TxMsg ">>> Comparing tables ......................", True
 130     If sUG = "" Then CompareTables sWebsite, sPrefix, oCN
-        'CompareQueries sWebsite, sPrefix, oCN
     
 132     RunDDSchemaCompare = Not bAbortSynchronisation
 
@@ -5206,7 +3172,7 @@ Private Function GetRemoteTables(sWebsite As String, _
 
 132             With ddDatabaseTables.Tables(UBound(ddDatabaseTables.Tables))
 
-134                 TxMsg "**??Fetching schema of remote table: " & oRSTables.Fields("TABLE_NAME").Value
+134                 TxMsg "**??Fetching schema of remote table: " & oRSTables.Fields("TABLE_NAME").Value, , True
             
 136                 .Name = oRSTables.Fields("TABLE_NAME").Value
 138                 .IsTable = True
@@ -5392,6 +3358,40 @@ Private Function RetDataType(sDataType As String) As Long
 
 End Function
 
+Public Function HasProperty(obj As Object, strPropName As String) As Boolean
+    'Purpose:   Return true if the object has the property.
+    Dim varDummy As Variant
+    
+    On Error Resume Next
+    varDummy = obj.Properties(strPropName)
+    HasProperty = (Err.Number = 0)
+End Function
+
+Function SetPropertyDAO(obj As Object, strPropertyName As String, intType As Integer, varValue As Variant, Optional strErrMsg As String) As Boolean
+    On Error GoTo ErrHandler
+    'Purpose:   Set a property for an object, creating if necessary.
+    'Arguments: obj = the object whose property should be set.
+    '           strPropertyName = the name of the property to set.
+    '           intType = the type of property (needed for creating)
+    '           varValue = the value to set this property to.
+    '           strErrMsg = string to append any error message to.
+    
+    If HasProperty(obj, strPropertyName) Then
+        obj.Properties(strPropertyName) = varValue
+    Else
+        obj.Properties.Append obj.CreateProperty(strPropertyName, intType, varValue)
+    End If
+
+    SetPropertyDAO = True
+
+ExitHandler:
+    Exit Function
+
+ErrHandler:
+    TxMsg "!!!! SetPropertyDAO_err: " & obj.Name & "." & strPropertyName & " not set to " & varValue & ". Error " & Err.Number & " - " & Err.Description & vbCrLf
+    Resume ExitHandler
+End Function
+
 Private Function GetLocalTables(oCOnn As ADODB.Connection, _
                                 sPrefix As String) As DDTableCollection
         '<EhHeader>
@@ -5402,55 +3402,78 @@ Private Function GetLocalTables(oCOnn As ADODB.Connection, _
         Dim oRSColumns As New ADODB.Recordset
         Dim ddDatabaseTables As DDTableCollection
 100     ReDim ddDatabaseTables.Tables(0)
-        
+        Dim i As Long
         Dim adoxTable As New adox.Table
+        Dim adoxColumn As New adox.Column
         Dim adoxCatalog As New adox.Catalog
+        Dim sDatabaseFullPath As String
+        Dim dbDAO As DAO.Database
+        
 102     adoxCatalog.ActiveConnection = oCOnn
 104     oRSColumns.Open oCOnn.OpenSchema(adSchemaColumns)
         
-106     For Each adoxTable In adoxCatalog.Tables
+106     sDatabaseFullPath = Mid$(oCOnn.ConnectionString, InStr(oCOnn.ConnectionString, "Data Source=") + 12, InStr(oCOnn.ConnectionString, "Mode=") - (InStr(oCOnn.ConnectionString, "Data Source=") + 12) - 1)
+        
+108     For Each adoxTable In adoxCatalog.Tables
     
-108         If adoxTable.Type = "TABLE" And Left(adoxTable.Name, Len(sPrefix)) = sPrefix Then
+110         If adoxTable.Type = "TABLE" And Left(adoxTable.Name, Len(sPrefix)) = sPrefix Then
             
-110             ReDim Preserve ddDatabaseTables.Tables(UBound(ddDatabaseTables.Tables) + 1)
+112             ReDim Preserve ddDatabaseTables.Tables(UBound(ddDatabaseTables.Tables) + 1)
       
-112             With ddDatabaseTables.Tables(UBound(ddDatabaseTables.Tables))
-            
-114                 .Name = adoxTable.Name
-116                 .IsTable = True
-118                 .IsLinkedTable = False
-120                 .IsQuery = False
-                    '.sAutoNum = "none"
-122                 TxMsg "**??Fetching schema of local table: " & .Name
+114             With ddDatabaseTables.Tables(UBound(ddDatabaseTables.Tables))
+116                 i = 0
+
+118                 Do Until i = adoxTable.Columns.Count
                     
-124                 ReDim .Columns(0)
+120                     Set adoxColumn = adoxTable.Columns(i)
 
-126                 oRSColumns.Filter = adFilterNone
-128                 'If Not oRSColumns.EOF Or Not oRSColumns.BOF Then oRSColumns.MoveFirst
-130                 oRSColumns.Filter = "TABLE_NAME = '" & .Name & "'"
+122                     If adoxColumn.Type = adDate Then
+124                         'adoxColumn.Properties("Format").Value = "dd-MMM-yy"
+
+126                         Set dbDAO = OpenDatabase(sDatabaseFullPath)
+128                         SetPropertyDAO dbDAO.TableDefs(adoxTable.Name).Fields(adoxColumn.Name), "Format", dbText, "dd-MMM-yy"
+130                         Set dbDAO = Nothing
+
+                        End If
+
+132                     i = i + 1
+                    Loop
             
-                    If bSQLServerInUse Then Set oRS = New ADODB.Recordset
+134                 .Name = adoxTable.Name
+136                 .IsTable = True
+138                 .IsLinkedTable = False
+140                 .IsQuery = False
+                    '.sAutoNum = "none"
+142                 TxMsg "**??Fetching schema of local table: " & .Name, , True
+                    
+144                 ReDim .Columns(0)
+
+146                 oRSColumns.Filter = adFilterNone
+                    'If Not oRSColumns.EOF Or Not oRSColumns.BOF Then oRSColumns.MoveFirst
+148                 oRSColumns.Filter = "TABLE_NAME = '" & .Name & "'"
+            
+150                 If bSQLServerInUse Then Set oRS = New ADODB.Recordset
              
-132                 Do Until oRSColumns.EOF
+152                 Do Until oRSColumns.EOF
 
-                        If Not oRSColumns.Fields("COLUMN_NAME").Value = "WKB" And Not Left(oRSColumns.Fields("COLUMN_NAME").Value, 1) = "_" Then
+154                     If Not oRSColumns.Fields("COLUMN_NAME").Value = "WKB" And Not Left(oRSColumns.Fields("COLUMN_NAME").Value, 1) = "_" Then
                         
-134                         ReDim Preserve .Columns(UBound(.Columns) + 1)
-136                         .Columns(UBound(.Columns)).Name = oRSColumns.Fields("COLUMN_NAME").Value
-138                         .Columns(UBound(.Columns)).Ordinal = oRSColumns.Fields("ORDINAL_POSITION").Value
-140                         .Columns(UBound(.Columns)).TypeEnum = oRSColumns.Fields("DATA_TYPE").Value
+156                         ReDim Preserve .Columns(UBound(.Columns) + 1)
+158                         .Columns(UBound(.Columns)).Name = oRSColumns.Fields("COLUMN_NAME").Value
+160                         .Columns(UBound(.Columns)).Ordinal = oRSColumns.Fields("ORDINAL_POSITION").Value
+162                         .Columns(UBound(.Columns)).TypeEnum = oRSColumns.Fields("DATA_TYPE").Value
                         
-142                         If bSQLServerInUse Then
-146                             oRS.Open "SELECT [value] FROM ::fn_listExtendedProperty ( 'MS_Description','user', 'dbo', 'table', '" & .Name & "', 'column', '" & oRSColumns.Fields("COLUMN_NAME").Value & "')", oCOnn, adOpenDynamic, adLockBatchOptimistic
+164                         If bSQLServerInUse Then
+166                             oRS.Open "SELECT [value] FROM ::fn_listExtendedProperty ( 'MS_Description','user', 'dbo', 'table', '" & .Name & "', 'column', '" & oRSColumns.Fields("COLUMN_NAME").Value & "')", oCOnn, adOpenDynamic, adLockBatchOptimistic
 
-148                             If Not oRS.EOF Then .Columns(UBound(.Columns)).Description = oRS.Fields("value").Value
-150                             oRS.Close
-                            ElseIf Not IsNull(oRSColumns.Fields("DESCRIPTION").Value) Then
-154                             .Columns(UBound(.Columns)).Description = oRSColumns.Fields("DESCRIPTION").Value
+168                             If Not oRS.EOF Then .Columns(UBound(.Columns)).Description = oRS.Fields("value").Value
+170                             oRS.Close
+172                         ElseIf Not IsNull(oRSColumns.Fields("DESCRIPTION").Value) Then
+174                             .Columns(UBound(.Columns)).Description = oRSColumns.Fields("DESCRIPTION").Value
                             End If
 
-156                         If Not IsNull(oRSColumns.Fields("CHARACTER_MAXIMUM_LENGTH").Value) Then
-158                             .Columns(UBound(.Columns)).MaxLength = oRSColumns.Fields("CHARACTER_MAXIMUM_LENGTH").Value
+176                         If Not IsNull(oRSColumns.Fields("CHARACTER_MAXIMUM_LENGTH").Value) Then
+178                             .Columns(UBound(.Columns)).MaxLength = oRSColumns.Fields("CHARACTER_MAXIMUM_LENGTH").Value
                             End If
                         
                             'If Not oRSColumns.Fields("ISAUTOINCREMENT") Is Nothing Then
@@ -5460,10 +3483,10 @@ Private Function GetLocalTables(oCOnn As ADODB.Connection, _
                             '   End If
                         End If
 
-160                     oRSColumns.MoveNext
+180                     oRSColumns.MoveNext
                     Loop
                     
-                    If bSQLServerInUse Then Set oRS = Nothing
+182                 If bSQLServerInUse Then Set oRS = Nothing
             
                 End With
         
@@ -5471,230 +3494,16 @@ Private Function GetLocalTables(oCOnn As ADODB.Connection, _
 
         Next
 
-162     Set adoxCatalog = Nothing
-164     Set adoxTable = Nothing
-166     Set oRSColumns = Nothing
-168     GetLocalTables = ddDatabaseTables
+184     Set adoxCatalog = Nothing
+186     Set adoxTable = Nothing
+188     Set oRSColumns = Nothing
+190     GetLocalTables = ddDatabaseTables
         'TxMsg "SynchWorker.GetLocalTables_Err on line (" & Erl & ") " & Err.Description, True
         '<EhFooter>
         Exit Function
 
 GetLocalTables_Err:
         TxMsg "SynchWorker.GetLocalTables_Err on line (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Function
-
-Private Function FixLocalQueriesExtents(oCOnn As ADODB.Connection, _
-                                        sPrefix As String) As DDQueryCollection
-
-    Dim oRSQueries As New ADODB.Recordset
-    
-    If Not DoesTableExist(oCOnn, "ttkGISLayerSQL") Then
-            
-        oCOnn.Execute "CREATE TABLE [ttkGISLayerSQL]  ([NAME] TEXT(255), [XMIN] DOUBLE, [XMAX] DOUBLE, [YMIN] DOUBLE, [YMAX] DOUBLE, [SHAPETYPE] INTEGER)"
-        TxMsg "   --- Creating table [ttkGISLayerSQL]"
-
-    End If
-
-    With oRSQueries
-
-        .Open oCOnn.OpenSchema(adSchemaViews)
-        .Filter = "TABLE_NAME LIKE '" & sPrefix & "%'"
-
-        If Not .BOF Or Not .EOF Then .MoveFirst
-
-        Do Until .EOF
-
-            If Right(oRSQueries.Fields("TABLE_NAME").Value, 4) = "_FEA" Then UpdatettkGISLaySQL oRSQueries.Fields("TABLE_NAME").Value, oCOnn
-            .MoveNext
-        Loop
-
-    End With
-
-    Set oRSQueries = Nothing
-
-End Function
-
-
-Private Function GetLocalQueries(oCOnn As ADODB.Connection, _
-                                 sPrefix As String) As DDQueryCollection
-        '<EhHeader>
-        On Error GoTo GetLocalQueries_Err
-        '</EhHeader>
-
-        Dim oRSQueries As New ADODB.Recordset
-        Dim ddQueries As DDQueryCollection
-
-100     ddQueries.Prefix = sPrefix
-102     ReDim ddQueries.Queries(0)
-
-104     With oRSQueries
-
-106         .Open oCOnn.OpenSchema(adSchemaViews)
-108         .Filter = "TABLE_NAME LIKE '" & sPrefix & "%'"
-
-110         If Not .BOF Or Not .EOF Then .MoveFirst
-
-112         Do Until .EOF
-
-114             ReDim Preserve ddQueries.Queries(UBound(ddQueries.Queries) + 1)
-
-116             'TxMsg ">>> Query [" & oRSQueries.Fields("TABLE_NAME").Value & "] located in array at index: " & UBound(ddQueries.Queries), True
-
-118             ddQueries.Queries(UBound(ddQueries.Queries)).Name = oRSQueries.Fields("TABLE_NAME").Value
-
-'120             If Not IsNull(oRSQueries.Fields("VIEW_DEFINITION").Value) Then
-'122                 ddQueries.Queries(UBound(ddQueries.Queries)).sSQL = Trim(oRSQueries.Fields("VIEW_DEFINITION").Value)
-'                Else
-'124                 TxMsg "!!! WARNING..... Query [" & oRSQueries.Fields("TABLE_NAME").Value & "] definition is NULL!!!", True
-'                End If
-
-126             .MoveNext
-
-            Loop
-
-        End With
-
-128     Set oRSQueries = Nothing
-130     GetLocalQueries = ddQueries
-
-        '<EhFooter>
-        Exit Function
-
-GetLocalQueries_Err:
-        TxMsg "SynchWorker.GetLocalQueries_Err on line (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Function
-
-Private Function CompareQueries(sWebsite As String, _
-                                sPrefix As String, _
-                                oCOnn As ADODB.Connection) As Boolean
-        '<EhHeader>
-        On Error GoTo CompareQueries_Err
-        '</EhHeader>
-
-        On Error Resume Next
-        Dim oRS As ADODB.Recordset
-        Dim i As Long
-        Dim iLoops As Long
-        Dim bError As Boolean
-        Dim bRetVal As Boolean
-        
-        'TxMsg "**??Creating queries/views in the client database...", True
-        
-100     iLoops = 1
-102     bError = True
-        
-104     Do Until iLoops > 5 Or bError = False
-
-106         If iLoops = 5 Then On Error GoTo CompareQueries_Err
-108         bError = False
-            
-            i = 1
-110         If Not iLoops = 1 Then TxMsg ">>> Attempting loop #" & iLoops & " of 5 for query creation...............................................", True
-
-114         Do Until i > UBound(DefinedDDQueries.Queries) Or UBound(DefinedDDQueries.Queries) = 0 Or UBound(DefinedDDQueries.Queries) = -1
-
-                
-                
-116             With DefinedDDQueries.Queries(i)
-
-118                 bRetVal = True
-                    
-                    If (.bNew Or .bEdited Or .bDelete) And iLoops = 1 Then TxMsg ">>> Attempting loop #" & iLoops & " of 5 for query creation...............................................", True
-                    
-120                 If .bNew Then
-
-122                     bRetVal = CreateQuery(.Name, .sSQL, oCOnn, sWebsite)
-
-124                 ElseIf .bEdited Then
-126                     bRetVal = DropLocalQuery(.Name, oCOnn)
-128                     bRetVal = CreateQuery(.Name, .sSQL, oCOnn, sWebsite)
-130                 ElseIf .bDelete Then
-132                     bRetVal = DropLocalQuery(.Name, oCOnn)
-                    End If
-                    
-134                 If bError = False Then bError = Not bRetVal
-                
-136                 If bRetVal Then
-138                     DefinedDDQueries.Queries(i).bDelete = False
-140                     DefinedDDQueries.Queries(i).bNew = False
-142                     DefinedDDQueries.Queries(i).bEdited = False
-                    End If
-
-                End With
-
-144             i = i + 1
-        
-            Loop
-  
-148         If bError Then
-
-                TxMsg ">>> Loop #" & iLoops & " reached the midway point...............................................", True
-150             i = UBound(DefinedDDQueries.Queries)
-
-152             Do Until i = 0 Or UBound(DefinedDDQueries.Queries) = 0 Or UBound(DefinedDDQueries.Queries) = -1
-
-154                 With DefinedDDQueries.Queries(i)
-
-156                     bRetVal = True
-
-158                     If .bNew Then
-160                         bRetVal = CreateQuery(.Name, .sSQL, oCOnn, sWebsite)
-162                     ElseIf .bEdited Then
-164                         bRetVal = DropLocalQuery(.Name, oCOnn)
-166                         bRetVal = CreateQuery(.Name, .sSQL, oCOnn, sWebsite)
-168                     ElseIf .bDelete Then
-170                         bRetVal = DropLocalQuery(.Name, oCOnn)
-                        End If
-                    
-172                     If bError = False Then bError = Not bRetVal
-                    
-174                     If iLoops = 5 And Not Len(.sSQL) > 0 Then bRetVal = False
-                    
-176                     If bRetVal Then
-
-178                         DefinedDDQueries.Queries(i).bDelete = False
-180                         DefinedDDQueries.Queries(i).bNew = False
-182                         DefinedDDQueries.Queries(i).bEdited = False
-
-184                     ElseIf iLoops = 5 Then
-                    
-186                         Set oRS = New ADODB.Recordset
-188                         oRS.Open "SELECT [GUID1] from [" & sPrefix & "Queries] WHERE [QueryName] = '" & Replace(.Name, sPrefix, "") & "'", oCOnn, adOpenDynamic, adLockBatchOptimistic
-
-190                         If Not oRS.EOF Then
-192                             oCOnn.Execute "DELETE FROM [" & sPrefix & "SynchHistory] WHERE [sTableName] = '" & sPrefix & "Queries' AND [sID] = '" & oRS.Fields(0).Value & "'"
-                                oCOnn.Execute "DELETE FROM [" & sPrefix & "SynchHistoryOverview] WHERE [sTableName] = '" & sPrefix & "Queries'"
-                                'oCOnn.Execute "DELETE FROM [" & sPrefix & "Queries] WHERE QueryName = '" & .Name & "'"
-194                             oRS.Delete adAffectCurrent
-196                             oRS.UpdateBatch
-198                             oRS.Close
-                            End If
-
-200                         Set oRS = Nothing
-                        
-                        End If
-
-                    End With
-
-202                 i = i - 1
-        
-                Loop
-        
-            End If
-            
-204         iLoops = iLoops + 1
-        Loop
-        
-206     CompareQueries = Not bError
-        'TxMsg "**??Completed creating queries/views in the client database...", True
-
-        '<EhFooter>
-        Exit Function
-
-CompareQueries_Err:
-        TxMsg "SynchWorker.CompareQueries_Err on line (" & Erl & ") " & Err.Description, True
         '</EhFooter>
 End Function
 
@@ -5728,14 +3537,14 @@ Private Sub CompareTables(sWebsite As String, _
 106         sTableName = LocalTables.Tables(iLocalTableIndex).Name
 108         TxMsg ">>>>>>>> Currently looking at table: " & sTableName, False, True
 110         iRemoteTableIndex = LocateIndexOfTable(RemoteTables, sTableName)
+
             If Right(sTableName, 4) = "_FEA" Then UpdatettkGISLaySQL sTableName, oCOnn
         
-112         If iRemoteTableIndex = 0 Then
-114             TxMsg "   !!! Table [" & sTableName & "] has been removed from the server - dropping local copy and removing from SynchHistory", True
+112         If iRemoteTableIndex = 0 And Not Right$(sTableName, 6) = "Hashed" Then
+114             TxMsg "   !!! Table [" & sTableName & "] has been removed from the server - dropping local copy and removing from SynchHistory", True, True
                 DropLocalTable sTableName, oCOnn, sPrefix
-'116             oCOnn.Execute "DROP TABLE [" & sTableName & "]"
+                '116             oCOnn.Execute "DROP TABLE [" & sTableName & "]"
 118             oCOnn.Execute "DELETE FROM [" & sPrefix & "SynchHistory] WHERE sTableName = '" & sTableName & "'"
-                oCOnn.Execute "DELETE FROM [" & sPrefix & "SynchHistoryOverview] WHERE sTableName = '" & sTableName & "'"
             
             End If
         
@@ -5754,7 +3563,7 @@ Private Sub CompareTables(sWebsite As String, _
 132         iLocalTableIndex = LocateIndexOfTable(LocalTables, sTableName)
 134         TxMsg ">>>>>>>> Currently looking at table: " & sTableName, False, True
         
-136         If Not iLocalTableIndex = 0 Then
+136         If Not iLocalTableIndex = 0 And Not Right(sTableName, 6) = "Hashed" Then
                 '
                 'If Not RemoteTables.Tables(iRemoteTableIndex).sAutoNum = LocalTables.Tables(iLocalTableIndex).sAutoNum Then
         
@@ -5876,13 +3685,14 @@ Private Sub CompareTables(sWebsite As String, _
                 '''''''''''''''''''''''''''''''''''''''''''''''''''''
                 ' ISSUE:  Table does not exist in the local database
                 ' ACTION: Create table on the local database
-            
-216             bAbortSynchronisation = True
-218             sSQL = "SELECT TOP 1 * FROM [" & RemoteTables.Tables(iRemoteTableIndex).Name & "]"
-                'RemoteRS.Open sSQL, , adOpenDynamic, adLockBatchOptimistic
-220             Set RemoteRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
-222             CreateTable RemoteTables.Tables(iRemoteTableIndex).Name, RemoteRS, oCOnn, sWebsite
-224             RemoteRS.Close
+                If Not Right$(RemoteTables.Tables(iRemoteTableIndex).Name, 6) = "Hashed" Then
+216                 bAbortSynchronisation = True
+218                 sSQL = "SELECT TOP 1 * FROM [" & RemoteTables.Tables(iRemoteTableIndex).Name & "]"
+                    'RemoteRS.Open sSQL, , adOpenDynamic, adLockBatchOptimistic
+220                 Set RemoteRS = OpenServerRSCompressed(sWebsite, "ID", sSQL)
+222                 CreateTable RemoteTables.Tables(iRemoteTableIndex).Name, RemoteRS, oCOnn, sWebsite
+224                 RemoteRS.Close
+                End If
             
             End If
         
@@ -5890,7 +3700,7 @@ Private Sub CompareTables(sWebsite As String, _
     
         Loop
         
-228    TxMsg ">>>>> Currently checking tables", False, True
+228     TxMsg ">>>>> Currently checking tables", False, True
         
 230     If Not bAbortSynchronisation Then
         
@@ -5908,7 +3718,7 @@ Private Sub CompareTables(sWebsite As String, _
 246                 bGeoTableAltered = False
                 End If
                 
-248             If Not Right$(sTableNameAltered, 4) = "_GEO" And Not Right$(sTableNameAltered, 12) = "SynchHistory" And Not Right$(sTableNameAltered, 20) = "SynchHistoryOverview" Then
+248             If Not Right$(sTableNameAltered, 4) = "_GEO" And Not Right$(sTableNameAltered, 12) = "SynchHistory" And Not Right$(sTableNameAltered, 6) = "Hashed" Then
 
                     'TxMsg "validating : " & RemoteTables.Tables(iRemoteTableIndex).Name & " and linked is: " & RemoteTables.Tables(iRemoteTableIndex).IsLinkedTable
 250                 ValidateClientTable sTableNameAltered, IIf(RemoteTables.Tables(iRemoteTableIndex).IsLinkedTable, "GUID2", "GUID1"), True, bGeoTableAltered, oCOnn, sPrefix
@@ -5944,6 +3754,7 @@ Public Sub UpdateLocalTableCaption(sTableName As String, _
 100     If bSQLServerInUse Then
             ' On Error Resume Next next
             oCOnn.Execute "EXEC sys.sp_addextendedproperty @level0type = N'SCHEMA' ,@level0name = [dbo] ,@level1type = N'TABLE' ,@level1name = [" & sTableName & "] ,@level2type = N'COLUMN' ,@level2name = [" & sFieldName & "] ,@name = N'MS_Description' ,@value = N'" & sCaption & "' ;"
+
             If bRetry Then oCOnn.Execute "EXEC sys.sp_updateextendedproperty @level0type = N'SCHEMA' ,@level0name = [dbo] ,@level1type = N'TABLE' ,@level1name = [" & sTableName & "] ,@level2type = N'COLUMN' ,@level2name = [" & sFieldName & "] ,@name = N'MS_Description' ,@value = N'" & sCaption & "' ;"
 
         Else
@@ -6000,7 +3811,6 @@ Public Sub DropLocalTable(sTableName As String, _
     
             Dim oRS As New ADODB.Recordset
 108         oConnection.Execute "DELETE FROM [" & sPrefix & "SynchHistory] WHERE sTableName = '" & sTableName & "' and [sequence] >= 0"
-            oConnection.Execute "DELETE FROM [" & sPrefix & "SynchHistoryOverview] WHERE sTableName = '" & sTableName & "'"
         
 112         TxMsg "   --- Dropping local table [" & sTableName & "]"
             On Error Resume Next
@@ -6033,7 +3843,7 @@ DropLocalTable_Err:
 End Sub
 
 Public Function DropLocalQuery(sQueryName As String, _
-                          oConnection As ADODB.Connection) As Boolean
+                               oConnection As ADODB.Connection) As Boolean
         '<EhHeader>
         On Error GoTo DropLocalQuery_Err
         '</EhHeader>
@@ -6307,7 +4117,8 @@ End Sub
 
 Private Function CreateQuery(sName As String, _
                              sSQL As String, _
-                             oCOnn As ADODB.Connection, sWebsite As String) As Boolean
+                             oCOnn As ADODB.Connection, _
+                             sWebsite As String) As Boolean
         '<EhHeader>
         On Error GoTo CreateQuery_Err
         '</EhHeader>
@@ -6351,9 +4162,9 @@ Private Function CreateQuery(sName As String, _
 112     Set mcatDB = Nothing
 114     Set mCommand = Nothing
 
-136         If Right$(sName, 4) = "_FEA" Then
-138             CreateTTKGPReference sName, oCOnn, sWebsite
-            End If
+136     If Right$(sName, 4) = "_FEA" Then
+138         CreateTTKGPReference sName, oCOnn, sWebsite
+        End If
             
 116     Set oRS = New ADODB.Recordset
 
@@ -6376,7 +4187,6 @@ Private Function CreateQuery(sName As String, _
             Else
                 sTablesCreated = sName
             End If
-        
 
         End If
 
@@ -6394,7 +4204,8 @@ CreateQuery_Err:
         '</EhFooter>
 End Function
 
-Private Function CloneRS(oRS As ADODB.Recordset, Optional sExcludedField As String = "") As ADODB.Recordset
+Private Function CloneRS(oRS As ADODB.Recordset, _
+                         Optional sExcludedField As String = "") As ADODB.Recordset
         '<EhHeader>
         On Error GoTo CloneRS_Err
         '</EhHeader>
@@ -6425,6 +4236,52 @@ CloneRS_Err:
         '</EhFooter>
 End Function
 
+Private Function CloneRecordFromRS(oRS As ADODB.Recordset) As ADODB.Recordset
+        '<EhHeader>
+        On Error GoTo CloneRecordFromRS_Err
+        '</EhHeader>
+
+        Dim oRClone As New ADODB.Recordset
+        Dim i As Integer
+100     i = 0
+    
+102     Do Until i = oRS.Fields.Count
+    
+104         With oRS.Fields(i)
+        
+106             oRClone.Fields.Append .Name, .Type, .DefinedSize
+
+            End With
+
+108         i = i + 1
+        Loop
+    
+110     i = 0
+112     oRClone.Open
+        oRClone.AddNew
+    
+114     Do Until i = oRS.Fields.Count
+    
+116         With oRS.Fields(i)
+        
+118             oRClone.Fields(i).Value = .Value
+
+            End With
+
+120         i = i + 1
+        Loop
+    
+122     Set CloneRecordFromRS = oRClone
+        'TxMsg "SynchWorker.CloneRecordFromRS_Err on line (" & Erl & ") " & Err.Description, True
+        
+        '<EhFooter>
+        Exit Function
+
+CloneRecordFromRS_Err:
+        TxMsg "SynchWorker.CloneRecordFromRS_Err on line (" & Erl & ") " & Err.Description, True
+        '</EhFooter>
+End Function
+
 Private Function LocateIndexOfColumn(oTable As DDTable, _
                                      sItem As String) As Long
         '<EhHeader>
@@ -6451,35 +4308,6 @@ Private Function LocateIndexOfColumn(oTable As DDTable, _
 LocateIndexOfColumn_Err:
         TxMsg "SynchWorker.LocateIndexOfColumn_Err on line (" & Erl & ") " & Err.Description, True
         'Err.Raise vbObjectError + 100, "Project1.clsUpdateLocalDbSchemaWithServerSchema.LocateIndexOfColumn", "clsUpdateLocalDbSchemaWithServerSchema component failure"
-        '</EhFooter>
-End Function
-
-Private Function LocateIndexOfQuery(oQuery As DDQueryCollection, _
-                                    sItem As String) As Long
-        '<EhHeader>
-        On Error GoTo LocateIndexOfQuery_Err
-        '</EhHeader>
-
-        Dim i As Long
-        LocateIndexOfQuery = 0
-100     i = 0
-     
-102     Do Until i > UBound(oQuery.Queries) Or UBound(oQuery.Queries) = 0
-    
-104         If oQuery.Queries(i).Name = sItem Then
-106             LocateIndexOfQuery = i
-                Exit Do
-            End If
-        
-108         i = i + 1
-        Loop
-        
-        'TxMsg ">>>      Located query [" & sItem & "] in array at index: " & LocateIndexOfQuery, True
-        '<EhFooter>
-        Exit Function
-
-LocateIndexOfQuery_Err:
-        TxMsg "!!!!!! Error locating query [" & sItem & "] in array, Error message: " & Err.Description, True
         '</EhFooter>
 End Function
 
@@ -6515,16 +4343,16 @@ End Function
 
 Private Function DoesTableExist(cn As ADODB.Connection, _
                                 sTable As String) As Boolean
-    Dim Rs As New ADODB.Recordset
+    Dim RS As New ADODB.Recordset
     
     On Error GoTo hell
-    Rs.Open "SELECT * FROM " & sTable, cn, adOpenForwardOnly, adLockReadOnly
+    RS.Open "SELECT * FROM " & sTable, cn, adOpenForwardOnly, adLockReadOnly
 
     DoesTableExist = True
         
     On Error Resume Next
-    Rs.Close
-    Set Rs = Nothing
+    RS.Close
+    Set RS = Nothing
         
     Exit Function
 hell:
@@ -6532,13 +4360,12 @@ hell:
     Err.Clear
 
     DoesTableExist = False
-    Set Rs = Nothing
+    Set RS = Nothing
 End Function
 
 Private Sub TxMsg(sMsg As String, _
                   Optional bError As Boolean = False, _
                   Optional bDebugging As Boolean = False)
-
 
     On Error Resume Next
     Dim bOK As Boolean
@@ -6701,75 +4528,7 @@ Private Function BinaryToLong(ByVal binary_value As String) As Long
     ' Convert the result string into a long.
     BinaryToLong = CLng("&H" & hex_result)
 End Function
-
-Private Function GetAllFieldNamesForLocalTable(sTableName As String, _
-                                               cn As ADODB.Connection) As String
-        '<EhHeader>
-        On Error GoTo GetAllFieldNamesForLocalTable_Err
-        '</EhHeader>
-
-        Dim RSLocal As ADODB.Recordset
-100     Set RSLocal = New ADODB.Recordset
-        Dim iCol As Long
-        Dim sSQL As String
-102     GetAllFieldNamesForLocalTable = ""
-    
-104     With RSLocal
-
-106         sSQL = "SELECT top 1 * FROM [" & sTableName & "]"
-108         .Open sSQL, cn, adOpenDynamic, adLockBatchOptimistic
-    
-110         If .State = adStateOpen Then
-        
-112             iCol = 0
-
-114             Do Until iCol = .Fields.Count
-             
-116                 If Not .Fields(iCol).Name = "WKB" And Not .Fields(iCol).Name = "ORIG_ID" And Not Left(.Fields(iCol).Name, 1) = "_" Then
-118                     If Not GetAllFieldNamesForLocalTable = "" Then GetAllFieldNamesForLocalTable = GetAllFieldNamesForLocalTable & ","
-120                     GetAllFieldNamesForLocalTable = GetAllFieldNamesForLocalTable & "[" & .Fields(iCol).Name & "]"
-                    End If
-                
-122                 iCol = iCol + 1
-                
-                Loop
-            
-124             .Close
-        
-            End If
-        
-        End With
-
-126     Set RSLocal = Nothing
-
-        '<EhFooter>
-        Exit Function
-
-GetAllFieldNamesForLocalTable_Err:
-        TxMsg "SynchWorker.GetAllFieldNamesForLocalTable_Err on line (" & Erl & ") " & Err.Description, True
-        '</EhFooter>
-End Function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 
 

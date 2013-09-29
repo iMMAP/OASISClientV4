@@ -78,9 +78,9 @@ Begin VB.UserControl OASISRSSBrowser
             Style           =   6
             Alignment       =   1
             AutoSize        =   2
-            Object.Width           =   1588
+            Object.Width           =   1799
             MinWidth        =   1411
-            TextSave        =   "7/9/2013"
+            TextSave        =   "29-Sep-13"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Object.Width           =   4410
@@ -88,7 +88,7 @@ Begin VB.UserControl OASISRSSBrowser
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             AutoSize        =   1
-            Object.Width           =   12621
+            Object.Width           =   12409
          EndProperty
       EndProperty
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
@@ -1242,12 +1242,12 @@ End Sub
 Private Sub GIS_RSS_OnMouseDown(translated As Boolean, _
                                 ByVal Button As TatukGIS_XDK10.XMouseButton, _
                                 ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                                ByVal x As Long, _
-                                ByVal y As Long)
+                                ByVal X As Long, _
+                                ByVal Y As Long)
         Dim shp As TatukGIS_XDK10.XGIS_Shape
         Dim ptg As TatukGIS_XDK10.XGIS_Point
 
-        Set ptg = GIS_RSS.ScreenToMap(GisUtils.POINT(x, y))
+        Set ptg = GIS_RSS.ScreenToMap(GisUtils.POINT(X, Y))
 
         If GIS_RSS.Mode = TatukGIS_XDK10.XgisSelect Then
 118         Set shp = oLyr.Locate(ptg, 5 / GIS_RSS.zoom) ' 5 pixels precision

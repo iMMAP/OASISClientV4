@@ -701,8 +701,8 @@ dxThemeIntervals_Change_Err:
         '</EhFooter>
 End Sub
 
-Private Sub displayProgressBar(x As Integer, _
-                               y As Integer, _
+Private Sub displayProgressBar(X As Integer, _
+                               Y As Integer, _
                                w As Long, _
                                h As Long, _
                                cColourStart As Long, _
@@ -713,7 +713,7 @@ Private Sub displayProgressBar(x As Integer, _
 
 100     Load dxProgressBar(dxProgressBar.Count)
 102     Set dxProgressBar(dxProgressBar.UBound).Container = fraProgressBars 'cContainingFrame
-104     dxProgressBar(dxProgressBar.UBound).Move x, y, w, h
+104     dxProgressBar(dxProgressBar.UBound).Move X, Y, w, h
 106     dxProgressBar(dxProgressBar.UBound).Visible = True
 
 108     dxProgressBar(dxProgressBar.UBound).StartColor = cColourStart
@@ -729,8 +729,8 @@ displayProgressBar_Err:
         '</EhFooter>
 End Sub
 
-Private Sub displayRatioTxt(x As Integer, _
-                            y As Integer, _
+Private Sub displayRatioTxt(X As Integer, _
+                            Y As Integer, _
                             w As Long, _
                             h As Integer, _
                             iNumber As Long)
@@ -740,7 +740,7 @@ Private Sub displayRatioTxt(x As Integer, _
 
 100     Load txtRatio(txtRatio.Count)
 102     Set txtRatio(txtRatio.UBound).Container = fraProgressBars
-104     txtRatio(txtRatio.UBound).Move x, y, w, h
+104     txtRatio(txtRatio.UBound).Move X, Y, w, h
 106     txtRatio(txtRatio.UBound).Visible = True
     
 108     txtRatio(txtRatio.UBound).toolTipText = "Interval #" & txtRatio.UBound & " ratio"

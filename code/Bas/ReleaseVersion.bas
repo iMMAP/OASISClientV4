@@ -30,7 +30,7 @@ Sub VersionSpecificAction(nCode As Integer, _
 100     Select Case nCode
 
             Case 1
-102             gsApplicationName = "OASIS SMS Messenger V " & App.Major & "." & App.Minor & "." & App.Revision
+102             gsApplicationName = "OASIS SMS Messenger V " & App.major & "." & App.minor & "." & App.Revision
     
     '            frmSMSMain.mnuFile.Visible = True
     '            frmSMSMain.mnuOpenDatabase.Visible = True
@@ -68,47 +68,47 @@ Sub VersionSpecificAction(nCode As Integer, _
     '            frmSMSMain.mnuSeparator07.Visible = True
     '            frmSMSMain.mnuInfo009.Visible = True
     '
-104             frmSMSMain.Caption = gsApplicationName
-106             frmSMSMain.mnuInfo001.Caption = LoadLanguageSpecificString(nInput, 240)
-108             frmSMSMain.mnuFile.Caption = LoadLanguageSpecificString(nInput, 81)
-110             frmSMSMain.mnuRegistration.Caption = LoadLanguageSpecificString(nInput, 82)
-112             frmSMSMain.mnuInfo003.Caption = LoadLanguageSpecificString(nInput, 84)
+104             frmSMSMain.caption = gsApplicationName
+106             frmSMSMain.mnuInfo001.caption = LoadLanguageSpecificString(nInput, 240)
+108             frmSMSMain.mnuFile.caption = LoadLanguageSpecificString(nInput, 81)
+110             frmSMSMain.mnuRegistration.caption = LoadLanguageSpecificString(nInput, 82)
+112             frmSMSMain.mnuInfo003.caption = LoadLanguageSpecificString(nInput, 84)
 
 114             VersionSpecificAction 37, , , sCaption
-116             frmSMSMain.mnuInfo002.Caption = sCaption
+116             frmSMSMain.mnuInfo002.caption = sCaption
 
-118             frmSMSMain.mnuInfo004.Caption = LoadLanguageSpecificString(nInput, 86)
-120             frmSMSMain.mnuInfo005.Caption = LoadLanguageSpecificString(nInput, 87)
-122             frmSMSMain.mnuInfo006.Caption = LoadLanguageSpecificString(nInput, 88)
+118             frmSMSMain.mnuInfo004.caption = LoadLanguageSpecificString(nInput, 86)
+120             frmSMSMain.mnuInfo005.caption = LoadLanguageSpecificString(nInput, 87)
+122             frmSMSMain.mnuInfo006.caption = LoadLanguageSpecificString(nInput, 88)
 
 124             VersionSpecificAction 44, , , sApplicationPlaceHolder
 126             sTemp = LoadLanguageSpecificString(nInput, 410)
 128             sTemp = Replace(sTemp, gcPlaceHolder, sApplicationPlaceHolder)
-130             frmSMSMain.mnuOpenDatabase.Caption = sTemp
+130             frmSMSMain.mnuOpenDatabase.caption = sTemp
   
-132             frmSMSMain.mnuOpenDatabaseWithAccess2000.Caption = LoadLanguageSpecificString(nInput, 411)
+132             frmSMSMain.mnuOpenDatabaseWithAccess2000.caption = LoadLanguageSpecificString(nInput, 411)
 
 134             VersionSpecificAction 44, , , sApplicationPlaceHolder
 136             sTemp = LoadLanguageSpecificString(nInput, 412)
 138             sTemp = Replace(sTemp, gcPlaceHolder, sApplicationPlaceHolder)
-140             frmSMSMain.mnuImportLegacy.Caption = sTemp
+140             frmSMSMain.mnuImportLegacy.caption = sTemp
 
-142             frmSMSMain.mnuExit.Caption = LoadLanguageSpecificString(nInput, 89)
-144             frmSMSMain.mnuSettings.Caption = LoadLanguageSpecificString(nInput, 334)
-146             frmSMSMain.mnuGeneralSettings.Caption = LoadLanguageSpecificString(nInput, 115)
-148             frmSMSMain.mnuSendlog.Caption = LoadLanguageSpecificString(nInput, 113)
-150             frmSMSMain.mnuJoblog.Caption = LoadLanguageSpecificString(nInput, 589)
+142             frmSMSMain.mnuExit.caption = LoadLanguageSpecificString(nInput, 89)
+144             frmSMSMain.mnuSettings.caption = LoadLanguageSpecificString(nInput, 334)
+146             frmSMSMain.mnuGeneralSettings.caption = LoadLanguageSpecificString(nInput, 115)
+148             frmSMSMain.mnuSendlog.caption = LoadLanguageSpecificString(nInput, 113)
+150             frmSMSMain.mnuJoblog.caption = LoadLanguageSpecificString(nInput, 589)
 
-152             frmSMSMain.mnuLanguage(1).Caption = LoadLanguageSpecificString(nInput, 3)
-154             frmSMSMain.mnuLanguage(2).Caption = LoadLanguageSpecificString(nInput, 4)
+152             frmSMSMain.mnuLanguage(1).caption = LoadLanguageSpecificString(nInput, 3)
+154             frmSMSMain.mnuLanguage(2).caption = LoadLanguageSpecificString(nInput, 4)
 
-156             frmSMSMain.mnuBuyCredits.Caption = LoadLanguageSpecificString(nInput, 487)
-158             frmSMSMain.mnuShowCredits.Caption = LoadLanguageSpecificString(nInput, 114)
-160             frmSMSMain.mnuOriginators.Caption = LoadLanguageSpecificString(nInput, 751)
+156             frmSMSMain.mnuBuyCredits.caption = LoadLanguageSpecificString(nInput, 487)
+158             frmSMSMain.mnuShowCredits.caption = LoadLanguageSpecificString(nInput, 114)
+160             frmSMSMain.mnuOriginators.caption = LoadLanguageSpecificString(nInput, 751)
 
-162             frmSMSMain.mnuInfo009.Caption = LoadLanguageSpecificString(nInput, 83)
-164             frmSMSMain.mnuInfo007.Caption = LoadLanguageSpecificString(nInput, 484)
-166             frmSMSMain.mnuInfo008.Caption = LoadLanguageSpecificString(nInput, 483)
+162             frmSMSMain.mnuInfo009.caption = LoadLanguageSpecificString(nInput, 83)
+164             frmSMSMain.mnuInfo007.caption = LoadLanguageSpecificString(nInput, 484)
+166             frmSMSMain.mnuInfo008.caption = LoadLanguageSpecificString(nInput, 483)
   
 168         Case 2
 
@@ -118,8 +118,8 @@ Sub VersionSpecificAction(nCode As Integer, _
 174                     Load frmSMSMain.optSMSType(i)
                     End If
 
-176                 frmSMSMain.optSMSType(i).Left = 120
-178                 frmSMSMain.optSMSType(i).Top = 250 + (i * 340)
+176                 frmSMSMain.optSMSType(i).left = 120
+178                 frmSMSMain.optSMSType(i).top = 250 + (i * 340)
 180                 frmSMSMain.optSMSType(i).Visible = True
                 Next
   
@@ -147,33 +147,33 @@ Sub VersionSpecificAction(nCode As Integer, _
 
                 Next
 
-200             frmSettings.chkSMSTypeEnabled(0).Top = 700
-202             frmSettings.chkSMSTypeEnabled(0).Left = 120
+200             frmSettings.chkSMSTypeEnabled(0).top = 700
+202             frmSettings.chkSMSTypeEnabled(0).left = 120
 
-204             frmSettings.chkSMSTypeEnabled(1).Top = 1100
-206             frmSettings.chkSMSTypeEnabled(1).Left = 120
+204             frmSettings.chkSMSTypeEnabled(1).top = 1100
+206             frmSettings.chkSMSTypeEnabled(1).left = 120
 
-208             frmSettings.chkSMSTypeEnabled(2).Top = 1500
-210             frmSettings.chkSMSTypeEnabled(2).Left = 120
+208             frmSettings.chkSMSTypeEnabled(2).top = 1500
+210             frmSettings.chkSMSTypeEnabled(2).left = 120
 
-212             frmSettings.chkSMSTypeEnabled(3).Top = 1900
-214             frmSettings.chkSMSTypeEnabled(3).Left = 120
+212             frmSettings.chkSMSTypeEnabled(3).top = 1900
+214             frmSettings.chkSMSTypeEnabled(3).left = 120
 
-216             frmSettings.chkSMSTypeEnabled(4).Top = 2300
-218             frmSettings.chkSMSTypeEnabled(4).Left = 120
+216             frmSettings.chkSMSTypeEnabled(4).top = 2300
+218             frmSettings.chkSMSTypeEnabled(4).left = 120
 
-220             frmSettings.chkSMSTypeEnabled(5).Top = 2700
-222             frmSettings.chkSMSTypeEnabled(5).Left = 120
+220             frmSettings.chkSMSTypeEnabled(5).top = 2700
+222             frmSettings.chkSMSTypeEnabled(5).left = 120
   
 224             frmSettings.chkSMSTypeEnabled(6).Width = 5000
-226             frmSettings.chkSMSTypeEnabled(6).Top = 3100
-228             frmSettings.chkSMSTypeEnabled(6).Left = 120
+226             frmSettings.chkSMSTypeEnabled(6).top = 3100
+228             frmSettings.chkSMSTypeEnabled(6).left = 120
 
-230             frmSettings.chkSMSTypeEnabled(7).Top = 3500
-232             frmSettings.chkSMSTypeEnabled(7).Left = 120
+230             frmSettings.chkSMSTypeEnabled(7).top = 3500
+232             frmSettings.chkSMSTypeEnabled(7).left = 120
   
-234             frmSettings.chkSMSTypeEnabled(8).Top = 3900
-236             frmSettings.chkSMSTypeEnabled(8).Left = 120
+234             frmSettings.chkSMSTypeEnabled(8).top = 3900
+236             frmSettings.chkSMSTypeEnabled(8).left = 120
 
 238         Case 9
                 'Do nothing
@@ -234,28 +234,28 @@ Sub VersionSpecificAction(nCode As Integer, _
                 'Do nothing
    
 298         Case 28
-300             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+300             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 302         Case 29
-304             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/instruction/prices.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+304             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/instruction/prices.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 306         Case 30
-308             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/news/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+308             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/news/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 310         Case 31
-312             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/supportednetworks.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+312             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/supportednetworks.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
 
 314         Case 32
-316             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/documentation/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+316             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/documentation/home.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
 
 318         Case 33
-320             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/instruction/faq.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+320             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/instruction/faq.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 322         Case 34
-324             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/instruction/support.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+324             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/instruction/support.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
 
 326         Case 35
-328             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/instruction/aboutus.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+328             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/instruction/aboutus.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
 
 330         Case 36
 332             nInput = 13
@@ -315,14 +315,14 @@ Sub VersionSpecificAction(nCode As Integer, _
 398             sInput = LoadLanguageSpecificString(nInput, 536)
   
 400         Case 54
-402             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/balance.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+402             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/balance.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 404         Case 55
-406             lRet = ShellExecute(Screen.ActiveForm.hWnd, "Open", "http://www.aspsms.com/registration.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
+406             lRet = ShellExecute(Screen.ActiveForm.hwnd, "Open", "http://www.aspsms.com/registration.asp?REF=39", vbNullString, vbNullString, vbNormalFocus)
    
 408         Case 56
 410             VersionSpecificAction 23, gnLanguage, , sTemp
-412             sTemp = sTemp & vbCrLf & vbCrLf & "Versioninfo: " & Trim(Str$(App.Major)) & "." & Trim(Str$(App.Minor)) & " Build: " & Right("000" & Trim(Str$(App.Revision)), 4)
+412             sTemp = sTemp & vbCrLf & vbCrLf & "Versioninfo: " & Trim(Str$(App.major)) & "." & Trim(Str$(App.minor)) & " Build: " & right("000" & Trim(Str$(App.Revision)), 4)
 
 414             MsgBox sTemp, vbInformation, gsApplicationName
    
@@ -380,3 +380,100 @@ VersionSpecificAction_Err:
         '</EhFooter>
 End Sub
 
+
+Public Sub DoXLSX(objExcel As Object, RS As ADODB.Recordset, sPath As String)
+    Dim objWrkSht As Object 'Excel.Worksheet
+    Dim iCol As Integer
+    Dim recArray As Variant
+    Dim recCount As Long
+    Dim iRow As Integer
+    
+    objExcel.Workbooks.Add
+
+    Set objWrkSht = objExcel.Worksheets(1)
+    objWrkSht.Activate
+    objWrkSht.Name = "OASIS Export"
+    objWrkSht.Range(objWrkSht.Cells(1, 1), objWrkSht.Cells(1, RS.Fields.Count)).Font.Bold = True
+    
+    objExcel.Visible = True
+    objExcel.UserControl = True
+        
+    For iCol = 1 To RS.Fields.Count
+        objWrkSht.Cells(1, iCol).value = RS.Fields(iCol - 1).Name
+    Next
+    
+    On Error Resume Next
+
+    If Val(Mid(objExcel.Version, 1, InStr(1, objExcel.Version, ".") - 1)) > 8 Then
+        objWrkSht.Range("A2").CopyFromRecordset RS
+    Else
+        
+        recArray = RS.GetRows
+        recCount = UBound(recArray, 2) + 1 '+ 1 since 0-based array
+        
+
+        For iCol = 0 To RS.Fields.Count - 1
+            For iRow = 0 To recCount - 1
+                ' Take care of Date fields
+                If IsDate(recArray(iCol, iRow)) Then
+                    recArray(iCol, iRow) = Format(recArray(iCol, iRow))
+                ' Take care of OLE object fields or array fields
+                ElseIf IsArray(recArray(iCol, iRow)) Then
+                    recArray(iCol, iRow) = "Array Field"
+                End If
+            Next iRow 'next record
+        Next iCol 'next field
+            
+        objWrkSht.Cells(2, 1).Resize(recCount, RS.Fields.Count).value = TransposeDim(recArray)
+    End If
+    
+    'objWrkSht.SaveA sPath
+    objWrkSht.SaveAs sPath, , , , False
+    objExcel.Selection.CurrentRegion.Columns.AutoFit
+    objExcel.Selection.CurrentRegion.Rows.AutoFit
+    objWrkSht.Close
+    Set objWrkSht = Nothing
+'    Set objExcel = Nothing
+'
+'    ShellExecute 0, "open", sPath, "", "", 0
+    
+End Sub
+
+Function TransposeDim(v As Variant) As Variant
+' Custom Function to Transpose a 0-based array (v)
+    
+    Dim X As Long, Y As Long, Xupper As Long, Yupper As Long
+    Dim tempArray As Variant
+    
+    Xupper = UBound(v, 2)
+    Yupper = UBound(v, 1)
+    
+    ReDim tempArray(Xupper, Yupper)
+    For X = 0 To Xupper
+        For Y = 0 To Yupper
+            tempArray(X, Y) = v(Y, X)
+        Next Y
+    Next X
+    
+    TransposeDim = tempArray
+
+
+End Function
+
+Public Function ExcelVers(oEXLS As Object) As String
+    If oEXLS.Version = "12.0" Then
+        ExcelVers = "2007"
+    ElseIf oEXLS.Version = "11.0" Then
+        ExcelVers = "2003"
+    ElseIf oEXLS.Version = "10.0" Then
+        ExcelVers = "2002"
+    ElseIf oEXLS.Version = "9.0" Then
+        ExcelVers = "2000"
+    ElseIf oEXLS.Version = "8.0" Then
+        ExcelVers = "97"
+    ElseIf oEXLS.Version = "7.0" Then
+        ExcelVers = "95"
+    Else
+        ExcelVers = "OK" ' Should be ok for all OASIS versions....
+    End If
+End Function

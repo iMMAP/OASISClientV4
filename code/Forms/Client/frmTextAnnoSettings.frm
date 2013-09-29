@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{86CF1D34-0C5F-11D2-A9FC-0000F8754DA1}#2.0#0"; "Mscomct2.ocx"
+Object = "{86CF1D34-0C5F-11D2-A9FC-0000F8754DA1}#2.0#0"; "MSCOMCT2.OCX"
 Begin VB.Form frmTextAnnoSettings 
    BorderStyle     =   1  'Fixed Single
    Caption         =   "Text Annotation Settings"
@@ -212,6 +212,7 @@ Private Sub cmdDelete_Click()
 End Sub
 
 Private Sub cmdRemoveAll_Click()
+    txtAnnoText.Text = "My Annotation"
     RaiseEvent ResetAll
 End Sub
 
@@ -227,7 +228,7 @@ Private Sub panColorBack_Click()
     Dim c As New cCommonDialog
     
     c.ShowColor
-    panColorBack.BackColor = c.Color
+    panColorBack.BackColor = c.color
 
 End Sub
 
@@ -235,6 +236,6 @@ Private Sub panColorFore_Click()
     Dim c As New cCommonDialog
     
     c.ShowColor
-    panColorFore.BackColor = c.Color
+    panColorFore.BackColor = c.color
         
 End Sub

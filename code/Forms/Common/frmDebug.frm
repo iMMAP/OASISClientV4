@@ -115,30 +115,29 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-
 Public Function DebugPrinter(DebugStr As Variant)
-    
-   ' If Me.Visible Then
-    
-        'Actual limit = 32,767
-        If List1.ListCount > 10000 Then
-            List1.Clear
-            ''List1.RemoveItem 0
-        End If
-    
-        List1.AddItem "[" & Time & "] " & CStr(DebugStr)
         
-        If cmdAutoScroll.caption = "Disable AutoScroll" Then
-            List1.ListIndex = List1.ListCount - 1
-        End If
+    On Error Resume Next
         
-  '  Else
+    If FileExists(g_sAppPath & "\data\user\Sessions\temp_.log") = 1 Then
+        'Petri: This needs to be fixed
+        'Error: Invalid use of property
+        'oDebug.LogFile g_sAppPath & "\data\user\Sessions\temp_.log"
+    End If
     
-       ' DebugPrint "[" & Time & "] " & DebugStr
+    'Actual limit = 32,767
+    If List1.ListCount > 10000 Then
+        List1.Clear
+        ''List1.RemoveItem 0
+    End If
+
+    List1.AddItem "[" & Time & "] " & CStr(DebugStr)
     
-   ' End If
+   ' oDebug.Log DebugStr
     
-    
+    If cmdAutoScroll.caption = "Disable AutoScroll" Then
+        List1.ListIndex = List1.ListCount - 1
+    End If
 
 End Function
 
@@ -172,9 +171,9 @@ Private Sub cmdExport_Click()
 End Sub
 
 Private Sub Form_Load()
-    Me.Top = Screen.Height * 0.75
+    Me.top = Screen.Height * 0.75
     Me.Height = Screen.Height * 0.2
-    Me.Left = Screen.Width * 0.25
+    Me.left = Screen.Width * 0.25
     Me.Width = Screen.Width * 0.75
 End Sub
 

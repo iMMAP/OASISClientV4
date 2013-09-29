@@ -382,13 +382,13 @@ End Sub
 
 Private Sub UserControl_MouseDown(Button As Integer, _
                                   Shift As Integer, _
-                                  x As Single, _
-                                  y As Single)
+                                  X As Single, _
+                                  Y As Single)
 
     'NEEDED
     bOperationInProgress = True
     Dim lPercentage As Integer
-    lPercentage = Round((100 * y / UserControl.Height), 0)
+    lPercentage = Round((100 * Y / UserControl.Height), 0)
     CurrentZoom = GetNearestZoomValue(lPercentage)
 
     If bLinesDrawn Then SetZoomPointerFromCurrentZoomLevel

@@ -179,33 +179,35 @@ Public Sub Init(GIS As Object, _
     ListView1.ColumnHeaders.Item(1).Width = ListView1.Width * 0.9
     'lstLayers.Clear
     ReDim sLayerNames(GIS.items.Count)
-     SafeMoveFirst g_RSAppSettings
-     g_RSAppSettings.Find "SettingName = 'OASIS_Incident_Layer_Name'"
-Dim sIncidentsName As String
-If Not g_RSAppSettings.EOF Then sIncidentsName = g_RSAppSettings.Fields.Item("SettingValue1").value
+    SafeMoveFirst g_RSAppSettings
+    g_RSAppSettings.Find "SettingName = 'OASIS_Incident_Layer_Name'"
+    Dim sIncidentsName As String
+
+    If Not g_RSAppSettings.EOF Then sIncidentsName = g_RSAppSettings.Fields.Item("SettingValue1").value
+
     For i = 0 To GIS.items.Count - 1
 
         If InStr(g_sPermanentLyrs, GIS.items.Item(i).Name & ",") < 1 Then
         
-        If Not GIS.items.Item(i).Name = "Draw_Layer" And Not GIS.items.Item(i).Name = sIncidentsName Then
-            If GisUtils.IsInherited(GIS.items.Item(i), "XGIS_LayerVector") Then
-                'lstLayers.AddItem GIS.items.Item(i).caption
-                ListView1.ListItems.Add , , GIS.items.Item(i).caption
-                oRS.AddNew
-                oRS.Fields("sName").value = GIS.items.Item(i).Name
-                oRS.Fields("sAlias").value = GIS.items.Item(i).caption
-            End If
-
-            If GisUtils.IsInherited(GIS.items.Item(i), "XGIS_LayerPixel") Then
-                If bAddRaster Then
+            If Not GIS.items.Item(i).Name = "Draw_Layer" Then 'And Not GIS.items.Item(i).Name = sIncidentsName Then
+                If GisUtils.IsInherited(GIS.items.Item(i), "XGIS_LayerVector") Then
                     'lstLayers.AddItem GIS.items.Item(i).caption
                     ListView1.ListItems.Add , , GIS.items.Item(i).caption
                     oRS.AddNew
                     oRS.Fields("sName").value = GIS.items.Item(i).Name
                     oRS.Fields("sAlias").value = GIS.items.Item(i).caption
                 End If
+
+                If GisUtils.IsInherited(GIS.items.Item(i), "XGIS_LayerPixel") Then
+                    If bAddRaster Then
+                        'lstLayers.AddItem GIS.items.Item(i).caption
+                        ListView1.ListItems.Add , , GIS.items.Item(i).caption
+                        oRS.AddNew
+                        oRS.Fields("sName").value = GIS.items.Item(i).Name
+                        oRS.Fields("sAlias").value = GIS.items.Item(i).caption
+                    End If
+                End If
             End If
-        End If
         
         End If
         

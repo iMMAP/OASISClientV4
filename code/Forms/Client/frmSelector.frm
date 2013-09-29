@@ -77,11 +77,21 @@ Begin VB.Form frmSelector
       AccessibleDescription=   ""
       AccessibleValue =   ""
       AccessibleRole  =   9
+      Begin VB.CheckBox chkAutoSelect 
+         BackColor       =   &H00FFFFFF&
+         Caption         =   "Auto Select"
+         Height          =   330
+         Left            =   2700
+         TabIndex        =   29
+         Top             =   4680
+         Value           =   1  'Checked
+         Width           =   1245
+      End
       Begin VB.CheckBox chkLoadTo 
          BackColor       =   &H00FFFFFF&
          Caption         =   "Load to grid"
          Height          =   330
-         Left            =   2055
+         Left            =   1395
          TabIndex        =   28
          Top             =   4680
          Value           =   1  'Checked
@@ -1063,6 +1073,7 @@ Public Sub SetLayer(sLayerName As String, _
     End If
 
 End Sub
+
 
 Private Sub cmbOtherLayer_Click()
 

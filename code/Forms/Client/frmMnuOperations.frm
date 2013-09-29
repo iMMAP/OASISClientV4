@@ -20,11 +20,11 @@ Begin VB.Form frmMnuOperations
    ScaleHeight     =   5685
    ScaleWidth      =   3735
    StartUpPosition =   3  'Windows Default
-   Begin TatukGIS_XDK10.XGIS_ViewerWnd GIS 
+   Begin TatukGIS_XDK10.XGIS_ViewerWnd GISSecurity 
       Height          =   1515
       Left            =   1140
-      TabIndex        =   93
-      Top             =   2880
+      TabIndex        =   94
+      Top             =   1500
       Visible         =   0   'False
       Width           =   1515
       BigExtentMargin =   -10
@@ -98,11 +98,11 @@ Begin VB.Form frmMnuOperations
       CursorForUserDefined=   0
       View3D          =   0   'False
    End
-   Begin TatukGIS_XDK10.XGIS_ViewerWnd GISSecurity 
+   Begin TatukGIS_XDK10.XGIS_ViewerWnd GIS 
       Height          =   1515
       Left            =   1140
-      TabIndex        =   94
-      Top             =   1500
+      TabIndex        =   93
+      Top             =   2880
       Visible         =   0   'False
       Width           =   1515
       BigExtentMargin =   -10
@@ -1738,7 +1738,7 @@ Begin VB.Form frmMnuOperations
             FrameColor      =   -2147483628
             FrameShadow     =   -2147483632
             FloodStyle      =   1
-            _GridInfo       =   $"frmMnuOperations.frx":657F
+            _GridInfo       =   $"frmMnuOperations.frx":677F
             AccessibleName  =   ""
             AccessibleDescription=   ""
             AccessibleValue =   ""
@@ -1814,7 +1814,7 @@ Begin VB.Form frmMnuOperations
             Begin DXDBGRIDLibCtl.dxDBGrid dxDBGrid1 
                Height          =   4590
                Left            =   15
-               OleObjectBlob   =   "frmMnuOperations.frx":65C1
+               OleObjectBlob   =   "frmMnuOperations.frx":67C1
                TabIndex        =   6
                Top             =   15
                Width           =   3585
@@ -1885,7 +1885,7 @@ Begin VB.Form frmMnuOperations
             FrameColor      =   -2147483628
             FrameShadow     =   -2147483632
             FloodStyle      =   1
-            _GridInfo       =   $"frmMnuOperations.frx":7269
+            _GridInfo       =   $"frmMnuOperations.frx":7469
             AccessibleName  =   ""
             AccessibleDescription=   ""
             AccessibleValue =   ""
@@ -2096,7 +2096,7 @@ Begin VB.Form frmMnuOperations
             FrameColor      =   -2147483628
             FrameShadow     =   -2147483632
             FloodStyle      =   1
-            _GridInfo       =   $"frmMnuOperations.frx":72B3
+            _GridInfo       =   $"frmMnuOperations.frx":74B3
             AccessibleName  =   ""
             AccessibleDescription=   ""
             AccessibleValue =   ""
@@ -2209,7 +2209,7 @@ Begin VB.Form frmMnuOperations
             Begin DXDBGRIDLibCtl.dxDBGrid dxW3DBGrid 
                Height          =   4590
                Left            =   15
-               OleObjectBlob   =   "frmMnuOperations.frx":72F5
+               OleObjectBlob   =   "frmMnuOperations.frx":74F5
                TabIndex        =   12
                Top             =   15
                Width           =   3585
@@ -2321,7 +2321,7 @@ Begin VB.Form frmMnuOperations
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMnuOperations.frx":7FB7
+               _GridInfo       =   $"frmMnuOperations.frx":81B7
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -2659,8 +2659,8 @@ Attribute VB_Exposed = False
 Option Explicit
 Private Declare Function BitBlt _
                 Lib "gdi32" (ByVal hDestDC As Long, _
-                             ByVal x As Long, _
-                             ByVal y As Long, _
+                             ByVal X As Long, _
+                             ByVal Y As Long, _
                              ByVal nWidth As Long, _
                              ByVal nHeight As Long, _
                              ByVal hSrcDC As Long, _
@@ -3329,8 +3329,8 @@ Public Sub MapLibSaveMap(sPath As String, _
 160             .Fields("sName").value = sTitle
 162             .Fields("sInfo").value = sInfo
 164             .Fields("bSavedToDB").value = True
-166             .Fields.Item("centerX").value = m_OGIS.CenterPtg.x
-168             .Fields.Item("centerY").value = m_OGIS.CenterPtg.y
+166             .Fields.Item("centerX").value = m_OGIS.CenterPtg.X
+168             .Fields.Item("centerY").value = m_OGIS.CenterPtg.Y
 170             .Fields.Item("scale").value = m_OGIS.ScaleAsText
 172             .Fields.Item("EPSG").value = m_OGIS.CS.EPSG
 174             .Fields.Item("CreatedBy").value = sCreatedBy
@@ -3388,8 +3388,8 @@ End Sub
 Private Sub Legend1_OnMouseDown(translated As Boolean, _
                                 ByVal Button As TatukGIS_XDK10.XMouseButton, _
                                 ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                                ByVal x As Long, _
-                                ByVal y As Long)
+                                ByVal X As Long, _
+                                ByVal Y As Long)
         '<EhHeader>
         On Error GoTo Legend1_OnMouseDown_Err
         '</EhHeader>
@@ -3757,14 +3757,14 @@ Private Sub vbalSearch_NodeRightClick(Node As vbalTreeViewLib6.cTreeViewNode)
 
     If Node.Parent Is Nothing Then
         DebugPrint "Root"
-        Me.PopupMenu mnuSearchRight, , vbalSearch.left + tP.x * Screen.TwipsPerPixelX, vbalSearch.top + tP.y * Screen.TwipsPerPixelY
+        Me.PopupMenu mnuSearchRight, , vbalSearch.left + tP.X * Screen.TwipsPerPixelX, vbalSearch.top + tP.Y * Screen.TwipsPerPixelY
 
     ElseIf Node.Parent.Parent Is Nothing Then
         DebugPrint "Geoitem"
         m_sSearchCurLyr = Node.Tag
         sKey = Split(Node.Key, ":::")
         m_sSearchCurUID = sKey(0)
-        Me.PopupMenu mnuGeoItem, , vbalSearch.left + tP.x * Screen.TwipsPerPixelX, vbalSearch.top + tP.y * Screen.TwipsPerPixelY
+        Me.PopupMenu mnuGeoItem, , vbalSearch.left + tP.X * Screen.TwipsPerPixelX, vbalSearch.top + tP.Y * Screen.TwipsPerPixelY
 
     End If
 
@@ -3904,7 +3904,7 @@ Private Sub cmdExportLegend_Click()
             On Error GoTo cmdExportLegend_Click_Err
         
 112         Do Until Not bLayerExists
-        
+                On Error Resume Next ' new from 03 sept 2013
 114             If Not bLayerSeleted(l) Then
             
 116                 Set oLyrAB = Legend1.GIS_Viewer.get(sLayerNames(l))

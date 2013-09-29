@@ -520,10 +520,10 @@ Private Sub AdminClick(COMClicked As ComboBox, _
                     'oExtent.Prepare oShapeClicked.Extent.XMin + (GIS.VisibleExtent.XMax - GIS.VisibleExtent.XMin), GIS.VisibleExtent.YMin + (GIS.VisibleExtent.YMin - GIS.VisibleExtent.YMin), oShapeClicked.Extent.XMin + (GIS.VisibleExtent.XMax - GIS.VisibleExtent.XMin), GIS.VisibleExtent.YMin + (GIS.VisibleExtent.YMin - GIS.VisibleExtent.YMin)
                     'Set oShapeClicked = oLayerClicked.FindFirst(oLayerClicked.Extent, sFieldClicked & " = '" & COMClicked.List(COMClicked.ListIndex) & "'", Nothing, "", True)
                     GIS.CenterViewport oShapeClicked.Centroid
-                    oShapeClicked.Flash 8
+                    oShapeClicked.Flash 2, 50
                 Else
                     GIS.VisibleExtent = oShapeClicked.Extent
-                    oLayerClicked.GetShape(lClickedShapeUID).Flash 8
+                    oLayerClicked.GetShape(lClickedShapeUID).Flash 2, 50
                 End If
 
                 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''

@@ -866,52 +866,64 @@ Private Sub cmdAddManually_Click()
 End Sub
 
 Private Sub cmdConnect_Click()
+        '<EhHeader>
+        On Error GoTo cmdConnect_Click_Err
+        '</EhHeader>
 
-    Dim Wipe As VbMsgBoxResult
-    Dim CN As ADODB.Connection
-    Me.Hide
+        Dim Wipe As VbMsgBoxResult
+        Dim CN As ADODB.Connection
+100     Me.Hide
 
-    If listServer.Text <> sInitialMSACCESSServer And OptMicrosoftAccess.value = True Then
+102     If listServer.Text <> sInitialMSACCESSServer And OptMicrosoftAccess.value = True Then
 
-        Wipe = MsgBox("You are changing server.  In order to accomplish this the client database must be wiped.  Are you sure you want to proceed?", vbYesNo, "Wipe database?")
+104         Wipe = MsgBox("You are changing server.  In order to accomplish this the client database must be wiped.  Are you sure you want to proceed?", vbYesNo, "Wipe database?")
 
-        If Wipe = vbYes Then
+106         If Wipe = vbYes Then
         
-            Set CN = New ADODB.Connection
-            CN.Open GetConnectionString(g_sAppPath & "\data\db\OasisClient.mdb")
-            WipeTablesForReset CN
-            CN.Close
-            Set CN = Nothing
+108             Set CN = New ADODB.Connection
+110             CN.Open GetConnectionString(g_sAppPath & "\data\db\OasisClient.mdb")
+112             WipeTablesForReset CN
+114             CN.Close
+116             Set CN = Nothing
             
-            ComServer.Text = listServer.Text
-            sInitialMSACCESSServer = ComServer.Text
-            MsgBox "The OASIS Server has been updated", vbInformation
-            c1Tab.CurrTab = 0
+118             ComServer.Text = listServer.Text
+120             sInitialMSACCESSServer = ComServer.Text
+122             MsgBox "The OASIS Server has been updated", vbInformation
+124             c1Tab.CurrTab = 0
+            End If
+
+        Else
+126         ComServer.Text = listServer.Text
+128         MsgBox "The OASIS Server has been updated", vbInformation
+130         c1Tab.CurrTab = 0
+        End If
+    
+132     If ComServer.Text = "atlantis.oasiswebservice.org" Then
+134         txtUserName = "demo"
+136         txtPassword = "demo"
+            'txtPassword.Enabled = False
+           ' txtUserName.Enabled = False
+        
+        Else
+138         txtPassword.Enabled = True
+140         txtUserName.Enabled = True
         End If
 
-    Else
-        ComServer.Text = listServer.Text
-        MsgBox "The OASIS Server has been updated", vbInformation
-        c1Tab.CurrTab = 0
-    End If
+142     Me.Show
+144     Set CN = Nothing
     
-    If ComServer.Text = "atlantis.oasiswebservice.org" Then
-        txtUserName = "demo"
-        txtPassword = "demo"
-        'txtPassword.Enabled = False
-       ' txtUserName.Enabled = False
+146     g_sAppServerPath = "http://" & ComServer.Text
+148     cmdRestoreSQL.Enabled = IIf(FileExists(g_sAppPath & "\data\db\" & Replace(g_sAppServerPath, "/", "-") & ".bak"), True, False)
+
+        '<EhFooter>
+        Exit Sub
+
+cmdConnect_Click_Err:
+        MsgBox Err.Description & vbCrLf & _
+               "in OASISClient.frmLogin.cmdConnect_Click " & _
+               "at line " & Erl
         
-    Else
-        txtPassword.Enabled = True
-        txtUserName.Enabled = True
-    End If
-
-    Me.Show
-    Set CN = Nothing
-    
-    g_sAppServerPath = "http://" & ComServer.Text
-    cmdRestoreSQL.Enabled = IIf(FileExists(g_sAppPath & "\data\db\" & Replace(g_sAppServerPath, "/", "-") & ".bak"), True, False)
-
+        '</EhFooter>
 End Sub
 
 Private Sub cmdExpand_Click()
@@ -971,49 +983,61 @@ Private Function FolderExists(sFolderName As String) As Integer
 End Function
 
 Private Function VerifyDataFolderIntegrity() As Boolean
+        '<EhHeader>
+        On Error GoTo VerifyDataFolderIntegrity_Err
+        '</EhHeader>
 
-    Dim sOutput As String
-    VerifyDataFolderIntegrity = True
+        Dim sOutput As String
+100     VerifyDataFolderIntegrity = True
     
-    Dim i As Integer
-    Dim sPaths(17) As String
+        Dim i As Integer
+        Dim sPaths(17) As String
 
-    sPaths(0) = g_sAppPath & "\data"
-    sPaths(1) = g_sAppPath & "\data\db"
-    sPaths(2) = g_sAppPath & "\data\gis"
-    sPaths(3) = g_sAppPath & "\data\sync"
-    sPaths(4) = g_sAppPath & "\data\templates"
-    sPaths(5) = g_sAppPath & "\data\user"
-    sPaths(6) = g_sAppPath & "\data\db\dynamicdata"
-    sPaths(7) = g_sAppPath & "\data\sync\import"
-    sPaths(8) = g_sAppPath & "\data\templates\ChartTemplates"
-    sPaths(9) = g_sAppPath & "\data\templates\FixedTemplates"
-    sPaths(10) = g_sAppPath & "\data\templates\printtemplates"
-    sPaths(11) = g_sAppPath & "\data\templates\spatialanalysis"
-    sPaths(12) = g_sAppPath & "\data\templates\SecurityChartTemplates"
-    sPaths(13) = g_sAppPath & "\data\user\Exports"
-    sPaths(14) = g_sAppPath & "\data\user\Maps"
-    sPaths(15) = g_sAppPath & "\data\user\Sessions"
-    sPaths(16) = g_sAppPath & "\data\user\utils"
+102     sPaths(0) = g_sAppPath & "\data"
+104     sPaths(1) = g_sAppPath & "\data\db"
+106     sPaths(2) = g_sAppPath & "\data\gis"
+108     sPaths(3) = g_sAppPath & "\data\sync"
+110     sPaths(4) = g_sAppPath & "\data\templates"
+112     sPaths(5) = g_sAppPath & "\data\user"
+114     sPaths(6) = g_sAppPath & "\data\db\dynamicdata"
+116     sPaths(7) = g_sAppPath & "\data\sync\import"
+118     sPaths(8) = g_sAppPath & "\data\templates\ChartTemplates"
+120     sPaths(9) = g_sAppPath & "\data\templates\FixedTemplates"
+122     sPaths(10) = g_sAppPath & "\data\templates\printtemplates"
+124     sPaths(11) = g_sAppPath & "\data\templates\spatialanalysis"
+126     sPaths(12) = g_sAppPath & "\data\templates\SecurityChartTemplates"
+128     sPaths(13) = g_sAppPath & "\data\user\Exports"
+130     sPaths(14) = g_sAppPath & "\data\user\Maps"
+132     sPaths(15) = g_sAppPath & "\data\user\Sessions"
+134     sPaths(16) = g_sAppPath & "\data\user\utils"
 
-    i = 0
+136     i = 0
 
-    Do Until i = 17
+138     Do Until i = 17
     
-        If FolderExists(sPaths(i)) Then
-            'sOutput = sOutput & "Folder [" & sPaths(i) & "] exists" & Chr(13)
-        Else
-            'sOutput = sOutput & "Folder [" & sPaths(i) & "] does not exist!" & Chr(13) & Chr(13)
-            MkDir sPaths(i)
-            If VerifyDataFolderIntegrity Then VerifyDataFolderIntegrity = False
-        End If
+140         If FolderExists(sPaths(i)) Then
+                'sOutput = sOutput & "Folder [" & sPaths(i) & "] exists" & Chr(13)
+            Else
+                'sOutput = sOutput & "Folder [" & sPaths(i) & "] does not exist!" & Chr(13) & Chr(13)
+142             MkDir sPaths(i)
+144             If VerifyDataFolderIntegrity Then VerifyDataFolderIntegrity = False
+            End If
 
-        i = i + 1
-    Loop
+146         i = i + 1
+        Loop
 
     
-    'If Not VerifyDataFolderIntegrity Then MsgBox sOutput, vbCritical, "OASIS folder structure corrupted"
+        'If Not VerifyDataFolderIntegrity Then MsgBox sOutput, vbCritical, "OASIS folder structure corrupted"
     
+        '<EhFooter>
+        Exit Function
+
+VerifyDataFolderIntegrity_Err:
+        MsgBox Err.Description & vbCrLf & _
+               "in OASISClient.frmLogin.VerifyDataFolderIntegrity " & _
+               "at line " & Erl
+        Resume Next
+        '</EhFooter>
 End Function
 
 Private Sub cmdReloadProfile_Click()
@@ -1199,7 +1223,7 @@ Private Sub Form_Load()
         Dim i As Integer
         lStartWidth = Me.Width
         'Me.Width = Frame1.Width + 120
-    
+        
         ComServer.ListIndex = 0
         c1Tab.TabIndex = 0
         GetConnectionString ""
@@ -3250,13 +3274,13 @@ Private Sub WipeTablesForReset(oConn As ADODB.Connection)
         
         bDeleteIncidents = True
         oRS.Open "SELECT top 1 * from [oincidents_FEA]", oConn, adOpenDynamic, adLockBatchOptimistic
-
+bDeleteIncidents = True
         If oRS.State = adStateOpen Then
         
             If Not oRS.EOF And Not oRS.Bof Then
           
-                bDeleteIncidents = IIf(MsgBox("Do you want to delete all incident data?", vbYesNo, "Confirm incident data deletion") = vbYes, True, False)
-            
+               ' bDeleteIncidents = IIf(MsgBox("Do you want to delete all incident data?", vbYesNo, "Confirm incident data deletion") = vbYes, True, False)
+            'bDeleteIncidents = True
             End If
             
             oRS.Close

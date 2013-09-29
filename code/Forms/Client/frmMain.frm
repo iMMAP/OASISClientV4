@@ -448,7 +448,7 @@ Begin VB.Form frmMain
       BackColor       =   -2147483633
       Appearance      =   1
       ShowWeekNumbers =   -1  'True
-      StartOfWeek     =   88604674
+      StartOfWeek     =   97124354
       CurrentDate     =   39232
    End
    Begin VB.CommandButton Command1 
@@ -579,47 +579,47 @@ Begin VB.Form frmMain
          BeginProperty Images {2C247F25-8591-11D1-B16A-00C0F0283628} 
             NumListImages   =   9
             BeginProperty ListImage1 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2A57F
+               Picture         =   "frmMain.frx":32AC7
                Key             =   ""
                Object.Tag             =   "Adress"
             EndProperty
             BeginProperty ListImage2 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2A691
+               Picture         =   "frmMain.frx":32BD9
                Key             =   ""
                Object.Tag             =   "Check"
             EndProperty
             BeginProperty ListImage3 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2A7A3
+               Picture         =   "frmMain.frx":32CEB
                Key             =   ""
                Object.Tag             =   "Company"
             EndProperty
             BeginProperty ListImage4 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2A8B5
+               Picture         =   "frmMain.frx":32DFD
                Key             =   ""
                Object.Tag             =   "Count"
             EndProperty
             BeginProperty ListImage5 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2A9C7
+               Picture         =   "frmMain.frx":32F0F
                Key             =   ""
                Object.Tag             =   "Time"
             EndProperty
             BeginProperty ListImage6 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2AAD9
+               Picture         =   "frmMain.frx":33021
                Key             =   ""
                Object.Tag             =   "Man"
             EndProperty
             BeginProperty ListImage7 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2ABEB
+               Picture         =   "frmMain.frx":33133
                Key             =   ""
                Object.Tag             =   "Phone"
             EndProperty
             BeginProperty ListImage8 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2ACFD
+               Picture         =   "frmMain.frx":33245
                Key             =   ""
                Object.Tag             =   "Apple"
             EndProperty
             BeginProperty ListImage9 {2C247F27-8591-11D1-B16A-00C0F0283628} 
-               Picture         =   "frmMain.frx":2AE0F
+               Picture         =   "frmMain.frx":33357
                Key             =   ""
                Object.Tag             =   "Salary"
             EndProperty
@@ -679,7 +679,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2AF21
+         _GridInfo       =   $"frmMain.frx":33469
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -748,7 +748,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2AF55
+         _GridInfo       =   $"frmMain.frx":3349D
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -817,7 +817,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2AF89
+         _GridInfo       =   $"frmMain.frx":334D1
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -886,7 +886,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2AFBB
+         _GridInfo       =   $"frmMain.frx":33503
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -954,7 +954,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2AFF0
+         _GridInfo       =   $"frmMain.frx":33538
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -1023,7 +1023,7 @@ Begin VB.Form frmMain
          FrameColor      =   -2147483628
          FrameShadow     =   -2147483632
          FloodStyle      =   1
-         _GridInfo       =   $"frmMain.frx":2B027
+         _GridInfo       =   $"frmMain.frx":3356F
          AccessibleName  =   ""
          AccessibleDescription=   ""
          AccessibleValue =   ""
@@ -1135,7 +1135,7 @@ Begin VB.Form frmMain
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMain.frx":2B06C
+               _GridInfo       =   $"frmMain.frx":335B4
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -1359,7 +1359,7 @@ Begin VB.Form frmMain
                      FrameColor      =   -2147483628
                      FrameShadow     =   -2147483632
                      FloodStyle      =   1
-                     _GridInfo       =   $"frmMain.frx":2B0AE
+                     _GridInfo       =   $"frmMain.frx":335F6
                      AccessibleName  =   ""
                      AccessibleDescription=   ""
                      AccessibleValue =   ""
@@ -1436,7 +1436,7 @@ Begin VB.Form frmMain
                            Height          =   375
                            Index           =   4
                            Left            =   0
-                           Picture         =   "frmMain.frx":2B0EC
+                           Picture         =   "frmMain.frx":33634
                            TabIndex        =   125
                            ToolTipText     =   "Clear"
                            Top             =   1440
@@ -1455,7 +1455,7 @@ Begin VB.Form frmMain
                            Height          =   375
                            Index           =   3
                            Left            =   0
-                           Picture         =   "frmMain.frx":3193E
+                           Picture         =   "frmMain.frx":39E86
                            Style           =   1  'Graphical
                            TabIndex        =   43
                            ToolTipText     =   "Selector Settings"
@@ -1475,7 +1475,7 @@ Begin VB.Form frmMain
                            Height          =   375
                            Index           =   2
                            Left            =   0
-                           Picture         =   "frmMain.frx":38190
+                           Picture         =   "frmMain.frx":406D8
                            Style           =   1  'Graphical
                            TabIndex        =   122
                            ToolTipText     =   "Do reports"
@@ -1495,7 +1495,7 @@ Begin VB.Form frmMain
                            Height          =   375
                            Index           =   1
                            Left            =   0
-                           Picture         =   "frmMain.frx":3E9E2
+                           Picture         =   "frmMain.frx":46F2A
                            Style           =   1  'Graphical
                            TabIndex        =   121
                            ToolTipText     =   "Show Geo Summary"
@@ -1515,7 +1515,7 @@ Begin VB.Form frmMain
                            Height          =   375
                            Index           =   0
                            Left            =   0
-                           Picture         =   "frmMain.frx":45234
+                           Picture         =   "frmMain.frx":4D77C
                            Style           =   1  'Graphical
                            TabIndex        =   120
                            ToolTipText     =   "Close Current Info"
@@ -1630,7 +1630,7 @@ Begin VB.Form frmMain
                            FrameColor      =   -2147483628
                            FrameShadow     =   -2147483632
                            FloodStyle      =   1
-                           _GridInfo       =   $"frmMain.frx":4BA86
+                           _GridInfo       =   $"frmMain.frx":53FCE
                            AccessibleName  =   ""
                            AccessibleDescription=   ""
                            AccessibleValue =   ""
@@ -1800,9 +1800,9 @@ Begin VB.Form frmMain
                            Width           =   2445
                            Begin VB.ComboBox txtSpatialOperation 
                               Height          =   315
-                              ItemData        =   "frmMain.frx":4BAC5
+                              ItemData        =   "frmMain.frx":5400D
                               Left            =   150
-                              List            =   "frmMain.frx":4BACC
+                              List            =   "frmMain.frx":54014
                               Style           =   2  'Dropdown List
                               TabIndex        =   115
                               Top             =   540
@@ -1810,9 +1810,9 @@ Begin VB.Form frmMain
                            End
                            Begin VB.ComboBox ComBuffLevel 
                               Height          =   315
-                              ItemData        =   "frmMain.frx":4BADB
+                              ItemData        =   "frmMain.frx":54023
                               Left            =   150
-                              List            =   "frmMain.frx":4BAF7
+                              List            =   "frmMain.frx":5403F
                               Style           =   2  'Dropdown List
                               TabIndex        =   114
                               Top             =   210
@@ -1956,7 +1956,7 @@ Begin VB.Form frmMain
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMain.frx":4BB23
+               _GridInfo       =   $"frmMain.frx":5406B
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -1971,7 +1971,7 @@ Begin VB.Form frmMain
                   _ExtentX        =   18600
                   _ExtentY        =   688
                   _DataPath       =   ""
-                  Bands           =   "frmMain.frx":4BB6E
+                  Bands           =   "frmMain.frx":540B6
                   Begin TatukGIS_XDK10.XGIS_ControlScale Scale1 
                      Height          =   375
                      Left            =   9240
@@ -2031,7 +2031,7 @@ Begin VB.Form frmMain
                Begin DXDBGRIDLibCtl.dxDBGrid dxGISDataGrid 
                   Height          =   1560
                   Left            =   0
-                  OleObjectBlob   =   "frmMain.frx":4D8B0
+                  OleObjectBlob   =   "frmMain.frx":561F8
                   TabIndex        =   93
                   Top             =   390
                   Width           =   10545
@@ -2130,19 +2130,18 @@ Begin VB.Form frmMain
             AccessibleDescription=   ""
             AccessibleValue =   ""
             AccessibleRole  =   9
-            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow watermark 
-               Height          =   1035
-               Left            =   6660
-               TabIndex        =   143
-               Top             =   2520
-               Visible         =   0   'False
-               Width           =   1275
-               Symbol          =   0
+            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow NArrow 
+               Height          =   1095
+               Left            =   6960
+               TabIndex        =   142
+               Top             =   0
+               Width           =   1575
+               Symbol          =   7
                Transparent     =   -1  'True
                Path            =   ""
                Align           =   0
                BevelInner      =   0
-               BevelOuter      =   0
+               BevelOuter      =   2
                BorderStyle     =   0
                Color           =   -16777201
                Ctl3D           =   -1  'True
@@ -2213,7 +2212,7 @@ Begin VB.Form frmMain
                PrintSubtitleFontColor=   -16777208
                PrintFooterFontColor=   -16777208
                SelectionColor  =   16777215
-               SelectionPattern=   "frmMain.frx":4E538
+               SelectionPattern=   "frmMain.frx":56E80
                SelectionTransparency=   100
                SelectionWidth  =   100
                SelectionOutlineOnly=   0   'False
@@ -2240,18 +2239,19 @@ Begin VB.Form frmMain
                CursorForUserDefined=   0
                View3D          =   0   'False
             End
-            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow NArrow 
-               Height          =   1095
-               Left            =   6960
-               TabIndex        =   142
-               Top             =   0
-               Width           =   1575
-               Symbol          =   7
+            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow watermark 
+               Height          =   1035
+               Left            =   6660
+               TabIndex        =   143
+               Top             =   2520
+               Visible         =   0   'False
+               Width           =   1275
+               Symbol          =   0
                Transparent     =   -1  'True
                Path            =   ""
                Align           =   0
                BevelInner      =   0
-               BevelOuter      =   2
+               BevelOuter      =   0
                BorderStyle     =   0
                Color           =   -16777201
                Ctl3D           =   -1  'True
@@ -2669,7 +2669,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   930
                      MaskColor       =   &H0000C000&
-                     Picture         =   "frmMain.frx":5158A
+                     Picture         =   "frmMain.frx":57592
                      Style           =   1  'Graphical
                      TabIndex        =   62
                      ToolTipText     =   "Create scribble Area"
@@ -2721,7 +2721,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   1410
                      MaskColor       =   &H000000FF&
-                     Picture         =   "frmMain.frx":518CC
+                     Picture         =   "frmMain.frx":578D4
                      Style           =   1  'Graphical
                      TabIndex        =   52
                      ToolTipText     =   "Remove Markers"
@@ -2757,9 +2757,9 @@ Begin VB.Form frmMain
                   End
                   Begin VB.ComboBox comConversionType 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":5811E
+                     ItemData        =   "frmMain.frx":5E126
                      Left            =   660
-                     List            =   "frmMain.frx":5812E
+                     List            =   "frmMain.frx":5E136
                      Style           =   2  'Dropdown List
                      TabIndex        =   37
                      Top             =   60
@@ -2768,7 +2768,7 @@ Begin VB.Form frmMain
                   Begin VB.CommandButton cmdZoomTo 
                      Height          =   330
                      Left            =   1890
-                     Picture         =   "frmMain.frx":5815A
+                     Picture         =   "frmMain.frx":5E162
                      Style           =   1  'Graphical
                      TabIndex        =   36
                      ToolTipText     =   "Zoom to/Create Marker"
@@ -3076,121 +3076,121 @@ Begin VB.Form frmMain
                         Italic          =   0   'False
                         Strikethrough   =   0   'False
                      EndProperty
-                     PictureClose    =   "frmMain.frx":5E9AC
-                     PictureMinus    =   "frmMain.frx":5E9C8
-                     PictureOpen     =   "frmMain.frx":5E9E4
-                     PicturePlus     =   "frmMain.frx":5EA00
-                     PictureLeaf     =   "frmMain.frx":5EA1C
-                     TitleBackImage  =   "frmMain.frx":5EA38
-                     CheckPicDown    =   "frmMain.frx":5EA54
-                     CheckPicUp      =   "frmMain.frx":5EA70
-                     CheckPicDisabled=   "frmMain.frx":5EA8C
-                     RadioPicDown    =   "frmMain.frx":5EAA8
-                     RadioPicUp      =   "frmMain.frx":5EAC4
-                     BackImage       =   "frmMain.frx":5EAE0
-                     MouseIcon       =   "frmMain.frx":5EAFC
+                     PictureClose    =   "frmMain.frx":649B4
+                     PictureMinus    =   "frmMain.frx":649D0
+                     PictureOpen     =   "frmMain.frx":649EC
+                     PicturePlus     =   "frmMain.frx":64A08
+                     PictureLeaf     =   "frmMain.frx":64A24
+                     TitleBackImage  =   "frmMain.frx":64A40
+                     CheckPicDown    =   "frmMain.frx":64A5C
+                     CheckPicUp      =   "frmMain.frx":64A78
+                     CheckPicDisabled=   "frmMain.frx":64A94
+                     RadioPicDown    =   "frmMain.frx":64AB0
+                     RadioPicUp      =   "frmMain.frx":64ACC
+                     BackImage       =   "frmMain.frx":64AE8
+                     MouseIcon       =   "frmMain.frx":64B04
                      NoFocusBackColor=   -2147483633
-                     HeaderData      =   "frmMain.frx":5EB18
-                     PicArray0       =   "frmMain.frx":5EB40
-                     PicArray1       =   "frmMain.frx":5EB5C
-                     PicArray2       =   "frmMain.frx":5EB78
-                     PicArray3       =   "frmMain.frx":5EB94
-                     PicArray4       =   "frmMain.frx":5EBB0
-                     PicArray5       =   "frmMain.frx":5EBCC
-                     PicArray6       =   "frmMain.frx":5EBE8
-                     PicArray7       =   "frmMain.frx":5EC04
-                     PicArray8       =   "frmMain.frx":5EC20
-                     PicArray9       =   "frmMain.frx":5EC3C
-                     PicArray10      =   "frmMain.frx":5EC58
-                     PicArray11      =   "frmMain.frx":5EC74
-                     PicArray12      =   "frmMain.frx":5EC90
-                     PicArray13      =   "frmMain.frx":5ECAC
-                     PicArray14      =   "frmMain.frx":5ECC8
-                     PicArray15      =   "frmMain.frx":5ECE4
-                     PicArray16      =   "frmMain.frx":5ED00
-                     PicArray17      =   "frmMain.frx":5ED1C
-                     PicArray18      =   "frmMain.frx":5ED38
-                     PicArray19      =   "frmMain.frx":5ED54
-                     PicArray20      =   "frmMain.frx":5ED70
-                     PicArray21      =   "frmMain.frx":5ED8C
-                     PicArray22      =   "frmMain.frx":5EDA8
-                     PicArray23      =   "frmMain.frx":5EDC4
-                     PicArray24      =   "frmMain.frx":5EDE0
-                     PicArray25      =   "frmMain.frx":5EDFC
-                     PicArray26      =   "frmMain.frx":5EE18
-                     PicArray27      =   "frmMain.frx":5EE34
-                     PicArray28      =   "frmMain.frx":5EE50
-                     PicArray29      =   "frmMain.frx":5EE6C
-                     PicArray30      =   "frmMain.frx":5EE88
-                     PicArray31      =   "frmMain.frx":5EEA4
-                     PicArray32      =   "frmMain.frx":5EEC0
-                     PicArray33      =   "frmMain.frx":5EEDC
-                     PicArray34      =   "frmMain.frx":5EEF8
-                     PicArray35      =   "frmMain.frx":5EF14
-                     PicArray36      =   "frmMain.frx":5EF30
-                     PicArray37      =   "frmMain.frx":5EF4C
-                     PicArray38      =   "frmMain.frx":5EF68
-                     PicArray39      =   "frmMain.frx":5EF84
-                     PicArray40      =   "frmMain.frx":5EFA0
-                     PicArray41      =   "frmMain.frx":5EFBC
-                     PicArray42      =   "frmMain.frx":5EFD8
-                     PicArray43      =   "frmMain.frx":5EFF4
-                     PicArray44      =   "frmMain.frx":5F010
-                     PicArray45      =   "frmMain.frx":5F02C
-                     PicArray46      =   "frmMain.frx":5F048
-                     PicArray47      =   "frmMain.frx":5F064
-                     PicArray48      =   "frmMain.frx":5F080
-                     PicArray49      =   "frmMain.frx":5F09C
-                     PicArray50      =   "frmMain.frx":5F0B8
-                     PicArray51      =   "frmMain.frx":5F0D4
-                     PicArray52      =   "frmMain.frx":5F0F0
-                     PicArray53      =   "frmMain.frx":5F10C
-                     PicArray54      =   "frmMain.frx":5F128
-                     PicArray55      =   "frmMain.frx":5F144
-                     PicArray56      =   "frmMain.frx":5F160
-                     PicArray57      =   "frmMain.frx":5F17C
-                     PicArray58      =   "frmMain.frx":5F198
-                     PicArray59      =   "frmMain.frx":5F1B4
-                     PicArray60      =   "frmMain.frx":5F1D0
-                     PicArray61      =   "frmMain.frx":5F1EC
-                     PicArray62      =   "frmMain.frx":5F208
-                     PicArray63      =   "frmMain.frx":5F224
-                     PicArray64      =   "frmMain.frx":5F240
-                     PicArray65      =   "frmMain.frx":5F25C
-                     PicArray66      =   "frmMain.frx":5F278
-                     PicArray67      =   "frmMain.frx":5F294
-                     PicArray68      =   "frmMain.frx":5F2B0
-                     PicArray69      =   "frmMain.frx":5F2CC
-                     PicArray70      =   "frmMain.frx":5F2E8
-                     PicArray71      =   "frmMain.frx":5F304
-                     PicArray72      =   "frmMain.frx":5F320
-                     PicArray73      =   "frmMain.frx":5F33C
-                     PicArray74      =   "frmMain.frx":5F358
-                     PicArray75      =   "frmMain.frx":5F374
-                     PicArray76      =   "frmMain.frx":5F390
-                     PicArray77      =   "frmMain.frx":5F3AC
-                     PicArray78      =   "frmMain.frx":5F3C8
-                     PicArray79      =   "frmMain.frx":5F3E4
-                     PicArray80      =   "frmMain.frx":5F400
-                     PicArray81      =   "frmMain.frx":5F41C
-                     PicArray82      =   "frmMain.frx":5F438
-                     PicArray83      =   "frmMain.frx":5F454
-                     PicArray84      =   "frmMain.frx":5F470
-                     PicArray85      =   "frmMain.frx":5F48C
-                     PicArray86      =   "frmMain.frx":5F4A8
-                     PicArray87      =   "frmMain.frx":5F4C4
-                     PicArray88      =   "frmMain.frx":5F4E0
-                     PicArray89      =   "frmMain.frx":5F4FC
-                     PicArray90      =   "frmMain.frx":5F518
-                     PicArray91      =   "frmMain.frx":5F534
-                     PicArray92      =   "frmMain.frx":5F550
-                     PicArray93      =   "frmMain.frx":5F56C
-                     PicArray94      =   "frmMain.frx":5F588
-                     PicArray95      =   "frmMain.frx":5F5A4
-                     PicArray96      =   "frmMain.frx":5F5C0
-                     PicArray97      =   "frmMain.frx":5F5DC
-                     PicArray98      =   "frmMain.frx":5F5F8
-                     PicArray99      =   "frmMain.frx":5F614
+                     HeaderData      =   "frmMain.frx":64B20
+                     PicArray0       =   "frmMain.frx":64B48
+                     PicArray1       =   "frmMain.frx":64B64
+                     PicArray2       =   "frmMain.frx":64B80
+                     PicArray3       =   "frmMain.frx":64B9C
+                     PicArray4       =   "frmMain.frx":64BB8
+                     PicArray5       =   "frmMain.frx":64BD4
+                     PicArray6       =   "frmMain.frx":64BF0
+                     PicArray7       =   "frmMain.frx":64C0C
+                     PicArray8       =   "frmMain.frx":64C28
+                     PicArray9       =   "frmMain.frx":64C44
+                     PicArray10      =   "frmMain.frx":64C60
+                     PicArray11      =   "frmMain.frx":64C7C
+                     PicArray12      =   "frmMain.frx":64C98
+                     PicArray13      =   "frmMain.frx":64CB4
+                     PicArray14      =   "frmMain.frx":64CD0
+                     PicArray15      =   "frmMain.frx":64CEC
+                     PicArray16      =   "frmMain.frx":64D08
+                     PicArray17      =   "frmMain.frx":64D24
+                     PicArray18      =   "frmMain.frx":64D40
+                     PicArray19      =   "frmMain.frx":64D5C
+                     PicArray20      =   "frmMain.frx":64D78
+                     PicArray21      =   "frmMain.frx":64D94
+                     PicArray22      =   "frmMain.frx":64DB0
+                     PicArray23      =   "frmMain.frx":64DCC
+                     PicArray24      =   "frmMain.frx":64DE8
+                     PicArray25      =   "frmMain.frx":64E04
+                     PicArray26      =   "frmMain.frx":64E20
+                     PicArray27      =   "frmMain.frx":64E3C
+                     PicArray28      =   "frmMain.frx":64E58
+                     PicArray29      =   "frmMain.frx":64E74
+                     PicArray30      =   "frmMain.frx":64E90
+                     PicArray31      =   "frmMain.frx":64EAC
+                     PicArray32      =   "frmMain.frx":64EC8
+                     PicArray33      =   "frmMain.frx":64EE4
+                     PicArray34      =   "frmMain.frx":64F00
+                     PicArray35      =   "frmMain.frx":64F1C
+                     PicArray36      =   "frmMain.frx":64F38
+                     PicArray37      =   "frmMain.frx":64F54
+                     PicArray38      =   "frmMain.frx":64F70
+                     PicArray39      =   "frmMain.frx":64F8C
+                     PicArray40      =   "frmMain.frx":64FA8
+                     PicArray41      =   "frmMain.frx":64FC4
+                     PicArray42      =   "frmMain.frx":64FE0
+                     PicArray43      =   "frmMain.frx":64FFC
+                     PicArray44      =   "frmMain.frx":65018
+                     PicArray45      =   "frmMain.frx":65034
+                     PicArray46      =   "frmMain.frx":65050
+                     PicArray47      =   "frmMain.frx":6506C
+                     PicArray48      =   "frmMain.frx":65088
+                     PicArray49      =   "frmMain.frx":650A4
+                     PicArray50      =   "frmMain.frx":650C0
+                     PicArray51      =   "frmMain.frx":650DC
+                     PicArray52      =   "frmMain.frx":650F8
+                     PicArray53      =   "frmMain.frx":65114
+                     PicArray54      =   "frmMain.frx":65130
+                     PicArray55      =   "frmMain.frx":6514C
+                     PicArray56      =   "frmMain.frx":65168
+                     PicArray57      =   "frmMain.frx":65184
+                     PicArray58      =   "frmMain.frx":651A0
+                     PicArray59      =   "frmMain.frx":651BC
+                     PicArray60      =   "frmMain.frx":651D8
+                     PicArray61      =   "frmMain.frx":651F4
+                     PicArray62      =   "frmMain.frx":65210
+                     PicArray63      =   "frmMain.frx":6522C
+                     PicArray64      =   "frmMain.frx":65248
+                     PicArray65      =   "frmMain.frx":65264
+                     PicArray66      =   "frmMain.frx":65280
+                     PicArray67      =   "frmMain.frx":6529C
+                     PicArray68      =   "frmMain.frx":652B8
+                     PicArray69      =   "frmMain.frx":652D4
+                     PicArray70      =   "frmMain.frx":652F0
+                     PicArray71      =   "frmMain.frx":6530C
+                     PicArray72      =   "frmMain.frx":65328
+                     PicArray73      =   "frmMain.frx":65344
+                     PicArray74      =   "frmMain.frx":65360
+                     PicArray75      =   "frmMain.frx":6537C
+                     PicArray76      =   "frmMain.frx":65398
+                     PicArray77      =   "frmMain.frx":653B4
+                     PicArray78      =   "frmMain.frx":653D0
+                     PicArray79      =   "frmMain.frx":653EC
+                     PicArray80      =   "frmMain.frx":65408
+                     PicArray81      =   "frmMain.frx":65424
+                     PicArray82      =   "frmMain.frx":65440
+                     PicArray83      =   "frmMain.frx":6545C
+                     PicArray84      =   "frmMain.frx":65478
+                     PicArray85      =   "frmMain.frx":65494
+                     PicArray86      =   "frmMain.frx":654B0
+                     PicArray87      =   "frmMain.frx":654CC
+                     PicArray88      =   "frmMain.frx":654E8
+                     PicArray89      =   "frmMain.frx":65504
+                     PicArray90      =   "frmMain.frx":65520
+                     PicArray91      =   "frmMain.frx":6553C
+                     PicArray92      =   "frmMain.frx":65558
+                     PicArray93      =   "frmMain.frx":65574
+                     PicArray94      =   "frmMain.frx":65590
+                     PicArray95      =   "frmMain.frx":655AC
+                     PicArray96      =   "frmMain.frx":655C8
+                     PicArray97      =   "frmMain.frx":655E4
+                     PicArray98      =   "frmMain.frx":65600
+                     PicArray99      =   "frmMain.frx":6561C
                   End
                   Begin VB.Label lblGeoMarks 
                      Caption         =   "Geo Marks"
@@ -3261,9 +3261,9 @@ Begin VB.Form frmMain
                   AccessibleRole  =   9
                   Begin VB.ComboBox ComThemes 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":5F630
+                     ItemData        =   "frmMain.frx":65638
                      Left            =   45
-                     List            =   "frmMain.frx":5F661
+                     List            =   "frmMain.frx":65669
                      Style           =   2  'Dropdown List
                      TabIndex        =   20
                      Top             =   345
@@ -3281,7 +3281,7 @@ Begin VB.Form frmMain
                         Left            =   105
                         MultiLine       =   -1  'True
                         TabIndex        =   19
-                        Text            =   "frmMain.frx":5F7C7
+                        Text            =   "frmMain.frx":657CF
                         Top             =   270
                         Width           =   2100
                      End
@@ -3416,7 +3416,7 @@ Begin VB.Form frmMain
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMain.frx":5F7D9
+               _GridInfo       =   $"frmMain.frx":657E1
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -3792,7 +3792,7 @@ Private g_oEditLayer As TatukGIS_XDK10.XGIS_LayerAbstract
 Private m_oSQLGenericLyrs() As TatukGIS_XDK10.XGIS_LayerSqlAdo
 
 Private Declare Function FindWindow Lib "user32" Alias "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName As String) As Long
-Private Declare Function MoveWindow Lib "user32" (ByVal hwnd As Long, ByVal x As Long, ByVal y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
+Private Declare Function MoveWindow Lib "user32" (ByVal hwnd As Long, ByVal X As Long, ByVal Y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
 
 Private m_LastSelectedTool As ActiveBar3LibraryCtl.Tool
 Private m_prevTool As OASIS_TOOLS
@@ -4333,7 +4333,7 @@ Private Sub DynamicDataModule1_GetNearestShapeInfo(PassedPoint As TatukGIS_XDK10
         
 108             dDistance = -1
                 'oDistance = HaversineDistance(PassedPoint.x, oSHP.Centroid.x, PassedPoint.y, oSHP.Centroid.y)
-110             Set oShapeFromPoint = GisUtils.GisCreateShapeFromWKT("POINT(" & PassedPoint.x & " " & PassedPoint.y & ")")
+110             Set oShapeFromPoint = GisUtils.GisCreateShapeFromWKT("POINT(" & PassedPoint.X & " " & PassedPoint.Y & ")")
 
 112             oSHP.Distance2Shape (oShapeFromPoint)
 114             sFieldValue = oSHP.GetField(sFieldName)
@@ -4517,9 +4517,9 @@ Private Sub ctlZoomSlider1_ZoomChanged(oExtent As TatukGIS_XDK10.XGIS_Extent)
     yDiff = (360000 + oExtent.ymax) - (360000 + oExtent.ymin)
     GIS10.Lock
     Set oPt = GIS10.CenterPtg
-    oExtent.xmin = oPt.x - (xDiff / 2)
+    oExtent.xmin = oPt.X - (xDiff / 2)
     oExtent.xmax = oExtent.xmin + xDiff
-    oExtent.ymin = oPt.y - (yDiff / 2)
+    oExtent.ymin = oPt.Y - (yDiff / 2)
     oExtent.ymax = oExtent.ymin + yDiff
     GIS10.VisibleExtent = oExtent
     GIS10.Unlock
@@ -5423,7 +5423,7 @@ Private Sub m_frmIncidentsV2DataEntry_UpdateNearstPlaces(m_dPTG As XGIS_Point)
                                   
         End With
 
-164     m_frmIncidentsV2DataEntry.SetLocationParams sAdmins(0), sAdmins(1), sAdmins(2), sAdmins(3), sAdmins(4), CStr(m_dPTG.x), CStr(m_dPTG.y), ConvPTtoMGRS(m_dPTG.x, m_dPTG.y)
+164     m_frmIncidentsV2DataEntry.SetLocationParams sAdmins(0), sAdmins(1), sAdmins(2), sAdmins(3), sAdmins(4), CStr(m_dPTG.X), CStr(m_dPTG.Y), ConvPTtoMGRS(m_dPTG.X, m_dPTG.Y)
         
 166     oCNIncidentsV2.Open g_sIncidentsV2ConnectionString
 
@@ -5491,7 +5491,7 @@ Private Sub m_frmIncidentsV2DataEntry_GetMGRSFromXY(dX As Double, _
     m_oIncShpPt.Params.Marker.OutlineWidth = 25
     m_oIncShpPt.Params.Marker.OutlineColor = vbBlue ' vbRed
 
-    If Not m_dPTG.x = 0 And Not m_dPTG.y = 0 Then GIS10.CenterViewport m_dPTG
+    If Not m_dPTG.X = 0 And Not m_dPTG.Y = 0 Then GIS10.CenterViewport m_dPTG
                                 
 End Sub
 
@@ -5517,7 +5517,7 @@ Private Sub m_frmIncidentsV2DataEntry_GetXYFromMGRS(dX As Double, _
     m_oIncShpPt.Params.Marker.OutlineWidth = 25
     m_oIncShpPt.Params.Marker.OutlineColor = vbBlue ' vbRed
 
-    If Not m_dPTG.x = 0 And Not m_dPTG.y = 0 Then GIS10.CenterViewport m_dPTG
+    If Not m_dPTG.X = 0 And Not m_dPTG.Y = 0 Then GIS10.CenterViewport m_dPTG
 End Sub
 
 Private Sub m_frmIncidentsV2DataEntry_RefreshMap()
@@ -5580,8 +5580,8 @@ Private Sub ApplyMainSettings()
         
 128
 130          .edRotationAngle.Text = .udRotationAngle.value
-132             GIS10.RotationPoint.x = GIS10.viewer.CenterPtg.x
-134             GIS10.RotationPoint.y = GIS10.viewer.CenterPtg.y
+132             GIS10.RotationPoint.X = GIS10.viewer.CenterPtg.X
+134             GIS10.RotationPoint.Y = GIS10.viewer.CenterPtg.Y
 136             GIS10.RotationAngle = DegToRad(.udRotationAngle.value)
 138             GIS10.UpDate
   
@@ -5654,8 +5654,8 @@ Private Sub ApplyLocalSettings()
             GIS10.ScrollBars = .ScrollBars
 
             If .MapRotation <> 0 Then
-156             GIS10.RotationPoint.x = GIS10.viewer.CenterPtg.x
-158             GIS10.RotationPoint.y = GIS10.viewer.CenterPtg.y
+156             GIS10.RotationPoint.X = GIS10.viewer.CenterPtg.X
+158             GIS10.RotationPoint.Y = GIS10.viewer.CenterPtg.Y
 160             GIS10.RotationAngle = DegToRad(CDbl(.MapRotation))
 162             GIS10.UpDate
             End If
@@ -6119,8 +6119,8 @@ Private Sub m_frmMnuOperations_ShowMapLibraryDLG(sGUID As String, _
 122                 .lblGISDetails(1).caption = "X Max: " & GIS10.VisibleExtent.xmax
 124                 .lblGISDetails(2).caption = "Y Min: " & GIS10.VisibleExtent.ymin
 126                 .lblGISDetails(3).caption = "Y Max: " & GIS10.VisibleExtent.ymax
-128                 .lblGISDetails(4).caption = "Center X: " & GIS10.CenterPtg.x
-130                 .lblGISDetails(5).caption = "Center Y: " & GIS10.CenterPtg.y
+128                 .lblGISDetails(4).caption = "Center X: " & GIS10.CenterPtg.X
+130                 .lblGISDetails(5).caption = "Center Y: " & GIS10.CenterPtg.Y
 132                 .lblGISDetails(6).caption = "Scale: " & GIS10.ScaleAsText
 134                 .lblGISDetails(7).caption = "EPSG: " & GIS10.CS.EPSG
 136                 .DTPicker1.value = Now()
@@ -6251,7 +6251,7 @@ Private Sub m_frmMnuOperations_ShowMapLibraryDLG(sGUID As String, _
                         End If
                         
 228                     If sGUID = "" Then
-230                         m_frmMnuOperations.NewMapLibraryItem .txtMapInfo(0).Text, .txtMapInfo(6).Text, .txtMapInfo(1).Text, .txtMapInfo(2).Text, .txtMapInfo(3).Text, .txtMapInfo(4).Text, GIS10.VisibleExtent.xmin, GIS10.VisibleExtent.xmax, GIS10.VisibleExtent.ymin, GIS10.VisibleExtent.ymax, GIS10.CenterPtg.x, GIS10.CenterPtg.y, GIS10.ScaleAsText, GIS10.CS.EPSG, .DTPicker1.value
+230                         m_frmMnuOperations.NewMapLibraryItem .txtMapInfo(0).Text, .txtMapInfo(6).Text, .txtMapInfo(1).Text, .txtMapInfo(2).Text, .txtMapInfo(3).Text, .txtMapInfo(4).Text, GIS10.VisibleExtent.xmin, GIS10.VisibleExtent.xmax, GIS10.VisibleExtent.ymin, GIS10.VisibleExtent.ymax, GIS10.CenterPtg.X, GIS10.CenterPtg.Y, GIS10.ScaleAsText, GIS10.CS.EPSG, .DTPicker1.value
                         Else
 232                         m_frmMnuOperations.MapLibSaveMap Replace(g_sAppPath & "\data\user\maps\" & sGUID & ".ttkgp", "Database Driven:", ""), sGUID, .txtMapInfo(0).Text, .txtMapInfo(6).Text, .txtMapInfo(1).Text, .txtMapInfo(2).Text, .txtMapInfo(3).Text, .txtMapInfo(4).Text, .DTPicker1.value
                         End If
@@ -6460,31 +6460,31 @@ Private Sub m_frmSpatialiseDD_CreateObject(sObjectType As String)
 End Sub
 
 Public Sub DynamicDataModule1_ConvertMGRStoPT(sMGRS As String, _
-                                              x As Double, _
-                                              y As Double)
+                                              X As Double, _
+                                              Y As Double)
 
-    ConvMGRStoPT sMGRS, x, y
+    ConvMGRStoPT sMGRS, X, Y
 
 End Sub
 
-Public Sub m_frmSpatialiseDD_ConvertMGRS(sMGRS As String, x As Double, y As Double)
-ConvMGRStoPT sMGRS, x, y
+Public Sub m_frmSpatialiseDD_ConvertMGRS(sMGRS As String, X As Double, Y As Double)
+ConvMGRStoPT sMGRS, X, Y
 
 End Sub
 
 Public Sub m_frmSpatialiseDD_RestoreDDWindow(bCommitShape As Boolean)
     
-    Dim x As Double
-    Dim y As Double
+    Dim X As Double
+    Dim Y As Double
     'Dim sMGRS As String
     
     If m_frmSpatialiseDD.Tag = "NON SPATIAL TABLE" Then
         If bCommitShape Then
             m_frmSpatialiseDD.List1.ListIndex = 0
-            x = m_frmSpatialiseDD.List1.Text
+            X = m_frmSpatialiseDD.List1.Text
             m_frmSpatialiseDD.List2.ListIndex = 0
-            y = m_frmSpatialiseDD.List2.Text
-            DynamicDataModule1.SaveNonSpatialXY x, y, ConvPTtoMGRS(x, y)
+            Y = m_frmSpatialiseDD.List2.Text
+            DynamicDataModule1.SaveNonSpatialXY X, Y, ConvPTtoMGRS(X, Y)
         End If
         
         mDDLayer.GetShape(mDDLayer.GetLastUid).Delete
@@ -6971,7 +6971,7 @@ Private Sub cmdZoomToSettings_Click()
     frmZoomToSettings.Show vbModal, Me
 End Sub
 
-Private Sub dxGISDataGrid_OnDragEndHeader(ByVal Column As DXDBGRIDLibCtl.IdxGridColumn, ByVal x As Single, ByVal y As Single, accept As Boolean)
+Private Sub dxGISDataGrid_OnDragEndHeader(ByVal Column As DXDBGRIDLibCtl.IdxGridColumn, ByVal X As Single, ByVal Y As Single, accept As Boolean)
         '<EhHeader>
         On Error GoTo dxGISDataGrid_OnDragEndHeader_Err
         '</EhHeader>
@@ -7250,13 +7250,13 @@ Private Function GetNearestShape(PassedPoint As TatukGIS_XDK10.XGIS_Point, _
             
             If oShapeNearest.ShapeType = XgisShapeTypePoint Then
                 'Works accurately for points
-                oDistance = HaversineDistance(oShapeNearest.Centroid.x, PassedPoint.x, oShapeNearest.Centroid.y, PassedPoint.y)
+                oDistance = HaversineDistance(oShapeNearest.Centroid.X, PassedPoint.X, oShapeNearest.Centroid.Y, PassedPoint.Y)
             Else
                 'oDistance = oShapeNearest.Distance2Shape(oShapeFromPoint) * 100
                 'Note the workaround - we get the nearest snap point to the shape and then calc distance using haversine
-                Set oShapeFromPoint = GisUtils.GisCreateShapeFromWKT("POINT(" & PassedPoint.x & " " & PassedPoint.y & ")")
+                Set oShapeFromPoint = GisUtils.GisCreateShapeFromWKT("POINT(" & PassedPoint.X & " " & PassedPoint.Y & ")")
                 Set oPointSnap = oShapeNearest.GetSnapPoint(PassedPoint, 1000000000, oDistance * 100)
-                oDistance = HaversineDistance(oPointSnap.x, PassedPoint.x, oPointSnap.y, PassedPoint.y)
+                oDistance = HaversineDistance(oPointSnap.X, PassedPoint.X, oPointSnap.Y, PassedPoint.Y)
                 Set oShapeFromPoint = Nothing
             End If
             
@@ -7290,7 +7290,7 @@ Private Function DistanceBetween2Points(oCentroidPoint As TatukGIS_XDK10.XGIS_Po
             'DistanceBetween2Points = oshp.distance(oCentroidPoint, 1000000000)
             'DistanceBetween2Points = DistanceBetween2Points * 111.3199
             
-            DistanceBetween2Points = HaversineDistance(oCentroidPoint.x, oSHP.Centroid.x, oCentroidPoint.y, oSHP.Centroid.y)
+            DistanceBetween2Points = HaversineDistance(oCentroidPoint.X, oSHP.Centroid.X, oCentroidPoint.Y, oSHP.Centroid.Y)
             
         End If
     End If
@@ -7688,18 +7688,18 @@ Private Sub cmdZoomTo_Click()
         Dim oSHP As TatukGIS_XDK10.XGIS_Shape
         Dim sFont As String
         Dim SymbolList As TatukGIS_XDK10.XGIS_SymbolList
-        Dim x As Double
-        Dim y As Double
+        Dim X As Double
+        Dim Y As Double
         
-        x = CDbl(IIf(IsNumeric(Replace(me2Long.Text, "_", "")), Replace(me2Long.Text, "_", ""), 0))
-        y = CDbl(IIf(IsNumeric(Replace(me2Lat.Text, "_", "")), Replace(me2Lat.Text, "_", ""), 0))
+        X = CDbl(IIf(IsNumeric(Replace(me2Long.Text, "_", "")), Replace(me2Long.Text, "_", ""), 0))
+        Y = CDbl(IIf(IsNumeric(Replace(me2Lat.Text, "_", "")), Replace(me2Lat.Text, "_", ""), 0))
 
-        If x + y = 0 Then
+        If X + Y = 0 Then
             MsgBox "Coordinate values do not seem to be correct! Please Check and try again", vbInformation, "OASIS Coordinate Utils"
             Exit Sub
         End If
     
-100     ptg.Prepare x, y
+100     ptg.Prepare X, Y
 
        ' me2Lat.Text = Y
        ' me2Long.Text = X
@@ -8266,15 +8266,15 @@ GIS_OnKeyUp_Err:
         '</EhFooter>
 End Sub
 
-Private Sub m_fmrAddIncident_ConvPTtoMGRS(x As Double, y As Double)
-    m_fmrAddIncident.txtMGRS.Text = ConvPTtoMGRS(x, y)
+Private Sub m_fmrAddIncident_ConvPTtoMGRS(X As Double, Y As Double)
+    m_fmrAddIncident.txtMGRS.Text = ConvPTtoMGRS(X, Y)
 End Sub
 
-Private Sub m_fmrAddIncident_ConvMGRStoPT(sMGRS As String, x As Double, y As Double)
+Private Sub m_fmrAddIncident_ConvMGRStoPT(sMGRS As String, X As Double, Y As Double)
     
-    If ConvMGRStoPT(sMGRS, x, y) Then
-        m_fmrAddIncident.txtX.Text = x
-        m_fmrAddIncident.txtY.Text = y
+    If ConvMGRStoPT(sMGRS, X, Y) Then
+        m_fmrAddIncident.txtX.Text = X
+        m_fmrAddIncident.txtY.Text = Y
     Else
             m_fmrAddIncident.txtX.Text = ""
         m_fmrAddIncident.txtY.Text = ""
@@ -9719,8 +9719,8 @@ Private Sub mnuGetCoords_Click()
 '    ConvertMultiCoords CDbl(2), CDbl(2)
 End Sub
 
-Private Sub ConvertMultiCoords(x As Double, _
-                               y As Double)
+Private Sub ConvertMultiCoords(X As Double, _
+                               Y As Double)
     Dim iProjectionType As Integer
     Dim iDatumNumber As Integer
     Dim iUnits As Integer
@@ -10235,7 +10235,7 @@ Public Sub SetMess(sMess As String)
 112             .caption = sMess
             End With
         End With
-
+        AB.Bands.Item("bStatus").Refresh
         '<EhFooter>
         Exit Sub
 
@@ -10257,7 +10257,7 @@ Private Function GetTimeFormatted() As String
 
 End Function
 
-Private Sub NArrow_OnMouseUp(translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal x As Long, ByVal y As Long)
+Private Sub NArrow_OnMouseUp(translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal X As Long, ByVal Y As Long)
     'NArrow
    ' narrow
 End Sub
@@ -10326,7 +10326,7 @@ Private Sub ChangeToolCursor()
 
 End Sub
 
-Private Sub OASSelect_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub OASSelect_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
     DebugPrint ""
 End Sub
 
@@ -10723,8 +10723,8 @@ Private Sub SelAttributes1_OnMouseDown(Index As Integer, _
                                        translated As Boolean, _
                                        ByVal Button As TatukGIS_XDK10.XMouseButton, _
                                        ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                                       ByVal x As Long, _
-                                       ByVal y As Long)
+                                       ByVal X As Long, _
+                                       ByVal Y As Long)
 
 100     If Button = TatukGIS_XDK10.XmbRight Then
     
@@ -10732,13 +10732,13 @@ Private Sub SelAttributes1_OnMouseDown(Index As Integer, _
 102         GetCursorPos ptPopUpPos
             'abGridPop.Bands("popGrid").PopupMenu , ScaleX(Point.X, vbPixels, vbTwips) - Me.left, ScaleY(Point.Y, vbPixels, vbTwips) - Me.top
 
-106         PopupMenu mnuSelector, x:=ScaleX(ptPopUpPos.x, vbPixels, vbTwips) - Me.left, y:=ScaleY(ptPopUpPos.y, vbPixels, vbTwips) - (Me.top + 250)
+106         PopupMenu mnuSelector, X:=ScaleX(ptPopUpPos.X, vbPixels, vbTwips) - Me.left, Y:=ScaleY(ptPopUpPos.Y, vbPixels, vbTwips) - (Me.top + 250)
   
         End If
 
 End Sub
 
-Private Sub SelAttributes1_OnMouseUp(Index As Integer, translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal x As Long, ByVal y As Long)
+Private Sub SelAttributes1_OnMouseUp(Index As Integer, translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal X As Long, ByVal Y As Long)
     DebugPrint ""
 End Sub
 
@@ -10838,8 +10838,8 @@ Private Sub tmrUpdate_Timer()
      Dim m_Cursor As POINTAPI
      Dim m_hDC As Long
      Dim lRtn As Long
-     Dim x As Long
-     Dim y As Long
+     Dim X As Long
+     Dim Y As Long
      Dim lScrHt As Long
      Dim lScrWt As Long
      
@@ -10857,21 +10857,21 @@ Private Sub tmrUpdate_Timer()
      ' to create some space from the mouse cursor so that we don't see the corner
      ' of the zoom box in the magnification.
      ' If we are at the right of the screen
-     If m_Cursor.x + (elMagnifier.Width \ Screen.TwipsPerPixelX) + (MOUSE_BUFFER \ Screen.TwipsPerPixelX) > lScrWt And _
-          m_Cursor.y + (elMagnifier.Height \ Screen.TwipsPerPixelY) + (MOUSE_BUFFER \ Screen.TwipsPerPixelY) > lScrHt Then
-          x = (m_Cursor.x * Screen.TwipsPerPixelX) - (elMagnifier.Width + MOUSE_BUFFER)
-          y = (m_Cursor.y * Screen.TwipsPerPixelY) - (elMagnifier.Height + MOUSE_BUFFER)
-     ElseIf m_Cursor.x + (elMagnifier.Width \ Screen.TwipsPerPixelX) + _
+     If m_Cursor.X + (elMagnifier.Width \ Screen.TwipsPerPixelX) + (MOUSE_BUFFER \ Screen.TwipsPerPixelX) > lScrWt And _
+          m_Cursor.Y + (elMagnifier.Height \ Screen.TwipsPerPixelY) + (MOUSE_BUFFER \ Screen.TwipsPerPixelY) > lScrHt Then
+          X = (m_Cursor.X * Screen.TwipsPerPixelX) - (elMagnifier.Width + MOUSE_BUFFER)
+          Y = (m_Cursor.Y * Screen.TwipsPerPixelY) - (elMagnifier.Height + MOUSE_BUFFER)
+     ElseIf m_Cursor.X + (elMagnifier.Width \ Screen.TwipsPerPixelX) + _
           (MOUSE_BUFFER \ Screen.TwipsPerPixelX) > lScrWt Then
-          x = (m_Cursor.x * Screen.TwipsPerPixelX) - (elMagnifier.Width + MOUSE_BUFFER)
-          y = m_Cursor.y * Screen.TwipsPerPixelY + MOUSE_BUFFER
-     ElseIf m_Cursor.y + (elMagnifier.Height \ Screen.TwipsPerPixelY) + _
+          X = (m_Cursor.X * Screen.TwipsPerPixelX) - (elMagnifier.Width + MOUSE_BUFFER)
+          Y = m_Cursor.Y * Screen.TwipsPerPixelY + MOUSE_BUFFER
+     ElseIf m_Cursor.Y + (elMagnifier.Height \ Screen.TwipsPerPixelY) + _
           (MOUSE_BUFFER \ Screen.TwipsPerPixelY) > lScrHt Then
-          x = m_Cursor.x * Screen.TwipsPerPixelX + MOUSE_BUFFER
-          y = (m_Cursor.y * Screen.TwipsPerPixelY) - (elMagnifier.Height + MOUSE_BUFFER)
+          X = m_Cursor.X * Screen.TwipsPerPixelX + MOUSE_BUFFER
+          Y = (m_Cursor.Y * Screen.TwipsPerPixelY) - (elMagnifier.Height + MOUSE_BUFFER)
      Else
-          x = m_Cursor.x * Screen.TwipsPerPixelX + MOUSE_BUFFER
-          y = m_Cursor.y * Screen.TwipsPerPixelY + MOUSE_BUFFER
+          X = m_Cursor.X * Screen.TwipsPerPixelX + MOUSE_BUFFER
+          Y = m_Cursor.Y * Screen.TwipsPerPixelY + MOUSE_BUFFER
      End If
      ' move the form with the cursor
      'Me.Move X, Y, Me.Width, Me.Height
@@ -10880,7 +10880,7 @@ Private Sub tmrUpdate_Timer()
      ' Blit the coordinates, passed in the api call, and stretch it into
      ' our form
      StretchBlt GetWindowDC(elMagnifier.hwnd), 0, 0, ScaleX(elMagnifier.Width, vbTwips, vbPixels), ScaleY(elMagnifier.Height, vbTwips, vbPixels), _
-        m_hDC, m_Cursor.x - 24, m_Cursor.y - 24, 48, 48, vbSrcCopy
+        m_hDC, m_Cursor.X - 24, m_Cursor.Y - 24, 48, 48, vbSrcCopy
      ' Draw a box to make the form distinguishable from the background.  Set the forms
      ' forecolor to make changes to it.
      'frmZoom.Line (0, 0)-(frmZoom.ScaleWidth - 1, frmZoom.ScaleHeight - 1), , B
@@ -10938,13 +10938,13 @@ Private Sub txtMGRS_LostFocus()
         On Error GoTo txtMGRS_LostFocus_Err
         '</EhHeader>
         On Error Resume Next
-        Dim x  As Double
-        Dim y As Double
+        Dim X  As Double
+        Dim Y As Double
     
-100     Map1.MilitaryGridReferenceToPoint Replace(txtMGRS.Text, " ", ""), x, y
+100     Map1.MilitaryGridReferenceToPoint Replace(txtMGRS.Text, " ", ""), X, Y
     
-102     me2Long.Text = "0" & CStr(left(x, Len(me2Long.Text) - 1))
-104     me2Lat.Text = CStr(left(y, Len(me2Long.Text) - 1))
+102     me2Long.Text = "0" & CStr(left(X, Len(me2Long.Text) - 1))
+104     me2Lat.Text = CStr(left(Y, Len(me2Long.Text) - 1))
     
 106     me2Lat_LostFocus
 108     me2Long_LostFocus
@@ -11080,13 +11080,13 @@ ClearCoordValues_Err:
         '</EhFooter>
 End Sub
 
-Private Function ConvPTtoMGRS(x As Double, y As Double) As String
-    ConvPTtoMGRS = Map1.MilitaryGridReferenceFromPoint(x, y)
+Private Function ConvPTtoMGRS(X As Double, Y As Double) As String
+    ConvPTtoMGRS = Map1.MilitaryGridReferenceFromPoint(X, Y)
 End Function
 
-Private Function ConvMGRStoPT(sMGRS As String, x As Double, y As Double) As Boolean
+Private Function ConvMGRStoPT(sMGRS As String, X As Double, Y As Double) As Boolean
     On Error Resume Next
-    ConvMGRStoPT = Map1.MilitaryGridReferenceToPoint(sMGRS, x, y)
+    ConvMGRStoPT = Map1.MilitaryGridReferenceToPoint(sMGRS, X, Y)
 End Function
 
 Private Sub UpdateDisplayValue()
@@ -12700,12 +12700,30 @@ Private Sub abGridTools_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
 118                         .InitDir = g_sAppPath & "\data\gis\"
                         
 120                         If frmExportFormats.chkFormats(0).value = vbChecked Then
-122                             .Filter = "Microsoft Excel (.xls)|*.xls"
-124                             .DefaultExt = ".xls"
-126                             .ShowSave
+
+                                Dim oXlApp As Object
+                                Set oXlApp = CreateObject("Excel.Application")
+                                
+                                If oXlApp Is Nothing Then
+122                                 .Filter = "Microsoft Excel (.xls)|*.xls"
+124                                 .DefaultExt = ".xls"
+                                    .ShowSave
+                                    If Not .Filename = "" Then dxGISDataGrid.M.ExportToXLS .Filename
+                                Else
+                                    .Filter = "Microsoft Excel (.xlsx)|*.xlsx"
+                                    .DefaultExt = ".xlsx"
+                                    .ShowSave
+                                    
+                                    
+                                    'Debug.Print ExcelVers(oXlApp)
+                                    If Not .Filename = "" Then DoXLSX oXlApp, dxGISDataGrid.DataSource, .Filename
+                                    Set oXlApp = Nothing
+                                End If
+                                
+126
 
                                 'g_sAppPath & "\data\user\Exports\OASIS_Export_" & Day(Now) & Month(Now) & Year(Now) & Hour(Now) & Minute(Now) & Second(Now) & ".xls"
-128                             If Not .Filename = "" Then dxGISDataGrid.M.ExportToXLS .Filename
+128                             'If Not .Filename = "" Then dxGISDataGrid.M.ExportToXLS .Filename
                             End If
 
 130                         If frmExportFormats.chkFormats(1).value = vbChecked Then
@@ -14300,7 +14318,8 @@ Public Sub AddLayer(Optional oLayer As Object)
                         End If
                         
 180                     oLayer.Path = .Filename
-182                    Set oLayer = GisUtils.GisCreateLayer(sName, .Filename) ' oLayer.Open
+                        oLayer.Open
+'182                    Set oLayer = GisUtils.GisCreateLayer(sName, .Filename) ' oLayer.Open
                 
 184                     GIS10.Add oLayer
 186                     FillCOPValues
@@ -15038,7 +15057,7 @@ miniMapRefresh_Err:
 
 
 
-Private Sub MouseUp(ByVal x As Integer, ByVal y As Integer)
+Private Sub MouseUp(ByVal X As Integer, ByVal Y As Integer)
         '<EhHeader>
         On Error GoTo MouseUp_Err
         '</EhHeader>
@@ -15046,15 +15065,15 @@ Private Sub MouseUp(ByVal x As Integer, ByVal y As Integer)
             Dim P1, p2, p3 As TatukGIS_XDK10.XGIS_Point
             Dim p4 As New TatukGIS_XDK10.XGIS_Point
 
-100         Set ptg = m_frmOvMap.GISm.ScreenToMap(GisUtils.POINT(x, y))
+100         Set ptg = m_frmOvMap.GISm.ScreenToMap(GisUtils.POINT(X, Y))
 102         minishp.SetPosition miniRecalc(ptg), m_frmOvMap.GISm.get(MINIMAP_R_NAME), 5
 104         m_frmOvMap.GISm.UpDate
 106         fminiMove = False
 108         Set P1 = minishp.GetPoint(0, 0)
 110         Set p2 = minishp.GetPoint(0, 1)
 112         Set p3 = minishp.GetPoint(0, 2)
-114         p4.x = P1.x + (p2.x - P1.x) / 2
-116         p4.y = P1.y + (p3.y - p2.y) / 2
+114         p4.X = P1.X + (p2.X - P1.X) / 2
+116         p4.Y = P1.Y + (p3.Y - p2.Y) / 2
 118         GIS10.Center = p4
         '<EhFooter>
         Exit Sub
@@ -15656,8 +15675,8 @@ Public Sub LoadLayerAttrDataToGrid(sExcludedFieldsPassed As Variant)
 242                             iFieldIndex = iFieldIndex + 1
                             Loop
                             
-244                         oRSNew.Fields(iFieldCount - 2).value = oShp9.Centroid.x
-246                         oRSNew.Fields(iFieldCount - 1).value = oShp9.Centroid.y
+244                         oRSNew.Fields(iFieldCount - 2).value = oShp9.Centroid.X
+246                         oRSNew.Fields(iFieldCount - 1).value = oShp9.Centroid.Y
 
 
 248                         dxProgressBar1.DoStep
@@ -15813,8 +15832,8 @@ Public Sub LoadLayerAttrDataToGrid(sExcludedFieldsPassed As Variant)
 402                     lUID = oASHP9.uID
     'Add Centroid to the grid
 404                     GISGridRS.Fields(0).value = lUID
-406                     GISGridRS.Fields(i).value = oASHP9.Centroid.x
-408                     GISGridRS.Fields(i + 1).value = oASHP9.Centroid.y
+406                     GISGridRS.Fields(i).value = oASHP9.Centroid.X
+408                     GISGridRS.Fields(i + 1).value = oASHP9.Centroid.Y
 
                     End If
                     
@@ -17204,7 +17223,7 @@ Private Sub mnuGetCellValue_Click()
     
 End Sub
 
-Private Sub dxGISDataGrid_OnMouseDown(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single)
+Private Sub dxGISDataGrid_OnMouseDown(ByVal Button As Long, ByVal Shift As Long, ByVal X As Single, ByVal Y As Single)
         '<EhHeader>
         On Error GoTo dxGISDataGrid_OnMouseDown_Err
         '</EhHeader>
@@ -17214,11 +17233,11 @@ Private Sub dxGISDataGrid_OnMouseDown(ByVal Button As Long, ByVal Shift As Long,
     
             ' Get the position of the cursor
 102     GetCursorPos ptPopUpPos
-        m_MouseDownX = x
-        m_MouseDownY = y
+        m_MouseDownX = X
+        m_MouseDownY = Y
         'abGridPop.Bands("popGrid").PopupMenu , ScaleX(Point.X, vbPixels, vbTwips) - Me.left, ScaleY(Point.Y, vbPixels, vbTwips) - Me.top
 104     If dxGISDataGrid.ex.SelectedCount > 0 Then
-106         PopupMenu mnuGridAction, x:=ScaleX(ptPopUpPos.x, vbPixels, vbTwips) - Me.left, y:=ScaleY(ptPopUpPos.y, vbPixels, vbTwips) - (Me.top + 250)
+106         PopupMenu mnuGridAction, X:=ScaleX(ptPopUpPos.X, vbPixels, vbTwips) - Me.left, Y:=ScaleY(ptPopUpPos.Y, vbPixels, vbTwips) - (Me.top + 250)
         End If
     End If
     
@@ -17234,7 +17253,7 @@ dxGISDataGrid_OnMouseDown_Err:
         '</EhFooter>
 End Sub
 
-Private Sub dxGISDataGrid_OnMouseMove(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single)
+Private Sub dxGISDataGrid_OnMouseMove(ByVal Button As Long, ByVal Shift As Long, ByVal X As Single, ByVal Y As Single)
 '    DebugPrint  "MOUSEMOVE: " & X
 End Sub
 
@@ -17429,8 +17448,10 @@ Private Sub CreateAddedScribbles()
 106     m_oDrawLyr.Name = "Draw_Layer"
 108     m_oDrawLyr.HideFromLegend = True
 
-110     sAdoString = GetConnectionString(g_sAppPath & "\Data\Db\OASISClient.mdb")
+        DebugPrint m_Cnn.ConnectionString
+        DebugPrint GetConnectionString(g_sAppPath & "\Data\Db\OASISClient.mdb")
 
+110     sAdoString = m_Cnn.ConnectionString 'GetConnectionString(g_sAppPath & "\Data\Db\OASISClient.mdb")
 112     sAdoString = "[TatukGIS Layer]" & vbCrLf & "Storage = Native" & vbCrLf & "layer=" & "Draw_Layer" & vbCrLf & "Dialect=MSJET" & vbCrLf & "ADO=" & sAdoString
 
 114     If Not DoTableExists("Draw_Layer_GEO", m_Cnn) Then
@@ -17517,8 +17538,8 @@ Private Sub Form_Unload(Cancel As Integer)
 134                 .Find "Personnell_ID = " & g_CurrentUserID
 
 136                 If Not .EOF Then
-138                     .Fields("LatestViewX").value = Replace(GIS10.viewer.CenterPtg.x, ",", ".")
-140                     .Fields("LatestViewY").value = Replace(GIS10.viewer.CenterPtg.y, ",", ".")
+138                     .Fields("LatestViewX").value = Replace(GIS10.viewer.CenterPtg.X, ",", ".")
+140                     .Fields("LatestViewY").value = Replace(GIS10.viewer.CenterPtg.Y, ",", ".")
 142                     .Fields("LatestViewZ").value = Replace(GIS10.viewer.zoom, ",", ".")
 144                     .Fields("LatestMapName").value = GIS10.Name
 146                     .UpdateBatch adAffectCurrent
@@ -17966,8 +17987,8 @@ Public Sub GetAdmCode(ptg As TatukGIS_XDK10.XGIS_Point, _
         End If
 
         If m_bUseDistrictOnly Then
-        Dim x As Double
-        Dim y As Double
+        Dim X As Double
+        Dim Y As Double
             'x = oShp.Centroid.x
             'y = oShp.Centroid.y
             
@@ -18035,8 +18056,8 @@ End Function
 Private Sub GIS10_OnMouseDown(translated As Boolean, _
                               ByVal Button As TatukGIS_XDK10.XMouseButton, _
                               ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                              ByVal x As Long, _
-                              ByVal y As Long)
+                              ByVal X As Long, _
+                              ByVal Y As Long)
         '<EhHeader>
         On Error GoTo GIS10_OnMouseDown_Err
         '</EhHeader>
@@ -18068,11 +18089,11 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 110     If Button = XmbRight Then
             Dim Pt As POINTAPI
 112         GetCursorPos Pt
-114         PopupMenu mnuMAPPopUp, , ScaleX(Pt.x - 2, vbPixels, vbTwips), ScaleY(Pt.y - 8, vbPixels, vbTwips)
+114         PopupMenu mnuMAPPopUp, , ScaleX(Pt.X - 2, vbPixels, vbTwips), ScaleY(Pt.Y - 8, vbPixels, vbTwips)
             Exit Sub
         End If
   
-116     Set m_dPTG = GIS10.ScreenToMap(GisUtils.POINT(x, y))
+116     Set m_dPTG = GIS10.ScreenToMap(GisUtils.POINT(X, Y))
 
         'ProjTest m_dPTG.X, m_dPTG.y
 
@@ -18082,8 +18103,8 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
             
 120             m_bPolyL = True
                 'GIS10.PaintMinimum
-122             Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(x, y))
-124             gdpts(UBound(gdpts)).x = x: gdpts(UBound(gdpts)).y = y
+122             Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(X, Y))
+124             gdpts(UBound(gdpts)).X = X: gdpts(UBound(gdpts)).Y = Y
 126             GDI_Polyline GIS10.hdc, gdpts
                 
 128             If Not m_bDrawFinished Then
@@ -18093,9 +18114,9 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 134                 m_bDrawFinished = False
                 End If
             
-136             Set oldPos = GisUtils.POINT(x, y)
+136             Set oldPos = GisUtils.POINT(X, Y)
                 
-138             m_frmMeasure.UpdateDistance m_dPTG.x, m_dPTG.y
+138             m_frmMeasure.UpdateDistance m_dPTG.X, m_dPTG.Y
                 'frmMeasure.SetFocus
                 
 140         Case oPointBuffer
@@ -18165,10 +18186,10 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 
 216                     If Shift = XssShift Then
 218                         frmSendMess.lvwAttributes.ListItems.Add , , "X"
-220                         frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.x
+220                         frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.X
                             
 222                         frmSendMess.lvwAttributes.ListItems.Add , , "Y"
-224                         frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.y
+224                         frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.Y
                             
 226                         For j = 0 To oVecLyr.Fields.Count - 1
 228                             frmSendMess.lvwAttributes.ListItems.Add , , oVecLyr.Fields.Item(j).Name
@@ -18193,10 +18214,10 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 
 240                 If Shift = 17 Then
 242                     frmSendMess.lvwAttributes.ListItems.Add , , "X"
-244                     frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.x
+244                     frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.X
                             
 246                     frmSendMess.lvwAttributes.ListItems.Add , , "Y"
-248                     frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.y
+248                     frmSendMess.lvwAttributes.ListItems.Item(frmSendMess.lvwAttributes.ListItems.Count).SubItems(1) = oSHP.Centroid.Y
                             
 250                     Set oVecLyr = oSHP.layer
                             
@@ -18293,7 +18314,7 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
                         
                         'm_fmrAddIncident.SetNearestValues GetNearestShape(m_dPTG, "Office Locations"), GetNearestShape(m_dPTG, "Operational Areas")
 
-428                     m_fmrAddIncident.SetCoordinateValue CStr(m_dPTG.x), "Long:", CStr(m_dPTG.y), "Lat:", "Lat/Long WGS84", Map1.MilitaryGridReferenceFromPoint(m_dPTG.x, m_dPTG.y)
+428                     m_fmrAddIncident.SetCoordinateValue CStr(m_dPTG.X), "Long:", CStr(m_dPTG.Y), "Lat:", "Lat/Long WGS84", Map1.MilitaryGridReferenceFromPoint(m_dPTG.X, m_dPTG.Y)
 430                     m_fmrAddIncident.SetFocus
                     
 432                     m_oIncShpPt.Unlock
@@ -18363,7 +18384,7 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 
 474         Case OASIS_TOOLS.oRadiusSelect, OASIS_TOOLS.oCircleSelect
             
-476             Set oldPos = GisUtils.POINT(x, y)
+476             Set oldPos = GisUtils.POINT(X, Y)
 478             oldRadius = 0
 
 480         Case oLineSelect, oPolyLineSelect, oPolySelect, oRectSelect, oMultiSelect, oAreaSelect
@@ -18377,8 +18398,8 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
                 
                 ' Private gdpts() As POINTAPI
             
-488             Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(x, y))
-490             gdpts(UBound(gdpts)).x = x: gdpts(UBound(gdpts)).y = y
+488             Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(X, Y))
+490             gdpts(UBound(gdpts)).X = X: gdpts(UBound(gdpts)).Y = Y
 492             GDI_Polyline GIS10.hdc, gdpts
                 
 494             If Not m_bDrawFinished Then
@@ -18388,7 +18409,7 @@ Private Sub GIS10_OnMouseDown(translated As Boolean, _
 500                 m_bDrawFinished = False
                 End If
             
-502             Set oldPos = GisUtils.POINT(x, y)
+502             Set oldPos = GisUtils.POINT(X, Y)
 
 504         Case OASIS_TOOLS.oFeatureSelect
             
@@ -18537,9 +18558,9 @@ Private Sub UpdateSpatialiseDDList(sShp As TatukGIS_XDK10.XGIS_Shape)
     Do Until i = sShp.GetNumPoints
             
         If Len(sPoints) > 1 Then
-            sPoints = sPoints & ";" & sShp.GetPoint(0, i).x & ";" & sShp.GetPoint(0, i).y
+            sPoints = sPoints & ";" & sShp.GetPoint(0, i).X & ";" & sShp.GetPoint(0, i).Y
         Else
-            sPoints = sShp.GetPoint(0, i).x & ";" & sShp.GetPoint(0, i).y
+            sPoints = sShp.GetPoint(0, i).X & ";" & sShp.GetPoint(0, i).Y
         End If
 
         i = i + 1
@@ -18605,14 +18626,14 @@ Private Function CreatePolygonEX() As Long
 118         oSHP.Lock TatukGIS_XDK10.XgisLockExtent
 120         oSHP.AddPart
         
-            dLat1 = ptsSel(0).x
-            dLon1 = ptsSel(0).y
+            dLat1 = ptsSel(0).X
+            dLon1 = ptsSel(0).Y
         
 122         For i = LBound(ptsSel) To UBound(ptsSel)
 124             oSHP.AddPoint ptsSel(i)
 
-                If i = 1 Then dDistLen = dDistLen + HaversineDistance(dLon1, ptsSel(i).x, dLat1, ptsSel(i).y)
-                If i > 1 Then dDistLen = dDistLen + HaversineDistance(ptsSel(i - 1).x, ptsSel(i).x, ptsSel(i - 1).y, ptsSel(i).y)
+                If i = 1 Then dDistLen = dDistLen + HaversineDistance(dLon1, ptsSel(i).X, dLat1, ptsSel(i).Y)
+                If i > 1 Then dDistLen = dDistLen + HaversineDistance(ptsSel(i - 1).X, ptsSel(i).X, ptsSel(i - 1).Y, ptsSel(i).Y)
             Next
 
 126         oSHP.Unlock
@@ -18682,13 +18703,13 @@ Private Function CreatePolyLine() As Long
 118         oSHP.Lock TatukGIS_XDK10.XgisLockExtent
 120         oSHP.AddPart
 
-            dLat1 = ptsSel(0).y
-            dLon1 = ptsSel(0).x
+            dLat1 = ptsSel(0).Y
+            dLon1 = ptsSel(0).X
         
 122         For i = LBound(ptsSel) To UBound(ptsSel)
 124             oSHP.AddPoint ptsSel(i)
-                If i = 1 Then dDistLen = dDistLen + HaversineDistance(dLon1, ptsSel(i).x, dLat1, ptsSel(i).y)
-                If i > 1 Then dDistLen = dDistLen + HaversineDistance(ptsSel(i - 1).x, ptsSel(i).x, ptsSel(i - 1).y, ptsSel(i).y)
+                If i = 1 Then dDistLen = dDistLen + HaversineDistance(dLon1, ptsSel(i).X, dLat1, ptsSel(i).Y)
+                If i > 1 Then dDistLen = dDistLen + HaversineDistance(ptsSel(i - 1).X, ptsSel(i).X, ptsSel(i - 1).Y, ptsSel(i).Y)
             Next
             
 126         oSHP.Unlock
@@ -18745,8 +18766,8 @@ Dim i As Integer
         
     For i = 0 To 2
         Set Pt = New TatukGIS_XDK10.XGIS_Point
-        Pt.x = i
-        Pt.y = i
+        Pt.X = i
+        Pt.Y = i
         oLine.AddPoint Pt
     Next
         
@@ -18765,15 +18786,15 @@ End Sub
 
 Private Sub GIS10_OnMouseMove(translated As Boolean, _
                               ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                              ByVal x As Long, _
-                              ByVal y As Long)
+                              ByVal X As Long, _
+                              ByVal Y As Long)
         '<EhHeader>
         On Error GoTo GIS10_OnMouseMove_Err
         '</EhHeader>
         
-        If lLastMouseX = x And lLastMouseY = y Then Exit Sub
-lLastMouseX = x
-lLastMouseY = y
+        If lLastMouseX = X And lLastMouseY = Y Then Exit Sub
+lLastMouseX = X
+lLastMouseY = Y
 
         Dim ptg As TatukGIS_XDK10.XGIS_Point
         Dim shp As TatukGIS_XDK10.XGIS_Shape
@@ -18788,7 +18809,7 @@ lLastMouseY = y
 100     If m_bScrib Then
 102         GIS10.PaintMinimum
             '        pts(UBound(pts)).X = ScaleX(X, vbPixels, vbTwips): pts(UBound(pts)).Y = ScaleY(Y, vbPixels, vbTwips)
-104         gdpts(UBound(gdpts)).x = x: gdpts(UBound(gdpts)).y = y
+104         gdpts(UBound(gdpts)).X = X: gdpts(UBound(gdpts)).Y = Y
         
 106         GDI_Polyline GIS10.hdc, gdpts
 108         ReDim Preserve gdpts(UBound(gdpts) + 1)
@@ -18797,8 +18818,8 @@ lLastMouseY = y
 
 110     If m_bPolyG Or m_bPolyL Then
 112         GIS10.PaintMinimum
-114         Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(x, y))
-116         gdpts(UBound(gdpts)).x = x: gdpts(UBound(gdpts)).y = y
+114         Set ptsSel(UBound(ptsSel)) = GIS10.ScreenToMap(GisUtils.POINT(X, Y))
+116         gdpts(UBound(gdpts)).X = X: gdpts(UBound(gdpts)).Y = Y
 118         GDI_Polyline GIS10.hdc, gdpts
         End If
 
@@ -18806,13 +18827,13 @@ lLastMouseY = y
 122         GIS10.PaintMinimum
 
 124         If UBound(gdpts) > 0 Then
-126             gdpts(1).x = x: gdpts(1).y = y
-128             GDI_Rectangle GIS10.hdc, gdpts(0).x, gdpts(0).y, gdpts(1).y, gdpts(1).y
+126             gdpts(1).X = X: gdpts(1).Y = Y
+128             GDI_Rectangle GIS10.hdc, gdpts(0).X, gdpts(0).Y, gdpts(1).Y, gdpts(1).Y
             End If
         
         End If
   
-130     Set ptg = GIS10.ScreenToMap(GisUtils.POINT(x, y))
+130     Set ptg = GIS10.ScreenToMap(GisUtils.POINT(X, Y))
 
 132     If oMapTipSetting.Enabled And Not oMapTipSetting.MapTipLayer = "" Then
 134         If oMapTipSetting.MapTipLayer = "--All--" Then
@@ -18890,14 +18911,14 @@ lLastMouseY = y
         End If
         
         'sMGRS = " MGRS:" & Map1.MilitaryGridReferenceFromPoint(ptg.x, ptg.y) & " Zoom:" & Round(GIS10.zoom, 2) & " Scale:" & GIS10.ScaleAsText
-190     sMGRS = " MGRS:" & Map1.MilitaryGridReferenceFromPoint(ptg.x, ptg.y) & " Scale:" & GIS10.ScaleAsText
+190     sMGRS = " MGRS:" & Map1.MilitaryGridReferenceFromPoint(ptg.X, ptg.Y) & " Scale:" & GIS10.ScaleAsText
         
-192     AB.Bands.Item("bStatus").Tools.Item("lblCoords").Text = "X:" & Round(ptg.x, 8) & " Y:" & Round(ptg.y, 8) & sMGRS
-194     AB.Bands.Item("bStatus").Tools.Item("lblCoords").caption = "X:" & Round(ptg.x, 8) & " Y:" & Round(ptg.y, 8) & sMGRS
+192     AB.Bands.Item("bStatus").Tools.Item("lblCoords").Text = "X:" & Round(ptg.X, 8) & " Y:" & Round(ptg.Y, 8) & sMGRS
+194     AB.Bands.Item("bStatus").Tools.Item("lblCoords").caption = "X:" & Round(ptg.X, 8) & " Y:" & Round(ptg.Y, 8) & sMGRS
         
 196     If m_oToolTipSHP Is Nothing Then
-198         ptTip.x = 0
-200         ptTip.y = 0
+198         ptTip.X = 0
+200         ptTip.Y = 0
 202         picToolTip.Visible = False
         Else
 204         GetCursorPos ptTip
@@ -18910,12 +18931,12 @@ lLastMouseY = y
 210         SetROP2 GIS10.hdc, R2_XORPEN
 
 212         If oldRadius <> 0 Then
-214             Ellipse GIS10.hdc, oldPos.x - oldRadius, oldPos.y - oldRadius, oldPos.x + oldRadius, oldPos.y + oldRadius
+214             Ellipse GIS10.hdc, oldPos.X - oldRadius, oldPos.Y - oldRadius, oldPos.X + oldRadius, oldPos.Y + oldRadius
             End If
 
-216         oldRadius = Round(Sqr(((oldPos.x - x) * (oldPos.x - x)) + ((oldPos.y - y) * (oldPos.y - y))))
+216         oldRadius = Round(Sqr(((oldPos.X - X) * (oldPos.X - X)) + ((oldPos.Y - Y) * (oldPos.Y - Y))))
 
-218         Ellipse GIS10.hdc, oldPos.x - oldRadius, oldPos.y - oldRadius, oldPos.x + oldRadius, oldPos.y + oldRadius
+218         Ellipse GIS10.hdc, oldPos.X - oldRadius, oldPos.Y - oldRadius, oldPos.X + oldRadius, oldPos.Y + oldRadius
 
         End If
 
@@ -18944,7 +18965,7 @@ lLastMouseY = y
         End If
     
         On Error Resume Next
-232     SSC.Run "OASISGis_MouseMove", sMGRS, ptg.x, ptg.y
+232     SSC.Run "OASISGis_MouseMove", sMGRS, ptg.X, ptg.Y
     
 234     translated = True
         '<EhFooter>
@@ -18987,14 +19008,14 @@ Private Sub DumpAllGISProperties()
         
             With .Center
                 DebugPrint "Center"
-                DebugPrint .x
-                DebugPrint .y
+                DebugPrint .X
+                DebugPrint .Y
         
             End With
         
             With .CenterPtg
-                DebugPrint .x
-                DebugPrint .y
+                DebugPrint .X
+                DebugPrint .Y
         
             End With
         
@@ -19147,8 +19168,8 @@ End Sub
 Private Sub GIS10_OnMouseUp(translated As Boolean, _
                             ByVal Button As TatukGIS_XDK10.XMouseButton, _
                             ByVal Shift As TatukGIS_XDK10.XShiftState, _
-                            ByVal x As Long, _
-                            ByVal y As Long)
+                            ByVal X As Long, _
+                            ByVal Y As Long)
         '<EhHeader>
         On Error GoTo GIS10_OnMouseUp_Err
         '</EhHeader>
@@ -19188,8 +19209,8 @@ Private Sub GIS10_OnMouseUp(translated As Boolean, _
 128         m_oDrawLyr.Unlock
 130
             'distance recalc
-132         Set ptg1 = GIS10.ScreenToMap(GisUtils.POINT(oldPos.x + oldRadius, y))
-134         distance = ptg1.x - ptg.x
+132         Set ptg1 = GIS10.ScreenToMap(GisUtils.POINT(oldPos.X + oldRadius, Y))
+134         distance = ptg1.X - ptg.X
     
             AddShapeWithBufferAndHighlightIntersect tmp, distance
 
@@ -19236,6 +19257,7 @@ Private Sub AddShapeWithBufferAndHighlightIntersect(oShapeNew As TatukGIS_XDK10.
             Dim lngDataLength As Long
             m_frmSelector.dxProgressBar1.Visible = True
             m_frmSelector.chkLoadTo.Visible = False
+            m_frmSelector.chkAutoSelect.Visible = False
 104         GIS10.Lock
 
 106         DoEvents
@@ -19273,7 +19295,11 @@ Private Sub AddShapeWithBufferAndHighlightIntersect(oShapeNew As TatukGIS_XDK10.
 152         For Each tmp In lL.Loop(buf2.Extent, "", buf2, RELATE_INTERSECT, True)
 
 154             Set tmp = tmp.MakeEditable
-156             tmp.IsSelected = True
+                
+                'If m_frmSelector.chkAutoSelect.value = vbChecked Then
+156              tmp.IsSelected = True
+                'End If
+                
 158             m_frmSelector.ProgressStep
 
 160             If m_frmSelector.DistanceEnabled Then tmp.SetField "Distance_From_Centre", Round(DistanceBetween2Points(oPoint, tmp), 2)
@@ -19337,6 +19363,15 @@ Private Sub AddShapeWithBufferAndHighlightIntersect(oShapeNew As TatukGIS_XDK10.
 
         m_frmSelector.dxProgressBar1.Visible = False
         m_frmSelector.chkLoadTo.Visible = True
+        m_frmSelector.chkAutoSelect.Visible = True
+        GIS10.get("Buffers").Delete buf2.uID
+        
+        If m_frmSelector.chkAutoSelect.value = vbUnchecked Then
+            oLayerOutput.DeselectAll
+            oLayerOutput.Params.Visible = False
+        End If
+        
+        GIS10.UpDate  'get("Buffers").draw
         '<EhFooter>
         Exit Sub
 
@@ -19450,16 +19485,16 @@ Private Sub m_fmrAddIncident_CheckCoordinates(sAdmVal1 As String, _
         On Error GoTo m_fmrAddIncident_CheckCoordinates_Err
         '</EhHeader>
         Dim ptg As New TatukGIS_XDK10.XGIS_Point
-        Dim x As Double
-        Dim y As Double
+        Dim X As Double
+        Dim Y As Double
 
 100     If Len(m_fmrAddIncident.txtX.Text) > 0 And Len(m_fmrAddIncident.txtY.Text) > 0 Then
 102         ptg.Prepare CDbl(m_fmrAddIncident.txtX.Text), CDbl(m_fmrAddIncident.txtY.Text)
         Else
 
 104         If Len(m_fmrAddIncident.txtMGRS.Text) > 0 Then
-106             ConvMGRStoPT m_fmrAddIncident.txtMGRS.Text, x, y
-108             ptg.Prepare x, y
+106             ConvMGRStoPT m_fmrAddIncident.txtMGRS.Text, X, Y
+108             ptg.Prepare X, Y
             Else
                 Exit Sub
             End If
@@ -19937,11 +19972,11 @@ m_frmMnuOperations_ZoomToLoc_Err:
         '</EhFooter>
 End Sub
 
-Private Sub m_frmOvMap_MapOnMouseMove(translated As Boolean, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal x As Long, ByVal y As Long)
+Private Sub m_frmOvMap_MapOnMouseMove(translated As Boolean, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal X As Long, ByVal Y As Long)
         '<EhHeader>
         On Error GoTo m_frmOvMap_MapOnMouseMove_Err
         '</EhHeader>
-100     MouseUp x, y
+100     MouseUp X, Y
         '<EhFooter>
         Exit Sub
 
@@ -19953,11 +19988,11 @@ m_frmOvMap_MapOnMouseMove_Err:
         '</EhFooter>
 End Sub
 
-Private Sub m_frmOvMap_MapOnMouseUp(translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal x As Long, ByVal y As Long)
+Private Sub m_frmOvMap_MapOnMouseUp(translated As Boolean, ByVal Button As TatukGIS_XDK10.XMouseButton, ByVal Shift As TatukGIS_XDK10.XShiftState, ByVal X As Long, ByVal Y As Long)
         '<EhHeader>
         On Error GoTo m_frmOvMap_MapOnMouseUp_Err
         '</EhHeader>
-100     MouseUp x, y
+100     MouseUp X, Y
         '<EhFooter>
         Exit Sub
 
@@ -20026,8 +20061,6 @@ Public Sub Init(Optional sInitialMapName As String)
         Set m_frmMapLibraryDLG = New frmMapLibraryDLG
         'Set m_frmDynamicContent = New frmDynamicContent
         
-124     SSC.AddObject "frmOIncident", m_fmrAddIncident, True
-        
 126     m_sInitialMapName = sInitialMapName
 
 128     AddDockableInspectors
@@ -20053,7 +20086,7 @@ Public Sub Init(Optional sInitialMapName As String)
         'Call ShellExecute(Me.Hwnd, vbNullString, "C:\Program Files\Globalsat\TR Management Center\OASIS_Tracker.exe", "", "c:\", 2)
     
 146     Set oINIReader = Nothing
-
+147     SSC.AddObject "frmOIncident", m_fmrAddIncident, True
         CheckOVBFiles
         OpenLocalAppSettings
         PrepareConvertorUTM_LL
@@ -21076,7 +21109,7 @@ Public Sub InitMap(Optional sMapPath As String, _
         Exit Sub
 
 InitMap_Err:
-        MsgBox Err.Description '& vbCrLf & '       "in OASISClient.frmMain.InitMap " & '       "at line " & Erl
+        MsgBox Err.Description & vbCrLf & "in OASISClient.frmMain.InitMap10 " & "at line " & Erl
         Resume Next
         '</EhFooter>
 End Sub
@@ -21458,7 +21491,7 @@ Private Sub Form_Load()
         Exit Sub
 
 Form_Load_Err:
-        'MsgBox Err.Description & vbCrLf & "in OASISClient.frmMain.Form_Load " & "at line " & Erl
+        DebugPrint Err.Description & vbCrLf & "in OASISClient.frmMain.Form_Load " & "at line " & Erl
         Resume Next
         '</EhFooter>
 End Sub
@@ -21937,7 +21970,7 @@ Private Sub cmdAddBookmarks_Click()
         On Error GoTo cmdAddBookmarks_Click_Err
         '</EhHeader>
 
-100     FrmAddBookMark.Init m_Cnn, GIS10.viewer.CenterPtg.x, GIS10.viewer.CenterPtg.y, GIS10.viewer.zoom, GIS10.Name
+100     FrmAddBookMark.Init m_Cnn, GIS10.viewer.CenterPtg.X, GIS10.viewer.CenterPtg.Y, GIS10.viewer.zoom, GIS10.Name
 102     FrmAddBookMark.Show vbModal, Me
 108     LoadGeoBookMarks
         
@@ -22176,8 +22209,8 @@ Private Sub udRotationAngle_Change()
   ' calculate the angle for set value
   Exit Sub
   edRotationAngle.Text = udRotationAngle.value
-  GIS10.RotationPoint.x = GIS10.CenterPtg.x
-  GIS10.RotationPoint.y = GIS10.CenterPtg.y
+  GIS10.RotationPoint.X = GIS10.CenterPtg.X
+  GIS10.RotationPoint.Y = GIS10.CenterPtg.Y
   GIS10.RotationAngle = DegToRad(udRotationAngle.value)
   GIS10.UpDate
 End Sub
@@ -22529,32 +22562,32 @@ Set objProj = New GeoMercator
 
 End Sub
 
-Private Sub LL_2_UTM(x As Double, _
-                     y As Double, _
+Private Sub LL_2_UTM(X As Double, _
+                     Y As Double, _
                      dblNorthing As Double, _
                      dblEasting As Double, _
                      strMessage As String)
        
-    dblNorthing = DegToRad(y)
+    dblNorthing = DegToRad(Y)
       
-    dblEasting = DegToRad(x)
+    dblEasting = DegToRad(X)
         
     strMessage = objProj.Forward(dblNorthing, dblEasting)
 
 End Sub
 
-Private Sub UTM_2_LL(x As Double, y As Double, dblNorthing As Double, _
+Private Sub UTM_2_LL(X As Double, Y As Double, dblNorthing As Double, _
                      dblEasting As Double, _
                      strMessage As String)
 
             strMessage = objProj.Inverse(dblNorthing, dblEasting)
       
-            y = RadToDeg(dblNorthing)
-            x = RadToDeg(dblEasting)
+            Y = RadToDeg(dblNorthing)
+            X = RadToDeg(dblEasting)
 End Sub
 
-Private Sub ProjTest(x As Double, _
-                     y As Double, _
+Private Sub ProjTest(X As Double, _
+                     Y As Double, _
                      Optional Zone As Integer, _
                      Optional bIsUTM As Boolean)
 
@@ -22582,14 +22615,14 @@ Private Sub tmrToolTip_Timer()
         If .Enabled Then
 
             'First Make Sure the PTTip is Initiated
-            If ptTip.x + ptTip.y > 0 Then
+            If ptTip.X + ptTip.Y > 0 Then
                 'Get Current Cursor Position to see if has changed since last time
                 GetCursorPos Pt
          
-                If Pt.x - ptTip.x = 0 And Pt.y - ptTip.y = 0 Then
+                If Pt.X - ptTip.X = 0 And Pt.Y - ptTip.Y = 0 Then
          
                     If Not m_oToolTipSHP Is Nothing Then
-                        mWnd = WindowFromPoint(ptTip.x, ptTip.y)
+                        mWnd = WindowFromPoint(ptTip.X, ptTip.Y)
                         'Get the window's position in Pixels
                         GetWindowRect mWnd, WR
                         
@@ -22599,7 +22632,7 @@ Private Sub tmrToolTip_Timer()
                             lblToolTip.caption = m_oToolTipSHP.GetField(.MapTipField)
                         End If
                         
-                        picToolTip.Move elMap.left + ScaleX(ptTip.x - WR.left + 7, vbPixels, vbTwips), ScaleY(ptTip.y - WR.top - 17, vbPixels, vbTwips), lblToolTip.Width + 140, lblToolTip.Height + 80
+                        picToolTip.Move elMap.left + ScaleX(ptTip.X - WR.left + 7, vbPixels, vbTwips), ScaleY(ptTip.Y - WR.top - 17, vbPixels, vbTwips), lblToolTip.Width + 140, lblToolTip.Height + 80
 
                         'DebugPrint "Pic:" & ScaleX(WR.Left + ptTip.X - 2, vbPixels, vbTwips) & " Win:" & Me.Left & " Mouse:" & ptTip.X & " Rect:" & WR.Left
                         picToolTip.BackColor = .TipColor

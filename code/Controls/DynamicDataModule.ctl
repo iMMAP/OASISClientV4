@@ -888,8 +888,8 @@ Private Type KEYBDINPUT
 End Type
 
 Private Type INTPOINT
-    x As Integer
-    y As Integer
+    X As Integer
+    Y As Integer
 End Type
 
 Private Enum EventTypes
@@ -908,7 +908,7 @@ Private Declare Function StringFromGUID2 Lib "ole32.dll" (rguid As Any, ByVal lp
 
 Public Event GetSpatialLoc(oLayer As TatukGIS_XDK10.XGIS_LayerVector)
 Public Event GetSpatialLocEx(oPoint As TatukGIS_XDK10.XGIS_Point)
-Public Event ConvertMGRStoPT(sMGRS As String, x As Double, y As Double)
+Public Event ConvertMGRStoPT(sMGRS As String, X As Double, Y As Double)
 Public Event GetCurrentExtentCentroid(oPoint As TatukGIS_XDK10.XGIS_Point)
 Public Event GetNearestShapeInfo(PassedPoint As TatukGIS_XDK10.XGIS_Point, sLayerName As String, sFieldName As String, ByRef sFieldValue As String, ByRef dDistance As Double)
 
@@ -1063,8 +1063,8 @@ Private Sub SimulateRightArrow()
 
     GenInput.dwType = EventTypes.INPUT_KEYBOARD
 
-    tmp.x = vbKeyRight
-    tmp.y = 0
+    tmp.X = vbKeyRight
+    tmp.Y = 0
     CopyMemory GenInput.dwData(0), tmp, Len(tmp)
     GenInput.dwData(1) = WM_KEYDOWN
     GenInput.dwData(2) = 0
@@ -1386,7 +1386,7 @@ Private Function SynchHistoryEdit(sNewGUID As String, _
 124                 .Fields("sBy").value = "[" & sTitle & "] " & sDescription & " (" & sBy & ")"
 126                 .Fields("sdelete").value = "false"
 128                 .Fields("updates").value = supdates
-130                 .Fields("noconflict").value = "local"
+130                 '.Fields("noconflict").value = "edit"
 132                 .UpdateBatch adAffectCurrent
                     
 134                 If .RecordCount > 1 Then
@@ -1463,7 +1463,7 @@ Private Function SynchHistoryDelete(sNewGUID As String, _
 120                 .Fields("sBy").value = "[" & sTitle & "] " & sDescription & " (" & sBy & ")"
 122                 .Fields("sdelete").value = "true"
 124                 .Fields("updates").value = supdates
-126                 .Fields("noconflict").value = "local"
+126                 '.Fields("noconflict").value = "deletion"
 128                 .UpdateBatch adAffectCurrent
                     
 130                 If .RecordCount > 1 Then
@@ -2283,11 +2283,13 @@ Private Sub cmdNext_Click()
 158         cmdNext.Visible = True
 
             i = 1
-
+If dxDBInspector1.Count > 0 Then
             Do Until i = dxDBInspector1.Count
 19999           SetAutoCalcField DDDefCurrent.Prefix & DDTableCurrent.TableName, dxDBInspector1.Rows(i).FieldName
                 i = i + 1
             Loop
+            
+            End If
             
 1762        UpdateValidationMask DDTableCurrent.TableName
 18654       dxProgressBar1.DoStep
@@ -2336,7 +2338,7 @@ Private Sub cmdNext_Click()
 
 cmdNext_Click_Err:
         If bDonePostEditor Then
-            MsgBox "DynamicDataModule.cmdNext_Click_Err (" & Erl & " ) " & Err.Description
+            MsgBox "DynamicDataModule.cmdNext_Click_Err (" & Erl & ") " & Err.Description
         Else
        
             If dxDBInspector1.FocusedNode.Index > 0 Then
@@ -2352,6 +2354,9 @@ cmdNext_Click_Err:
         dxDBInspector1.Visible = True
         cmdNext.Visible = True
         cmdCancel.Visible = True
+        Exit Sub
+        
+        Resume Next
         '</EhFooter>
 End Sub
     
@@ -3143,8 +3148,8 @@ End Function
 
 Private Sub dxDBGrid1_OnMouseDown(ByVal Button As Long, _
                                   ByVal Shift As Long, _
-                                  ByVal x As Single, _
-                                  ByVal y As Single)
+                                  ByVal X As Single, _
+                                  ByVal Y As Single)
 
     If Button = 2 Then PopupMenu ExportOptions
 
@@ -3429,8 +3434,8 @@ Private Sub dxDBInspector1_OnEditButtonClick(ByVal RowNode As dxDBRowNode)
     
     Dim oPoint As New TatukGIS_XDK10.XGIS_Point
     Dim sMGRS As String
-    Dim x As Double
-    Dim y As Double
+    Dim X As Double
+    Dim Y As Double
               
     Select Case RowNode.Row.ObjectName
     
@@ -3459,8 +3464,8 @@ Private Sub dxDBInspector1_OnEditButtonClick(ByVal RowNode As dxDBRowNode)
             If RowNode.Row.value = 0 Or IsNull(RowNode.Row.value) Or RowNode.Row.value = "" Then
                 RaiseEvent GetCurrentExtentCentroid(oPoint)
             Else
-                RaiseEvent ConvertMGRStoPT(dxDBInspector1.RowByName("MGRS").value, x, y)
-                oPoint.Prepare x, y
+                RaiseEvent ConvertMGRStoPT(dxDBInspector1.RowByName("MGRS").value, X, Y)
+                oPoint.Prepare X, Y
             End If
                
             RaiseEvent GetSpatialLocEx(oPoint)
@@ -3486,7 +3491,7 @@ Private Sub SetGridCaptions()
         
         Dim oDB As New ADOX.Catalog
         Dim itbl As New ADOX.Table
-        Dim icol As New ADOX.Column
+        Dim iCol As New ADOX.Column
         Dim j As Long
               
 100     If DDTableCurrent.IsLinkedTable Then
@@ -3518,27 +3523,27 @@ Private Sub SetGridCaptions()
     
 124     If 1 Or itbl.Name = oRS.Fields(0).Properties(1) Then
                 
-126         For Each icol In itbl.Columns
+126         For Each iCol In itbl.Columns
                 
                 If bSQLServerInUse Then
                     Set oRSCaption = New ADODB.Recordset
-                    oRSCaption.Open "SELECT * FROM ::fn_listExtendedProperty ( 'MS_Description','user', 'dbo', 'table', '" & itbl.Name & "', 'column', '" & icol.Name & "')", mConn, adOpenDynamic, adLockBatchOptimistic
+                    oRSCaption.Open "SELECT * FROM ::fn_listExtendedProperty ( 'MS_Description','user', 'dbo', 'table', '" & itbl.Name & "', 'column', '" & iCol.Name & "')", mConn, adOpenDynamic, adLockBatchOptimistic
 
                     If Not oRSCaption.EOF Then sCaption = oRSCaption.Fields("value").value
                     Set oRSCaption = Nothing
                 Else
                 
-128                 sCaption = icol.Properties(2).value
+128                 sCaption = iCol.Properties(2).value
 
                 End If
                 
-130             If Not dxDBInspector1.RowByName(icol.Name) Is Nothing Then
+130             If Not dxDBInspector1.RowByName(iCol.Name) Is Nothing Then
                 
-132                 With dxDBInspector1.RowByName(icol.Name)
+132                 With dxDBInspector1.RowByName(iCol.Name)
                     
 134                     .Alignment = taLeftJustify
                     
-136                     If icol.Type = adDate Or icol.Type = adNumeric Or icol.Type = adBoolean Or icol.Type = 1 Then
+136                     If iCol.Type = adDate Or iCol.Type = adNumeric Or iCol.Type = adBoolean Or iCol.Type = 1 Then
 138                         lCountOfFieldsNotMemo = lCountOfFieldsNotMemo + 1
                         End If
 
@@ -3553,7 +3558,7 @@ Private Sub SetGridCaptions()
 
 146             Do Until j = dxDBGrid1.Columns.Count
                             
-148                 If dxDBGrid1.Columns(j).FieldName = icol.Name Then
+148                 If dxDBGrid1.Columns(j).FieldName = iCol.Name Then
 150                     If Len(sCaption) > 0 Then dxDBGrid1.Columns(j).caption = sCaption
                     End If
                         
@@ -4181,7 +4186,7 @@ Public Sub SaveChanges(bSave As Boolean, _
     If bSave Then
         Set mShapeNew = oLayer.GetShape(oLayer.GetLastUid)
         sKMLString = sKML
-        UpdateCreatedPoint mShapeNew.Centroid.x, mShapeNew.Centroid.y
+        UpdateCreatedPoint mShapeNew.Centroid.X, mShapeNew.Centroid.Y
     Else
         Set mLayerCopy = Nothing
         sKMLString = ""
@@ -4189,22 +4194,22 @@ Public Sub SaveChanges(bSave As Boolean, _
 
 End Sub
 
-Public Sub SaveNonSpatialXY(x As Double, _
-                            y As Double, _
+Public Sub SaveNonSpatialXY(X As Double, _
+                            Y As Double, _
                             sMGRS As String)
     
-    If Not dxDBInspector1.RowByName("Longitude") Is Nothing Then dxDBInspector1.RowByName("Longitude").value = x
+    If Not dxDBInspector1.RowByName("Longitude") Is Nothing Then dxDBInspector1.RowByName("Longitude").value = X
     
-    If Not dxDBInspector1.RowByName("Latitude") Is Nothing Then dxDBInspector1.RowByName("Latitude").value = y
+    If Not dxDBInspector1.RowByName("Latitude") Is Nothing Then dxDBInspector1.RowByName("Latitude").value = Y
     
     If Not dxDBInspector1.RowByName("MGRS") Is Nothing Then dxDBInspector1.RowByName("MGRS").value = sMGRS
     
-    UpdateCreatedPoint x, y
+    UpdateCreatedPoint X, Y
 
 End Sub
 
-Public Sub UpdateCreatedPoint(x As Double, _
-                              y As Double)
+Public Sub UpdateCreatedPoint(X As Double, _
+                              Y As Double)
         '<EhHeader>
         On Error GoTo UpdateCreatedPoint_Err
         '</EhHeader>
@@ -4218,11 +4223,11 @@ Public Sub UpdateCreatedPoint(x As Double, _
         Dim sFieldValue As String
         Dim dDistance As Double
     
-100     If x = 0 And y = 0 Then
+100     If X = 0 And Y = 0 Then
 102         Set mCreatedPoint = Nothing
         Else
 104         Set mCreatedPoint = New XGIS_Point
-106         mCreatedPoint.Prepare x, y
+106         mCreatedPoint.Prepare X, Y
         
 108         i = 0
 
@@ -4817,7 +4822,7 @@ End Sub
 Private Sub dxDBInspector1_OnKeyUp(KeyCode As Integer, _
                                    ByVal Shift As Integer)
     'SimulateRightArrow
-    
+    If dxDBInspector1.Count > 0 Then
     If dxDBInspector1.FocusedNode.Row.ReadOnly Or KeyCode = vbKeyEscape Then
     
         KeyCode = 0
@@ -4899,6 +4904,7 @@ Private Sub dxDBInspector1_OnKeyUp(KeyCode As Integer, _
     
         End If
     
+    End If
     End If
     
 End Sub
