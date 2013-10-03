@@ -1121,6 +1121,7 @@ Private Sub Runnable_Start()
 
 Runnable_Start_Err:
         TxMsg "SynchWorker.Runnable_Start_Err on line (" & Erl & ") " & Err.Description, True
+        MsgBox "FATAL ERROR IN SYNCH ENGINE!"
         Set oRSSQLLyr = Nothing
         m_bRunning = False
         '</EhFooter>
@@ -2794,7 +2795,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
                                         
                                         End If
                                         
-970                                     If sResponse = "Data Updated" Then
+970                                     If oRSServer.EOF Or sResponse = "Data Updated" Then
                                     
 972                                         If oRSServerSynchHistory.EOF Then
 974                                             oRSServerSynchHistory.AddNew

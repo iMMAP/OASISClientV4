@@ -2526,6 +2526,7 @@ Private Sub SaveData()
         Dim bAbort As Boolean
         Dim sNewGUID As String
         Dim oShape As New TatukGIS_XDK10.XGIS_Shape
+        Dim oShapeTemplate As New TatukGIS_XDK10.XGIS_Shape
         Dim j As Long
         Dim sWKT As String
         Dim sDate As String
@@ -2535,215 +2536,223 @@ Private Sub SaveData()
 102         If mShape.IsEmpty Then
 104             Set oShape = New TatukGIS_XDK10.XGIS_Shape
 106         ElseIf mLayerCopy Is Nothing Then
-108             Set oShape = mShape.CreateCopy
+
+108             Set oShapeTemplate = mShape.CreateCopy
+110             mLayer.Delete mShape.uID
+112             mLayer.SaveAll
+114             Set oShape = mLayer.CreateShape(mShape.ShapeType)
+116             oShape.ImportFromEWKT oShapeTemplate.ExportToEWKT
+
             Else
-110             Set oShape = mLayerCopy.GetShape(mLayerCopy.GetLastUid)
+ 
+118             Set oShapeTemplate = mShapeNew.CreateCopy
+120             mLayer.Delete mShape.uID
+122             mLayer.SaveAll
+124             Set oShape = mLayer.CreateShape(mShape.ShapeType)
+126             oShape.ImportFromEWKT oShapeTemplate.ExportToEWKT
+              
             End If
         
-112         If oShape.GetNumPoints = 0 Then
-114             MsgBox "No spatial information has been saved for this record!  Save aborted", vbCritical
-116             bAbort = True
+128         If oShape.GetNumPoints = 0 Then
+130             MsgBox "No spatial information has been saved for this record!  Save aborted", vbCritical
+132             bAbort = True
             End If
         
         End If
         
-118     If Not bAbort Then
+134     If Not bAbort Then
 
             'Prepare form
-120         lblDescription.caption = "please wait momentarily for the data to save............"
-122         lblDescription.FontSize = 15
-124         lblDescription.Refresh
-126         UserControl.SetFocus
-128         cmdCancel.Visible = False
-130         lblOperation.caption = "  Browsing records..."
+136         lblDescription.caption = "please wait momentarily for the data to save............"
+138         lblDescription.FontSize = 15
+140         lblDescription.Refresh
+142         UserControl.SetFocus
+144         cmdCancel.Visible = False
+146         lblOperation.caption = "  Browsing records..."
 
-132         If DDTableCurrent.IsDDTable Then
+148         If DDTableCurrent.IsDDTable Then
             
                 'Save edited dd table
-134             If eCurrentOperation = Editing Then
-136                 SynchHistoryEdit GUIDGen, mDDRSGuid, "DD ddDef Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & DDTableCurrent.TableName, DDTableCurrent.IsGEOTable, "false", DDDefCurrent.Prefix
+150             If eCurrentOperation = Editing Then
+152                 SynchHistoryEdit GUIDGen, mDDRSGuid, "DD ddDef Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & DDTableCurrent.TableName, DDTableCurrent.IsGEOTable, "false", DDDefCurrent.Prefix
                 Else
-138                 SynchHistoryAddNew GUIDGen, mDDRSGuid, "DD ddDef Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & DDTableCurrent.TableName, DDTableCurrent.IsGEOTable, "false", DDDefCurrent.Prefix
+154                 SynchHistoryAddNew GUIDGen, mDDRSGuid, "DD ddDef Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & DDTableCurrent.TableName, DDTableCurrent.IsGEOTable, "false", DDDefCurrent.Prefix
                 End If
                 
-140             j = 0
+156             j = 0
 
-142             Do Until j = mDDRS.Fields.Count
+158             Do Until j = mDDRS.Fields.Count
 
-144                 If mDDRS.Fields(j).Type = adDate Then
-                        sDate = Format(mDDRS.Fields(j).value, "yyyymmdd")
+160                 If mDDRS.Fields(j).Type = adDate Then
+162                     sDate = Format(mDDRS.Fields(j).value, "yyyymmdd")
 
-146                     If sDate = "19991230" Or sDate = "18991230" Then
-148                         mDDRS.Fields(j).value = Null
+164                     If sDate = "19991230" Or sDate = "18991230" Then
+166                         mDDRS.Fields(j).value = Null
                         End If
                         
                     End If
                     
-150                 j = j + 1
+168                 j = j + 1
                 Loop
                 
-152             If Not DDTableCurrent.IsGEOTable Then
+170             If Not DDTableCurrent.IsGEOTable Then
 
-                    If FieldExists(mDDRS, "WKT") Then
-                        sWKT = "POINT (" & mDDRSManual.Fields("Longitude").value & " " & mDDRSManual.Fields("Latitude").value & ")"
+172                 If FieldExists(mDDRS, "WKT") Then
+174                     sWKT = "POINT (" & mDDRSManual.Fields("Longitude").value & " " & mDDRSManual.Fields("Latitude").value & ")"
 
-                        If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
-                        mDDRS.Fields("WKT").value = sWKT
+176                     If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
+178                     mDDRS.Fields("WKT").value = sWKT
                     End If
                     
-154                 mDDRS.UpdateBatch adAffectCurrent
+180                 mDDRS.UpdateBatch adAffectCurrent
 
                 Else
                     
-156                 mLayer.SaveData
-158                 mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE uid = " & mDDRS.Fields("UID").value
-160                 mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & left(DDTableCurrent.TableName, Len(DDTableCurrent.TableName) - 4) & "_GEO" & "] WHERE uid = " & mDDRS.Fields("UID").value
-162                 Set oShape = mLayer.AddShape(oShape, True)
-                    
-164                 i = 0
+182                 i = 0
 
-166                 Do Until i = mDDRS.Fields.Count
+184                 Do Until i = mDDRS.Fields.Count
                         
-168                     With mDDRS.Fields(i)
+186                     With mDDRS.Fields(i)
 
-170                         If Not .Name = "UID" Then
-172                             oShape.SetField .Name, .value
+188                         If Not .Name = "UID" Then
+190                             oShape.SetField .Name, .value
                             End If
 
                         End With
 
-174                     i = i + 1
+192                     i = i + 1
                     Loop
                         
-176                 If Len(sKMLString) > 1 And FieldExists(mDDRS, "KMLString") Then
-178                     mDDRS.Fields("KMLString").value = sKMLString
+194                 If Len(sKMLString) > 1 And FieldExists(mDDRS, "KMLString") Then
+196                     mDDRS.Fields("KMLString").value = sKMLString
 
-180                     If FieldExists(mDDRSManual, "UID") Then mDDRSManual.Fields("KMLString").value = sKMLString
-182                     oShape.SetField "KMLString", sKMLString
+198                     If FieldExists(mDDRSManual, "UID") Then mDDRSManual.Fields("KMLString").value = sKMLString
+200                     oShape.SetField "KMLString", sKMLString
                     End If
                     
-184                 If DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "WKT") Then
-186                     sWKT = oShape.ExportToWKT
+202                 If DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "WKT") Then
+204                     sWKT = oShape.ExportToWKT
 
-188                     If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
-190                     mDDRS.Fields("WKT").value = sWKT
-192                     oShape.SetField "WKT", sWKT
+206                     If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
+208                     mDDRS.Fields("WKT").value = sWKT
+210                     oShape.SetField "WKT", sWKT
                     End If
                     
-194                 If Not DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "Longitude") And FieldExists(mDDRS, "Latitude") Then
-196                     sWKT = "POINT (" & mDDRSManual.Fields("Longitude").value & " " & mDDRSManual.Fields("Latitude").value & ")"
+212                 If Not DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "Longitude") And FieldExists(mDDRS, "Latitude") Then
+214                     sWKT = "POINT (" & mDDRSManual.Fields("Longitude").value & " " & mDDRSManual.Fields("Latitude").value & ")"
 
-198                     If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
-200                     mDDRS.Fields("WKT").value = sWKT
+216                     If FieldExists(mDDRSManual, "WKT") Then mDDRSManual.Fields("WKT").value = sWKT
+218                     mDDRS.Fields("WKT").value = sWKT
                     End If
-                        
-202                 mLayer.SaveData
-204                 mDDRS.Fields("UID").value = oShape.uID
+                    
+220                 mLayer.SaveAll
+
+222                 mDDRS.Fields("UID").value = oShape.uID
                 
                 End If
 
             Else
                 
                 'Save linked tables
-206             i = 0
+224             i = 0
 
-208             If DDDefCurrent.NumOfLinkedTables > 0 Then
+226             If DDDefCurrent.NumOfLinkedTables > 0 Then
               
-210                 Do Until i >= UBound(mDDRSLinkedCollection)
+228                 Do Until i >= UBound(mDDRSLinkedCollection) - 1
     
-212                     mDDRSLinkedCollection(i).RS.Filter = adFilterPendingRecords ' adFilterAffectedRecords
+230                     mDDRSLinkedCollection(i).RS.Filter = adFilterPendingRecords ' adFilterAffectedRecords
 
-214                     If Not mDDRSLinkedCollection(i).RS.EOF Or Not mDDRSLinkedCollection(i).RS.Bof Then mDDRSLinkedCollection(i).RS.MoveFirst
+232                     If Not mDDRSLinkedCollection(i).RS.EOF Or Not mDDRSLinkedCollection(i).RS.Bof Then mDDRSLinkedCollection(i).RS.MoveFirst
                    
-216                     Do Until mDDRSLinkedCollection(i).RS.EOF
+234                     Do Until mDDRSLinkedCollection(i).RS.EOF
                     
-218                         If mDDRSLinkedCollection(i).RS.EditMode = adEditInProgress Then
-220                             SynchHistoryEdit GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").value, "DD linkedtable Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
-222                         ElseIf mDDRSLinkedCollection(i).RS.EditMode = adEditAdd Then
-224                             SynchHistoryAddNew GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").value, "DD linkedtable Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
-226                         ElseIf mDDRSLinkedCollection(i).RS.EditMode = adEditDelete Then
-228                             SynchHistoryDelete GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").OriginalValue, "DD linkedtable Delete", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
+236                         If mDDRSLinkedCollection(i).RS.EditMode = adEditInProgress Then
+238                             SynchHistoryEdit GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").value, "DD linkedtable Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
+240                         ElseIf mDDRSLinkedCollection(i).RS.EditMode = adEditAdd Then
+242                             SynchHistoryAddNew GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").value, "DD linkedtable Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
+244                         ElseIf mDDRSLinkedCollection(i).RS.EditMode = adEditDelete Then
+246                             SynchHistoryDelete GUIDGen, mDDRSLinkedCollection(i).RS.Fields("GUID2").OriginalValue, "DD linkedtable Delete", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & mDDRSLinkedCollection(i).sTableName, False, "false", DDDefCurrent.Prefix
                             End If
     
-230                         If FieldExists(mDDRSLinkedCollection(i).RS, "WKT") And FieldExists(mDDRSLinkedCollection(i).RS, "Longitude") And FieldExists(mDDRSLinkedCollection(i).RS, "Latitude") Then
-232                             sWKT = "POINT (" & mDDRSLinkedCollection(i).RS.Fields("Longitude").value & " " & mDDRSLinkedCollection(i).RS.Fields("Latitude").value & ")"
-234                             mDDRSLinkedCollection(i).RS.Fields("WKT").value = sWKT
+248                         If FieldExists(mDDRSLinkedCollection(i).RS, "WKT") And FieldExists(mDDRSLinkedCollection(i).RS, "Longitude") And FieldExists(mDDRSLinkedCollection(i).RS, "Latitude") Then
+250                             sWKT = "POINT (" & mDDRSLinkedCollection(i).RS.Fields("Longitude").value & " " & mDDRSLinkedCollection(i).RS.Fields("Latitude").value & ")"
+252                             mDDRSLinkedCollection(i).RS.Fields("WKT").value = sWKT
                             End If
                             
-236                         j = 0
+254                         j = 0
 
-238                         Do Until j = mDDRSLinkedCollection(i).RS.Fields.Count
+256                         Do Until j = mDDRSLinkedCollection(i).RS.Fields.Count
 
-240                             If mDDRSLinkedCollection(i).RS.Fields(j).Type = adDate Then
+258                             If mDDRSLinkedCollection(i).RS.Fields(j).Type = adDate Then
 
-                                    sDate = Format(mDDRSLinkedCollection(i).RS.Fields(j).value, "yyyymmdd")
+260                                 sDate = Format(mDDRSLinkedCollection(i).RS.Fields(j).value, "yyyymmdd")
 
-                                    If sDate = "19991230" Or sDate = "18991230" Then
-244                                     mDDRSLinkedCollection(i).RS.Fields(j).value = Null
+262                                 If sDate = "19991230" Or sDate = "18991230" Then
+264                                     mDDRSLinkedCollection(i).RS.Fields(j).value = Null
                                     End If
                         
                                 End If
                     
-246                             j = j + 1
+266                             j = j + 1
                             Loop
                     
-248                         mDDRSLinkedCollection(i).RS.MoveNext
+268                         mDDRSLinkedCollection(i).RS.MoveNext
                         Loop
                     
-250                     mDDRSLinkedCollection(i).RS.UpdateBatch adAffectAll  ' adAffectAllChapters
-252                     mDDRSLinkedCollection(i).RS.Filter = adFilterNone
-254                     i = i + 1
+270                     mDDRSLinkedCollection(i).RS.UpdateBatch adAffectAll  ' adAffectAllChapters
+272                     mDDRSLinkedCollection(i).RS.Filter = adFilterNone
+274                     i = i + 1
 
                     Loop
 
                 End If
                 
-256             mDDRS.Filter = adFilterPendingRecords
+276             mDDRS.Filter = adFilterPendingRecords
                 
-258             If Not mDDRS.EOF Then
+278             If Not mDDRS.EOF Then
                     
                     'Save mastertable
-260                 If eCurrentOperation = Editing Then
-262                     SynchHistoryEdit GUIDGen, mDDRSGuid, "DD mastertable Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "mastertable", False, "false", DDDefCurrent.Prefix
+280                 If eCurrentOperation = Editing Then
+282                     SynchHistoryEdit GUIDGen, mDDRSGuid, "DD mastertable Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "mastertable", False, "false", DDDefCurrent.Prefix
                     Else
-264                     SynchHistoryAddNew GUIDGen, mDDRSGuid, "DD mastertable Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "mastertable", False, "false", DDDefCurrent.Prefix
+284                     SynchHistoryAddNew GUIDGen, mDDRSGuid, "DD mastertable Add", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "mastertable", False, "false", DDDefCurrent.Prefix
                     End If
                     
-266                 j = 0
+286                 j = 0
 
-268                 Do Until j = mDDRS.Fields.Count
+288                 Do Until j = mDDRS.Fields.Count
 
-270                     If mDDRS.Fields(j).Type = adDate Then
-                            sDate = Format(mDDRS.Fields(j).value, "yyyymmdd")
+290                     If mDDRS.Fields(j).Type = adDate Then
+292                         sDate = Format(mDDRS.Fields(j).value, "yyyymmdd")
 
-                            If sDate = "19991230" Or sDate = "18991230" Then
-274                             mDDRS.Fields(j).value = Null
+294                         If sDate = "19991230" Or sDate = "18991230" Then
+296                             mDDRS.Fields(j).value = Null
                             End If
                         
                         End If
                     
-276                     j = j + 1
+298                     j = j + 1
                     Loop
                 
-278                 If Not DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "Longitude") And FieldExists(mDDRS, "Latitude") And FieldExists(mDDRS, "WKT") Then
-280                     sWKT = "POINT (" & mDDRS.Fields("Longitude").value & " " & mDDRS.Fields("Latitude").value & ")"
-282                     mDDRS.Fields("WKT").value = sWKT
+300                 If Not DDTableCurrent.IsGEOTable And FieldExists(mDDRS, "Longitude") And FieldExists(mDDRS, "Latitude") And FieldExists(mDDRS, "WKT") Then
+302                     sWKT = "POINT (" & mDDRS.Fields("Longitude").value & " " & mDDRS.Fields("Latitude").value & ")"
+304                     mDDRS.Fields("WKT").value = sWKT
                     End If
                     
-284                 mDDRS.UpdateBatch 'adAffectCurrent
+306                 mDDRS.UpdateBatch adAffectCurrent
                 
                 End If
 
-286             mDDRS.Filter = adFilterNone
+308             mDDRS.Filter = adFilterNone
 
             End If
 
-288         Call SetAccessRights
-290         cmdSpatial.Visible = False
+310         Call SetAccessRights
+312         cmdSpatial.Visible = False
 
-292         If DDTableCurrent.IsGEOTable Then SleepAPI (4000)
-294         'MsgBox "Saved"
-296         Set mLayerCopy = Nothing
+314         If DDTableCurrent.IsGEOTable Then SleepAPI (4000)
+            'MsgBox "Saved"
+316         Set mLayerCopy = Nothing
 
         End If
     
@@ -2754,7 +2763,6 @@ SaveData_Err:
         MsgBox "DynamicDataModule.SaveData_Err (" & Erl & " ) " & Err.Description
         Exit Sub
         Resume Next
-        'Stop
         '</EhFooter>
 End Sub
 
@@ -2908,6 +2916,7 @@ Private Sub dxDBGrid1_OnDblClick()
         Dim sFilter As String
         Dim sTitle As String
         Dim i As Long
+        Dim lUID As Long
         Dim sTableNames() As String
         Dim bPreventDeletion As Boolean
         Dim oRS As ADODB.Recordset
@@ -2970,20 +2979,24 @@ Private Sub dxDBGrid1_OnDblClick()
                         End If
                         
 154                     If DDTableCurrent.IsGEOTable Then
-156                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE [UID] = " & oRS.Fields("UID").value
-158                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & Replace(DDTableCurrent.TableName, "_FEA", "") & "_GEO] WHERE [UID] = " & oRS.Fields("UID").value
+                            lUID = oRS.Fields("UID").value
+156                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE [UID] = " & lUID
+158                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & Replace(DDTableCurrent.TableName, "_FEA", "") & "_GEO] WHERE [UID] = " & lUID
+                            oRS.Requery
 160                     ElseIf DDTableCurrent.IsDDTable Then
-162                         oRS.Delete adAffectCurrent
+                            mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE [GUID1] = '" & oRS.Fields("GUID1").value & "'"
+                            oRS.Requery
 164                     ElseIf DDTableCurrent.IsLinkedTable Then
-166                         dxDBGrid1.Dataset.Delete
+166                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE [GUID2] = '" & oRS.Fields("GUID2").value & "'"
+                            oRS.Requery
                         Else
-                        
 168                         mConn.Execute "DELETE FROM [" & DDDefCurrent.Prefix & DDTableCurrent.TableName & "] WHERE [GUID1] = '" & oRS.Fields("GUID1").value & "'"
+                            oRS.Requery
                         End If
                             
 170                     If Not DDTableCurrent.IsLinkedTable Then
                             
-172                         oRS.UpdateBatch adAffectCurrent
+172                         'If Not DDTableCurrent.IsGEOTable Then oRS.UpdateBatch adAffectCurrent
 174                         mDDRSManual.AddNew
 
 176                         If Not bSQLServerInUse Then dxDBGrid1.Dataset.ADODataset.Requery
@@ -3029,6 +3042,7 @@ Private Sub dxDBGrid1_OnDblClick()
 
         '<EhFooter>
         Exit Sub
+        Resume Next
 
 dxDBGrid1_OnDblClick_Err:
         MsgBox "DynamicDataModule.dxDBGrid1_OnDblClick_Err (" & Erl & " ) " & Err.Description
@@ -3945,6 +3959,7 @@ Public Sub ListDataElements_Click()
 124         Set mDDRSManual = New ADODB.Recordset
 
 126         If bSQLServerInUse Then mConn.CursorLocation = g_sGlobalCursorLocation
+mDDRS.CursorLocation = adUseServer
 128         mDDRS.Open sSQL, mConn, adOpenDynamic, adLockBatchOptimistic
             
 130         dxDBGrid1.Option = egoLoadAllRecords
