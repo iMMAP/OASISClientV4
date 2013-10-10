@@ -927,6 +927,9 @@ Private Sub Runnable_Start()
                                 '
                                 '                                End If
                                 
+                                oCN.Execute "DELETE FROM SynchHistory WHERE stablename <> 'oincidents'"
+                                If DoesTableExist(oCN, "SynchHistoryOverview") Then oCN.Execute "DROP TABLE SynchHistoryOverview"
+                                
 166                             ValidateClientTable "Incidents_ChartSettings", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
 168                             ValidateClientTable "oincidents", "ID", True, True, oCN, ""
 170                             ValidateClientTable "GeoBookMarks", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
@@ -2709,6 +2712,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 884                                 If oRSServerSynchHistory.RecordCount > 0 Then oRSServerSynchHistory.MoveFirst
 
 886                                 Do Until oRSServerSynchHistory.EOF
+
 888                                     lNumCurrentSynchRecords = lNumCurrentSynchRecords + 1
 890                                     TxMsg "**??(" & lNumCurrentSynchRecords & ") deleting record from local table [" & oRSServerSynchHistory.Fields("sTableName").Value & "] with ID: " & oRSServerSynchHistory.Fields("sID").Value
 
@@ -2716,24 +2720,24 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 894                                     oRSServer.Filter = sGUIDName & " = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
 896                                     oRSLocalSynchHistory.Filter = "[sID] = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
                                     
-898                                     If Not oRSServer.EOF Then
+898                                     'If Not oRSServer.EOF Then
                                             'ERROR: server record exist - it should not!
                                             'TODO: clean up the records table
                                             'oRSServer.Delete adAffectCurrent
-                                        End If
+                                        'End If
 
 900                                     If Not oRSLocal.EOF Then
 
 902                                         If bIsGeoTable Then
 904                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
-
 906                                             If Not oRSLocal_GEO.EOF Then oRSLocal.Delete adAffectCurrent
 908                                             oRSLocal_GEO.UpdateBatch
                                             End If
 
 910                                         oRSLocal.Delete adAffectCurrent
-912                                         oRSLocal.UpdateBatch adAffectCurrent
-                                            If Right$(.Fields("sTableName").Value, 7) = "Queries" Then DropLocalQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, cn
+912                                         oRSLocal.UpdateBatch 'adAffectCurrent
+913                                         If Right$(.Fields("sTableName").Value, 7) = "Queries" Then DropLocalQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, cn
+                                            
                                         End If
 
 914                                     If oRSLocalSynchHistory.EOF Then
@@ -2812,7 +2816,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 986                                         If Not sResponse = "Data Updated" Then
 988                                             TxMsg "    --- Error updating oRSServerSynchHistory: " & sResponse, True
                                             Else
-990                                             oRSLocalSynchHistory.UpdateBatch adAffectCurrent
+990                                             oRSLocalSynchHistory.UpdateBatch  'adAffectCurrent
                                             End If
                                     
                                         Else

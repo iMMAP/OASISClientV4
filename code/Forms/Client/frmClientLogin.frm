@@ -1314,7 +1314,7 @@ Private Sub Form_Load()
         Dim Process As Variant
 
 160     For Each Process In GetObject("winmgmts:").ExecQuery("select name from Win32_Process where name='OASIS_SynchNG.exe'")
-162         'Process.Terminate (0)
+162         Process.Terminate (0)
         Next
         
         On Error GoTo Form_Load_Err

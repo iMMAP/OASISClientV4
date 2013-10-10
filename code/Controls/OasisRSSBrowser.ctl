@@ -80,7 +80,7 @@ Begin VB.UserControl OASISRSSBrowser
             AutoSize        =   2
             Object.Width           =   1720
             MinWidth        =   1411
-            TextSave        =   "03-Oct-13"
+            TextSave        =   "07-Oct-13"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Object.Width           =   4410

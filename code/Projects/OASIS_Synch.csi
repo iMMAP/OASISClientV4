@@ -1,6 +1,6 @@
 [History]
-B0=OASIS_SynchNG/SynchWorker/SynchDDWithServer2
-B1=OASIS_SynchNG/SynchWorker/Runnable_Start
+B0=OASIS_SynchNG/SynchWorker/Runnable_Start
+B1=OASIS_SynchNG/SynchWorker/SynchDDWithServer2
 B2=OASIS_SynchNG/SynchWorker/SetPropertyDAO
 B3=OASIS_SynchNG/SynchWorker/GetLocalTables
 B4=OASIS_SynchNG/SynchWorker/RetDataType

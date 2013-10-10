@@ -1,6 +1,6 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#..\..\..\..\..\..\..\..\Windows\system32\stdole2.tlb#OLE Automation
-Reference=*\G{D76EE6DF-0E31-4A82-A44E-89D216C5C381}#1.0#0#..\..\..\..\Components\OASIS_SynchNG.exe#OASIS Synch Engine NG
+Reference=*\G{D76EE6DF-0E31-4A82-A44E-89D216C5C381}#1.0#0#..\..\bin\OASIS_SynchNG.exe#OASIS Synch Engine NG
 Form=..\Forms\Client\frmMon.frm
 Module=modComStart; ..\Bas\modComStart.bas
 IconForm="frmMon"
@@ -15,7 +15,7 @@ HelpContextID="0"
 CompatibleMode="0"
 MajorVer=3
 MinorVer=0
-RevisionVer=18
+RevisionVer=19
 AutoIncrementVer=1
 ServerSupportFiles=0
 VersionCompanyName="iMMAP inc"
