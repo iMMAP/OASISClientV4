@@ -205,6 +205,10 @@ Private m_bProxyEnabled As Boolean
 Private m_sProxyIP As String
 Private m_sProxyPort As String
 
+Private g_sProxyUser As String
+Private g_sProxyPass As String
+Private g_iProxyAuthType As Integer
+
 Private bSQLServerInUse As Boolean
 Private m_RSttkGISLayerSQLLocal As ADODB.Recordset
 Private m_RSttkGISLayerSQLRemote As ADODB.Recordset
@@ -1314,6 +1318,7 @@ Private Sub CheckProxySettings(cn As ADODB.Connection)
         Dim i As Integer
         
         Dim bAdvancedProxySettings As Boolean
+        Dim oRS As ADODB.Recordset
         
 100     m_bProxyEnabled = False
 102     m_sProxyIP = ""
@@ -1350,23 +1355,37 @@ Private Sub CheckProxySettings(cn As ADODB.Connection)
 132             m_bProxyEnabled = True
 134             m_sProxyIP = sProxyArray(0)
 136             m_sProxyPort = sProxyArray(1)
-        
-138             TxMsg ">>>>>> Proxy detected at [" & sProxyArray(0) & ":" & sProxyArray(1) & "]", True
+
+138             Set oRS = New ADODB.Recordset
+140             oRS.Open "SELECT * FROM AppSettings", cn, adOpenDynamic, adLockBatchOptimistic
+142             oRS.Find "SettingName = 'ProxyAuthentication'"
+
+144             If Not oRS.EOF Then
+146                 g_sProxyUser = oRS.Fields("SettingValue1").Value
+148                 g_sProxyPass = oRS.Fields("SettingValue2").Value
+150                 g_iProxyAuthType = oRS.Fields("SettingValue3").Value
+152                 TxMsg ">>>>>> Proxy with authentication detected at [" & sProxyArray(0) & ":" & sProxyArray(1) & "]", True
+                Else
+154                 g_sProxyUser = ""
+156                 g_sProxyPass = ""
+158                 TxMsg ">>>>>> Proxy with no authentication detected at [" & sProxyArray(0) & ":" & sProxyArray(1) & "]", True
+                End If
+                
+160             oRS.Close
+162             Set oRS = Nothing
     
             End If
     
         End If
     
-140     Set objShell = Nothing
+164     Set objShell = Nothing
 
         '<EhFooter>
         Exit Sub
 
 CheckProxySettings_Err:
-        Resume Next
-        'Err.Raise vbObjectError + 100, _
-         "OASIS_SynchNG.SynchWorker.CheckProxySettings", _
-         "SynchWorker component failure"
+        TxMsg "SynchWorker.CheckProxySettings_Err: (" & Erl & ") " & Err.Description, True
+        'Resume Next
         '</EhFooter>
 End Sub
 
@@ -1841,21 +1860,26 @@ Private Sub PrepareHttpComms(oHttp As WinHttpRequest, _
         '</EhHeader>
     
 100     oHttp.abort
-        Set oHttp = Nothing
-        Set oHttp = New WinHttpRequest
+102     Set oHttp = Nothing
+104     Set oHttp = New WinHttpRequest
 
-102     If m_bProxyEnabled Then oHttp.setProxy HTTPREQUEST_PROXYSETTING_PROXY, m_sProxyIP & ":" & m_sProxyPort, "*.microsoft.com"
-104     oHttp.setTimeouts -1, 360000, 360000, 360000
-106     oHttp.Option(WinHttpRequestOption_EnableHttp1_1) = False
-108     oHttp.Option(WinHttpRequestOption_SslErrorIgnoreFlags) = 13056  'dec equivalent to hex 0x3300
-110     oHttp.Open "POST", sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", False
+106     If m_bProxyEnabled Then oHttp.setProxy HTTPREQUEST_PROXYSETTING_PROXY, m_sProxyIP & ":" & m_sProxyPort, "*.microsoft.com"
+108     oHttp.setTimeouts -1, 360000, 360000, 360000
+110     oHttp.Option(WinHttpRequestOption_EnableHttp1_1) = False
+112     oHttp.Option(WinHttpRequestOption_SslErrorIgnoreFlags) = 13056  'dec equivalent to hex 0x3300
+114     oHttp.Open "POST", sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", False
         ' TxMsg ">>>>> Server ASP: " & sWebsite & IIf(bUpload, "oasisuploader4", "oasis4") & ".asp", True, True
-114     oHttp.setRequestHeader "Content-type", "application/x-www-form-urlencoded;charset=UTF-8"
-116     oHttp.setRequestHeader "Expires", "0"
-118     oHttp.setRequestHeader "Cache-Control", "no-cache"
-120     oHttp.setRequestHeader "Pragma", "no-cache"
-        'oHttp.SetCredentials sUser, sPwd, HTTPREQUEST_SETCREDENTIALS_FOR_SERVER
-    
+116     oHttp.setRequestHeader "Content-type", "application/x-www-form-urlencoded;charset=UTF-8"
+118     oHttp.setRequestHeader "Expires", "0"
+120     oHttp.setRequestHeader "Cache-Control", "no-cache"
+122     oHttp.setRequestHeader "Pragma", "no-cache"
+   
+124     If Len(g_sProxyUser) > 0 Then
+            'HTTPREQUEST_SETCREDENTIALS_FOR_SERVER = 0;
+            'HTTPREQUEST_SETCREDENTIALS_FOR_PROXY = 1;
+126         oHttp.SetCredentials g_sProxyUser, g_sProxyPass, g_iProxyAuthType
+        End If
+        
         '<EhFooter>
         Exit Sub
 

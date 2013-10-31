@@ -944,6 +944,14 @@ Private Sub CreateXLSFromRS(oRS As ADODB.Recordset, _
         Dim sText As String
         Dim iCol As Long
         Dim iRow As Long
+        Dim oXlApp As Object
+        
+        Set oXlApp = CreateObject("Excel.Application")
+        
+        If Not oXlApp Is Nothing Then
+            DoXLSX oXlApp, oRS, sPath
+            Set oXlApp = Nothing
+        End If
 
 100     If SafeMoveFirst(oRS) Then
         
@@ -1307,8 +1315,8 @@ Private Sub cmdExport_Click()
 108                     .CancelError = False
 110                     .DialogTitle = "Export data to..."
 112                     .InitDir = g_sAppPath & "\data\"
-114                     .Filter = "Microsoft Excel (.xls)|*.xls"
-116                     .DefaultExt = ".xls"
+114                     .Filter = "Microsoft Excel (.xlsx)|*.xlsx"
+116                     .DefaultExt = ".xlsx"
 118                     .ShowSave
                     End With
             
@@ -2207,11 +2215,11 @@ Private Sub SaveChartSettings()
 170             .Close
             
 172             If Not bEdit Then
-174                 SynchHistoryAddNew GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", IIf(DDDefCurrent.Prefix = "Incidents_", "", DDDefCurrent.Prefix)
+174                 SynchHistoryAddNew GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", IIf(DDDefCurrent.Prefix = "Incidents_", g_sRemoteTablePrefix, DDDefCurrent.Prefix)
 176                 GetQueries mConn, DDDefCurrent, DDDefCurrent.Prefix
 178                 listQueries.AddItem sQueryName
                 Else
-180                 SynchHistoryEdit GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", IIf(DDDefCurrent.Prefix = "Incidents_", "", DDDefCurrent.Prefix)
+180                 SynchHistoryEdit GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", IIf(DDDefCurrent.Prefix = "Incidents_", g_sRemoteTablePrefix, DDDefCurrent.Prefix)
                     'SynchHistoryEdit GUIDGen, mDDRSLinked.Fields(1).Value, "DD linkedtable Edit", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & DDTableCurrent.TableName, False, "false", DDDefCurrent.Prefix
                 End If
         
@@ -2251,7 +2259,7 @@ Private Sub RemoveChartFromDB()
 108                 sGUID = .Fields("GUID1").value
 110                 .Delete adAffectCurrent
 112                 .UpdateBatch
-114                 SynchHistoryDelete GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", DDDefCurrent.Prefix
+114                 SynchHistoryDelete GUIDGen, sGUID, "Chart Synch", g_sRemoteTablePrefix, g_sUserName, RFC3339DateTime, DDDefCurrent.Prefix & "ChartSettings", False, "false", IIf(DDDefCurrent.Prefix = "Incidents_", g_sRemoteTablePrefix, DDDefCurrent.Prefix)
 116                 listQueries.RemoveItem listQueries.ListIndex
 118                 MsgBox "Deletion successful"
                 

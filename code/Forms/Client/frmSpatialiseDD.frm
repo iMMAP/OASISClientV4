@@ -3,7 +3,7 @@ Object = "{0AFE7BE0-11B7-4A3E-978D-D4501E9A57FE}#1.0#0"; "c1sizer.ocx"
 Begin VB.Form frmSpatialiseDD 
    BackColor       =   &H00C0FFC0&
    BorderStyle     =   1  'Fixed Single
-   Caption         =   "Spatialise"
+   Caption         =   "Spatialize"
    ClientHeight    =   2925
    ClientLeft      =   150
    ClientTop       =   480
@@ -149,14 +149,37 @@ Begin VB.Form frmSpatialiseDD
          AccessibleDescription=   ""
          AccessibleValue =   ""
          AccessibleRole  =   9
+         Begin VB.CommandButton cmdZoomOut 
+            Height          =   495
+            Left            =   720
+            MaskColor       =   &H00000000&
+            Picture         =   "frmSpatialiseDD.frx":68F4
+            Style           =   1  'Graphical
+            TabIndex        =   21
+            Top             =   240
+            UseMaskColor    =   -1  'True
+            Width           =   495
+         End
+         Begin VB.CommandButton cmdCmdZoomIN 
+            Height          =   495
+            Left            =   60
+            MaskColor       =   &H00000000&
+            Picture         =   "frmSpatialiseDD.frx":6FF6
+            Style           =   1  'Graphical
+            TabIndex        =   20
+            Top             =   240
+            UseMaskColor    =   -1  'True
+            Width           =   495
+         End
          Begin VB.VScrollBar VScrollZoom 
             Height          =   495
-            Left            =   480
+            Left            =   960
             Max             =   2
             TabIndex        =   16
             TabStop         =   0   'False
-            Top             =   240
+            Top             =   180
             Value           =   1
+            Visible         =   0   'False
             Width           =   255
          End
          Begin VB.Label lblZoom 
@@ -279,9 +302,9 @@ Begin VB.Form frmSpatialiseDD
       End
       Begin VB.ListBox List2 
          Height          =   1620
-         ItemData        =   "frmSpatialiseDD.frx":68F4
+         ItemData        =   "frmSpatialiseDD.frx":76F8
          Left            =   2985
-         List            =   "frmSpatialiseDD.frx":68F6
+         List            =   "frmSpatialiseDD.frx":76FA
          TabIndex        =   7
          Top             =   810
          Width           =   2895
@@ -304,9 +327,9 @@ Begin VB.Form frmSpatialiseDD
       End
       Begin VB.ListBox List1 
          Height          =   1620
-         ItemData        =   "frmSpatialiseDD.frx":68F8
+         ItemData        =   "frmSpatialiseDD.frx":76FC
          Left            =   30
-         List            =   "frmSpatialiseDD.frx":68FA
+         List            =   "frmSpatialiseDD.frx":76FE
          TabIndex        =   4
          Top             =   810
          Width           =   2895
@@ -314,9 +337,9 @@ Begin VB.Form frmSpatialiseDD
       Begin VB.ComboBox cmbShapeType 
          Enabled         =   0   'False
          Height          =   315
-         ItemData        =   "frmSpatialiseDD.frx":68FC
+         ItemData        =   "frmSpatialiseDD.frx":7700
          Left            =   1500
-         List            =   "frmSpatialiseDD.frx":690C
+         List            =   "frmSpatialiseDD.frx":7710
          Style           =   2  'Dropdown List
          TabIndex        =   1
          Top             =   180
@@ -325,7 +348,16 @@ Begin VB.Form frmSpatialiseDD
       Begin VB.Label lblY 
          Alignment       =   2  'Center
          BackStyle       =   0  'Transparent
-         Caption         =   "y"
+         Caption         =   "Y"
+         BeginProperty Font 
+            Name            =   "MS Sans Serif"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   700
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
          Height          =   240
          Left            =   2985
          TabIndex        =   8
@@ -335,7 +367,16 @@ Begin VB.Form frmSpatialiseDD
       Begin VB.Label lblPoints 
          Alignment       =   2  'Center
          BackStyle       =   0  'Transparent
-         Caption         =   "x"
+         Caption         =   "X"
+         BeginProperty Font 
+            Name            =   "MS Sans Serif"
+            Size            =   8.25
+            Charset         =   0
+            Weight          =   700
+            Underline       =   0   'False
+            Italic          =   0   'False
+            Strikethrough   =   0   'False
+         EndProperty
          Height          =   240
          Left            =   30
          TabIndex        =   3
@@ -344,7 +385,7 @@ Begin VB.Form frmSpatialiseDD
       End
       Begin VB.Label lblShapetype 
          BackStyle       =   0  'Transparent
-         Caption         =   "  Shapetype"
+         Caption         =   "Choose Shapetype:"
          Height          =   270
          Left            =   30
          TabIndex        =   2
@@ -365,7 +406,7 @@ Public Event UpdateShape(oShape As TatukGIS_XDK10.XGIS_Shape)
 Public Event ZoomIn(bZoomIn As Boolean)
 Public Event PanLeftRight(bLeft As Boolean)
 Public Event PanUpDown(bUp As Boolean)
-Public Event ConvertMGRS(sMGRS As String, x As Double, y As Double)
+Public Event ConvertMGRS(sMGRS As String, X As Double, Y As Double)
 
 Public bButtonPressed As Boolean
 Private mLayer As TatukGIS_XDK10.XGIS_LayerVector
@@ -454,9 +495,9 @@ Public Sub SetLayer(oLayer As TatukGIS_XDK10.XGIS_LayerVector)
 116         Do Until i = oShape.GetNumPoints
 
 118             If Len(sPoints) > 1 Then
-120                 sPoints = sPoints & ";" & oShape.GetPoint(0, i).x & ";" & oShape.GetPoint(0, i).y
+120                 sPoints = sPoints & ";" & oShape.GetPoint(0, i).X & ";" & oShape.GetPoint(0, i).Y
                 Else
-122                 sPoints = oShape.GetPoint(0, i).x & ";" & oShape.GetPoint(0, i).y
+122                 sPoints = oShape.GetPoint(0, i).X & ";" & oShape.GetPoint(0, i).Y
                 End If
 
 124             i = i + 1
@@ -615,6 +656,10 @@ cmdCancel_Click_Err:
         '</EhFooter>
 End Sub
 
+Private Sub cmdCmdZoomIN_Click()
+    RaiseEvent ZoomIn(True)
+End Sub
+
 Private Sub cmdEdit_Click()
         '<EhHeader>
         On Error GoTo cmdEdit_Click_Err
@@ -650,8 +695,8 @@ End Sub
 
 Private Sub cmdEnterMGRS_Click()
 
-    Dim x As Double
-    Dim y As Double
+    Dim X As Double
+    Dim Y As Double
     Dim sMGRS As String
     Dim sRetval As String
 
@@ -660,7 +705,7 @@ Private Sub cmdEnterMGRS_Click()
     If Len(sRetval) > 1 Then
 
         sMGRS = sRetval
-        RaiseEvent ConvertMGRS(sMGRS, x, y)
+        RaiseEvent ConvertMGRS(sMGRS, X, Y)
         
         Dim oShape As New TatukGIS_XDK10.XGIS_Shape
         Dim oPt As New TatukGIS_XDK10.XGIS_Point
@@ -670,7 +715,7 @@ Private Sub cmdEnterMGRS_Click()
         Set oShape = mLayer.CreateShape(XgisShapeTypePoint)
         oShape.AddPart
 
-        oPt.Prepare x, y
+        oPt.Prepare X, Y
         oShape.AddPoint oPt
         If Not mLayer.FileInfo = "Generic Vector Layer" Then mLayer.SaveData
         SetLayer mLayer
@@ -681,20 +726,20 @@ End Sub
 
 Private Sub cmdEnterXY_Click()
 
-    Dim x As Double
-    Dim y As Double
+    Dim X As Double
+    Dim Y As Double
     Dim sRetval As String
 
     sRetval = InputBox("Please enter X coordinate", "Get X", "0")
 
     If IsNumeric(sRetval) Then
 
-        x = CDbl(sRetval)
+        X = CDbl(sRetval)
         sRetval = InputBox("Please enter Y coordinate", "Get Y", "0")
         
         If IsNumeric(sRetval) Then
 
-            y = CDbl(sRetval)
+            Y = CDbl(sRetval)
             
             Dim oShape As New TatukGIS_XDK10.XGIS_Shape
             Dim oPt As New TatukGIS_XDK10.XGIS_Point
@@ -704,7 +749,7 @@ Private Sub cmdEnterXY_Click()
             Set oShape = mLayer.CreateShape(XgisShapeTypePoint)
             oShape.AddPart
 
-            oPt.Prepare x, y
+            oPt.Prepare X, Y
             oShape.AddPoint oPt
             If Not mLayer.FileInfo = "Generic Vector Layer" Then mLayer.SaveData
             SetLayer mLayer
@@ -731,7 +776,7 @@ cmdFlash_Click_Err:
         '</EhFooter>
 End Sub
 
-Private Sub cmdOk_Click()
+Private Sub cmdOK_Click()
         '<EhHeader>
         On Error GoTo cmdOk_Click_Err
         '</EhHeader>
@@ -753,6 +798,10 @@ cmdOk_Click_Err:
                "at line " & Erl
         Resume Next
         '</EhFooter>
+End Sub
+
+Private Sub cmdZoomOut_Click()
+    RaiseEvent ZoomIn(False)
 End Sub
 
 Private Sub Form_Load()
@@ -860,15 +909,15 @@ Private Sub HScrollPan_Change()
 
 100     With HScrollPan
     
-102         If .Value = 0 Then
+102         If .value = 0 Then
                 ' MsgBox "left"
 104             RaiseEvent PanLeftRight(True)
-106         ElseIf .Value = 2 Then
+106         ElseIf .value = 2 Then
                 ' MsgBox "right"
 108             RaiseEvent PanLeftRight(False)
             End If
     
-110         .Value = 1
+110         .value = 1
         
         End With
 
@@ -890,15 +939,15 @@ Private Sub VScrollPan_Change()
 
 100     With VScrollPan
     
-102         If .Value = 0 Then
+102         If .value = 0 Then
                 'MsgBox "up"
 104             RaiseEvent PanUpDown(True)
-106         ElseIf .Value = 2 Then
+106         ElseIf .value = 2 Then
                 'MsgBox "down"
 108             RaiseEvent PanUpDown(False)
             End If
     
-110         .Value = 1
+110         .value = 1
     
         End With
     
@@ -920,16 +969,16 @@ Private Sub VScrollZoom_Change()
 
 100     With VScrollZoom
     
-102         If .Value = 0 Then
+102         If .value = 0 Then
                 'MsgBox "in"
 104             RaiseEvent ZoomIn(True)
             
-106         ElseIf .Value = 2 Then
+106         ElseIf .value = 2 Then
                 'MsgBox "out"
 108             RaiseEvent ZoomIn(False)
             End If
     
-110         .Value = 1
+110         .value = 1
     
         End With
     

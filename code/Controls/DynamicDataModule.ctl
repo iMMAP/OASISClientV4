@@ -1763,6 +1763,7 @@ Private Sub cmdAddData_Click()
         '<EhHeader>
         On Error GoTo cmdAddData_Click_Err
         '</EhHeader>
+        dxDBInspector1.DB.AddNew
         dxDBInspector1.BackColor = vbWhite
 100     C1TTab1Tab2.CurrTab = 1
 102     C1TTab1Tab2.Visible = False

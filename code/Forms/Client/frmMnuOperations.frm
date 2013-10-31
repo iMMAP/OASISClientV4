@@ -3908,7 +3908,7 @@ Private Sub cmdExportLegend_Click()
 114             If Not bLayerSeleted(l) Then
             
 116                 Set oLyrAB = Legend1.GIS_Viewer.get(sLayerNames(l))
-118                 oLyrAB.HideFromLegend = True
+118                 If Not oLyrAB Is Nothing Then oLyrAB.HideFromLegend = True
 
                 End If
         
@@ -4010,7 +4010,8 @@ Private Sub cmdExportLegend_Click()
 232             If Not bLayerSeleted(l) Then
             
 234                 Set oLyrAB = Legend1.GIS_Viewer.get(sLayerNames(l))
-236                 oLyrAB.HideFromLegend = False
+                    
+236                 If Not oLyrAB Is Nothing Then oLyrAB.HideFromLegend = False
 
                 End If
         

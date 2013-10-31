@@ -448,7 +448,7 @@ Begin VB.Form frmMain
       BackColor       =   -2147483633
       Appearance      =   1
       ShowWeekNumbers =   -1  'True
-      StartOfWeek     =   97124354
+      StartOfWeek     =   99745794
       CurrentDate     =   39232
    End
    Begin VB.CommandButton Command1 
@@ -2669,7 +2669,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   930
                      MaskColor       =   &H0000C000&
-                     Picture         =   "frmMain.frx":57592
+                     Picture         =   "frmMain.frx":57012
                      Style           =   1  'Graphical
                      TabIndex        =   62
                      ToolTipText     =   "Create scribble Area"
@@ -2721,7 +2721,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   1410
                      MaskColor       =   &H000000FF&
-                     Picture         =   "frmMain.frx":578D4
+                     Picture         =   "frmMain.frx":57354
                      Style           =   1  'Graphical
                      TabIndex        =   52
                      ToolTipText     =   "Remove Markers"
@@ -2757,9 +2757,9 @@ Begin VB.Form frmMain
                   End
                   Begin VB.ComboBox comConversionType 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":5E126
+                     ItemData        =   "frmMain.frx":5DBA6
                      Left            =   660
-                     List            =   "frmMain.frx":5E136
+                     List            =   "frmMain.frx":5DBB6
                      Style           =   2  'Dropdown List
                      TabIndex        =   37
                      Top             =   60
@@ -2768,7 +2768,7 @@ Begin VB.Form frmMain
                   Begin VB.CommandButton cmdZoomTo 
                      Height          =   330
                      Left            =   1890
-                     Picture         =   "frmMain.frx":5E162
+                     Picture         =   "frmMain.frx":5DBE2
                      Style           =   1  'Graphical
                      TabIndex        =   36
                      ToolTipText     =   "Zoom to/Create Marker"
@@ -3076,121 +3076,121 @@ Begin VB.Form frmMain
                         Italic          =   0   'False
                         Strikethrough   =   0   'False
                      EndProperty
-                     PictureClose    =   "frmMain.frx":649B4
-                     PictureMinus    =   "frmMain.frx":649D0
-                     PictureOpen     =   "frmMain.frx":649EC
-                     PicturePlus     =   "frmMain.frx":64A08
-                     PictureLeaf     =   "frmMain.frx":64A24
-                     TitleBackImage  =   "frmMain.frx":64A40
-                     CheckPicDown    =   "frmMain.frx":64A5C
-                     CheckPicUp      =   "frmMain.frx":64A78
-                     CheckPicDisabled=   "frmMain.frx":64A94
-                     RadioPicDown    =   "frmMain.frx":64AB0
-                     RadioPicUp      =   "frmMain.frx":64ACC
-                     BackImage       =   "frmMain.frx":64AE8
-                     MouseIcon       =   "frmMain.frx":64B04
+                     PictureClose    =   "frmMain.frx":64434
+                     PictureMinus    =   "frmMain.frx":64450
+                     PictureOpen     =   "frmMain.frx":6446C
+                     PicturePlus     =   "frmMain.frx":64488
+                     PictureLeaf     =   "frmMain.frx":644A4
+                     TitleBackImage  =   "frmMain.frx":644C0
+                     CheckPicDown    =   "frmMain.frx":644DC
+                     CheckPicUp      =   "frmMain.frx":644F8
+                     CheckPicDisabled=   "frmMain.frx":64514
+                     RadioPicDown    =   "frmMain.frx":64530
+                     RadioPicUp      =   "frmMain.frx":6454C
+                     BackImage       =   "frmMain.frx":64568
+                     MouseIcon       =   "frmMain.frx":64584
                      NoFocusBackColor=   -2147483633
-                     HeaderData      =   "frmMain.frx":64B20
-                     PicArray0       =   "frmMain.frx":64B48
-                     PicArray1       =   "frmMain.frx":64B64
-                     PicArray2       =   "frmMain.frx":64B80
-                     PicArray3       =   "frmMain.frx":64B9C
-                     PicArray4       =   "frmMain.frx":64BB8
-                     PicArray5       =   "frmMain.frx":64BD4
-                     PicArray6       =   "frmMain.frx":64BF0
-                     PicArray7       =   "frmMain.frx":64C0C
-                     PicArray8       =   "frmMain.frx":64C28
-                     PicArray9       =   "frmMain.frx":64C44
-                     PicArray10      =   "frmMain.frx":64C60
-                     PicArray11      =   "frmMain.frx":64C7C
-                     PicArray12      =   "frmMain.frx":64C98
-                     PicArray13      =   "frmMain.frx":64CB4
-                     PicArray14      =   "frmMain.frx":64CD0
-                     PicArray15      =   "frmMain.frx":64CEC
-                     PicArray16      =   "frmMain.frx":64D08
-                     PicArray17      =   "frmMain.frx":64D24
-                     PicArray18      =   "frmMain.frx":64D40
-                     PicArray19      =   "frmMain.frx":64D5C
-                     PicArray20      =   "frmMain.frx":64D78
-                     PicArray21      =   "frmMain.frx":64D94
-                     PicArray22      =   "frmMain.frx":64DB0
-                     PicArray23      =   "frmMain.frx":64DCC
-                     PicArray24      =   "frmMain.frx":64DE8
-                     PicArray25      =   "frmMain.frx":64E04
-                     PicArray26      =   "frmMain.frx":64E20
-                     PicArray27      =   "frmMain.frx":64E3C
-                     PicArray28      =   "frmMain.frx":64E58
-                     PicArray29      =   "frmMain.frx":64E74
-                     PicArray30      =   "frmMain.frx":64E90
-                     PicArray31      =   "frmMain.frx":64EAC
-                     PicArray32      =   "frmMain.frx":64EC8
-                     PicArray33      =   "frmMain.frx":64EE4
-                     PicArray34      =   "frmMain.frx":64F00
-                     PicArray35      =   "frmMain.frx":64F1C
-                     PicArray36      =   "frmMain.frx":64F38
-                     PicArray37      =   "frmMain.frx":64F54
-                     PicArray38      =   "frmMain.frx":64F70
-                     PicArray39      =   "frmMain.frx":64F8C
-                     PicArray40      =   "frmMain.frx":64FA8
-                     PicArray41      =   "frmMain.frx":64FC4
-                     PicArray42      =   "frmMain.frx":64FE0
-                     PicArray43      =   "frmMain.frx":64FFC
-                     PicArray44      =   "frmMain.frx":65018
-                     PicArray45      =   "frmMain.frx":65034
-                     PicArray46      =   "frmMain.frx":65050
-                     PicArray47      =   "frmMain.frx":6506C
-                     PicArray48      =   "frmMain.frx":65088
-                     PicArray49      =   "frmMain.frx":650A4
-                     PicArray50      =   "frmMain.frx":650C0
-                     PicArray51      =   "frmMain.frx":650DC
-                     PicArray52      =   "frmMain.frx":650F8
-                     PicArray53      =   "frmMain.frx":65114
-                     PicArray54      =   "frmMain.frx":65130
-                     PicArray55      =   "frmMain.frx":6514C
-                     PicArray56      =   "frmMain.frx":65168
-                     PicArray57      =   "frmMain.frx":65184
-                     PicArray58      =   "frmMain.frx":651A0
-                     PicArray59      =   "frmMain.frx":651BC
-                     PicArray60      =   "frmMain.frx":651D8
-                     PicArray61      =   "frmMain.frx":651F4
-                     PicArray62      =   "frmMain.frx":65210
-                     PicArray63      =   "frmMain.frx":6522C
-                     PicArray64      =   "frmMain.frx":65248
-                     PicArray65      =   "frmMain.frx":65264
-                     PicArray66      =   "frmMain.frx":65280
-                     PicArray67      =   "frmMain.frx":6529C
-                     PicArray68      =   "frmMain.frx":652B8
-                     PicArray69      =   "frmMain.frx":652D4
-                     PicArray70      =   "frmMain.frx":652F0
-                     PicArray71      =   "frmMain.frx":6530C
-                     PicArray72      =   "frmMain.frx":65328
-                     PicArray73      =   "frmMain.frx":65344
-                     PicArray74      =   "frmMain.frx":65360
-                     PicArray75      =   "frmMain.frx":6537C
-                     PicArray76      =   "frmMain.frx":65398
-                     PicArray77      =   "frmMain.frx":653B4
-                     PicArray78      =   "frmMain.frx":653D0
-                     PicArray79      =   "frmMain.frx":653EC
-                     PicArray80      =   "frmMain.frx":65408
-                     PicArray81      =   "frmMain.frx":65424
-                     PicArray82      =   "frmMain.frx":65440
-                     PicArray83      =   "frmMain.frx":6545C
-                     PicArray84      =   "frmMain.frx":65478
-                     PicArray85      =   "frmMain.frx":65494
-                     PicArray86      =   "frmMain.frx":654B0
-                     PicArray87      =   "frmMain.frx":654CC
-                     PicArray88      =   "frmMain.frx":654E8
-                     PicArray89      =   "frmMain.frx":65504
-                     PicArray90      =   "frmMain.frx":65520
-                     PicArray91      =   "frmMain.frx":6553C
-                     PicArray92      =   "frmMain.frx":65558
-                     PicArray93      =   "frmMain.frx":65574
-                     PicArray94      =   "frmMain.frx":65590
-                     PicArray95      =   "frmMain.frx":655AC
-                     PicArray96      =   "frmMain.frx":655C8
-                     PicArray97      =   "frmMain.frx":655E4
-                     PicArray98      =   "frmMain.frx":65600
-                     PicArray99      =   "frmMain.frx":6561C
+                     HeaderData      =   "frmMain.frx":645A0
+                     PicArray0       =   "frmMain.frx":645C8
+                     PicArray1       =   "frmMain.frx":645E4
+                     PicArray2       =   "frmMain.frx":64600
+                     PicArray3       =   "frmMain.frx":6461C
+                     PicArray4       =   "frmMain.frx":64638
+                     PicArray5       =   "frmMain.frx":64654
+                     PicArray6       =   "frmMain.frx":64670
+                     PicArray7       =   "frmMain.frx":6468C
+                     PicArray8       =   "frmMain.frx":646A8
+                     PicArray9       =   "frmMain.frx":646C4
+                     PicArray10      =   "frmMain.frx":646E0
+                     PicArray11      =   "frmMain.frx":646FC
+                     PicArray12      =   "frmMain.frx":64718
+                     PicArray13      =   "frmMain.frx":64734
+                     PicArray14      =   "frmMain.frx":64750
+                     PicArray15      =   "frmMain.frx":6476C
+                     PicArray16      =   "frmMain.frx":64788
+                     PicArray17      =   "frmMain.frx":647A4
+                     PicArray18      =   "frmMain.frx":647C0
+                     PicArray19      =   "frmMain.frx":647DC
+                     PicArray20      =   "frmMain.frx":647F8
+                     PicArray21      =   "frmMain.frx":64814
+                     PicArray22      =   "frmMain.frx":64830
+                     PicArray23      =   "frmMain.frx":6484C
+                     PicArray24      =   "frmMain.frx":64868
+                     PicArray25      =   "frmMain.frx":64884
+                     PicArray26      =   "frmMain.frx":648A0
+                     PicArray27      =   "frmMain.frx":648BC
+                     PicArray28      =   "frmMain.frx":648D8
+                     PicArray29      =   "frmMain.frx":648F4
+                     PicArray30      =   "frmMain.frx":64910
+                     PicArray31      =   "frmMain.frx":6492C
+                     PicArray32      =   "frmMain.frx":64948
+                     PicArray33      =   "frmMain.frx":64964
+                     PicArray34      =   "frmMain.frx":64980
+                     PicArray35      =   "frmMain.frx":6499C
+                     PicArray36      =   "frmMain.frx":649B8
+                     PicArray37      =   "frmMain.frx":649D4
+                     PicArray38      =   "frmMain.frx":649F0
+                     PicArray39      =   "frmMain.frx":64A0C
+                     PicArray40      =   "frmMain.frx":64A28
+                     PicArray41      =   "frmMain.frx":64A44
+                     PicArray42      =   "frmMain.frx":64A60
+                     PicArray43      =   "frmMain.frx":64A7C
+                     PicArray44      =   "frmMain.frx":64A98
+                     PicArray45      =   "frmMain.frx":64AB4
+                     PicArray46      =   "frmMain.frx":64AD0
+                     PicArray47      =   "frmMain.frx":64AEC
+                     PicArray48      =   "frmMain.frx":64B08
+                     PicArray49      =   "frmMain.frx":64B24
+                     PicArray50      =   "frmMain.frx":64B40
+                     PicArray51      =   "frmMain.frx":64B5C
+                     PicArray52      =   "frmMain.frx":64B78
+                     PicArray53      =   "frmMain.frx":64B94
+                     PicArray54      =   "frmMain.frx":64BB0
+                     PicArray55      =   "frmMain.frx":64BCC
+                     PicArray56      =   "frmMain.frx":64BE8
+                     PicArray57      =   "frmMain.frx":64C04
+                     PicArray58      =   "frmMain.frx":64C20
+                     PicArray59      =   "frmMain.frx":64C3C
+                     PicArray60      =   "frmMain.frx":64C58
+                     PicArray61      =   "frmMain.frx":64C74
+                     PicArray62      =   "frmMain.frx":64C90
+                     PicArray63      =   "frmMain.frx":64CAC
+                     PicArray64      =   "frmMain.frx":64CC8
+                     PicArray65      =   "frmMain.frx":64CE4
+                     PicArray66      =   "frmMain.frx":64D00
+                     PicArray67      =   "frmMain.frx":64D1C
+                     PicArray68      =   "frmMain.frx":64D38
+                     PicArray69      =   "frmMain.frx":64D54
+                     PicArray70      =   "frmMain.frx":64D70
+                     PicArray71      =   "frmMain.frx":64D8C
+                     PicArray72      =   "frmMain.frx":64DA8
+                     PicArray73      =   "frmMain.frx":64DC4
+                     PicArray74      =   "frmMain.frx":64DE0
+                     PicArray75      =   "frmMain.frx":64DFC
+                     PicArray76      =   "frmMain.frx":64E18
+                     PicArray77      =   "frmMain.frx":64E34
+                     PicArray78      =   "frmMain.frx":64E50
+                     PicArray79      =   "frmMain.frx":64E6C
+                     PicArray80      =   "frmMain.frx":64E88
+                     PicArray81      =   "frmMain.frx":64EA4
+                     PicArray82      =   "frmMain.frx":64EC0
+                     PicArray83      =   "frmMain.frx":64EDC
+                     PicArray84      =   "frmMain.frx":64EF8
+                     PicArray85      =   "frmMain.frx":64F14
+                     PicArray86      =   "frmMain.frx":64F30
+                     PicArray87      =   "frmMain.frx":64F4C
+                     PicArray88      =   "frmMain.frx":64F68
+                     PicArray89      =   "frmMain.frx":64F84
+                     PicArray90      =   "frmMain.frx":64FA0
+                     PicArray91      =   "frmMain.frx":64FBC
+                     PicArray92      =   "frmMain.frx":64FD8
+                     PicArray93      =   "frmMain.frx":64FF4
+                     PicArray94      =   "frmMain.frx":65010
+                     PicArray95      =   "frmMain.frx":6502C
+                     PicArray96      =   "frmMain.frx":65048
+                     PicArray97      =   "frmMain.frx":65064
+                     PicArray98      =   "frmMain.frx":65080
+                     PicArray99      =   "frmMain.frx":6509C
                   End
                   Begin VB.Label lblGeoMarks 
                      Caption         =   "Geo Marks"
@@ -3261,9 +3261,9 @@ Begin VB.Form frmMain
                   AccessibleRole  =   9
                   Begin VB.ComboBox ComThemes 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":65638
+                     ItemData        =   "frmMain.frx":650B8
                      Left            =   45
-                     List            =   "frmMain.frx":65669
+                     List            =   "frmMain.frx":650E9
                      Style           =   2  'Dropdown List
                      TabIndex        =   20
                      Top             =   345
@@ -3281,7 +3281,7 @@ Begin VB.Form frmMain
                         Left            =   105
                         MultiLine       =   -1  'True
                         TabIndex        =   19
-                        Text            =   "frmMain.frx":657CF
+                        Text            =   "frmMain.frx":6524F
                         Top             =   270
                         Width           =   2100
                      End
@@ -3416,7 +3416,7 @@ Begin VB.Form frmMain
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMain.frx":657E1
+               _GridInfo       =   $"frmMain.frx":65261
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -6387,7 +6387,13 @@ Private Sub m_frmSpatialiseDD_UpdateShape(oShape As TatukGIS_XDK10.XGIS_Shape)
     
     If Not mDDLayer.FileInfo = "Generic Vector Layer" Then mDDLayer.SaveAll
     m_oSpatialiseLayer.SaveAll
+    Dim lUID As Long
+    
+    lUID = oShape.uID
     Set oShape = mDDLayer.AddShape(oShape, True)
+    GIS10.get("Draw_Layer").Delete lUID
+    'Debug.Print oShape.Uid & oshape.Layer.Name
+    
     If Not mDDLayer.FileInfo = "Generic Vector Layer" Then mDDLayer.SaveAll
     UpdateSpatialiseDDList oShape
 
@@ -6516,6 +6522,8 @@ Public Sub m_frmSpatialiseDD_RestoreDDWindow(bCommitShape As Boolean)
         End If
     End If
     
+    GIS10.InvalidateExtent GIS10.VisibleExtent
+    'GIS10.get("Draw_Layer").Params.Visible = False
 End Sub
 
 Private Sub m_frmMnuDynamicDataModule_DDTableClicked()
@@ -15191,58 +15199,57 @@ Public Sub LoadLayerAttrDataToGridInit()
 118     If Not g_RSGISGridTableSettings.EOF And Not g_RSGISGridTableSettings.Bof Then
 120         sLayerName = g_RSGISGridTableSettings.Fields("Name").value
 122         Set GlobalGISGridLayerOriginal = GIS10.get(sLayerName)
-        ElseIf abGridTools.Tools.Item("comLyr").Text = "[Density Analysis Layer]" Then
+124     ElseIf abGridTools.Tools.Item("comLyr").Text = "[Density Analysis Layer]" Then
         
-        sLayerName = "scoring_layer"
-        Set GlobalGISGridLayerOriginal = GIS10.get(sLayerName)
+126         sLayerName = "scoring_layer"
+128         Set GlobalGISGridLayerOriginal = GIS10.get(sLayerName)
         
         Else
-124         sLayerName = abGridTools.Tools.Item("comLyr").Text
-126         Set GlobalGISGridLayerOriginal = GIS10.get(sLayerName)
+130         sLayerName = abGridTools.Tools.Item("comLyr").Text
+132         Set GlobalGISGridLayerOriginal = GIS10.get(sLayerName)
         End If
                  
-128     GISGridLayerName = sLayerName
+134     GISGridLayerName = sLayerName
 
-130     If GlobalGISGridLayerOriginal.ConfigName = "_DUMMY.ini" Then GISGridLayerName = GlobalGISGridLayerOriginal.Table
+136     If GlobalGISGridLayerOriginal.ConfigName = "_DUMMY.ini" Then GISGridLayerName = GlobalGISGridLayerOriginal.Table
 
         'Layer not found?
-132     If GlobalGISGridLayerOriginal Is Nothing Then
-134         MsgBox "The Data You are trying to browse does not anymore exist in the map." & vbCrLf & "Either it has been removed or the data is corrupt." & vbCrLf & "Contact your OASIS adminstrator if this problem remains."
-136         Set GlobalGISGridLayerOriginal = Nothing
+138     If GlobalGISGridLayerOriginal Is Nothing Then
+140         MsgBox "The Data You are trying to browse does not anymore exist in the map." & vbCrLf & "Either it has been removed or the data is corrupt." & vbCrLf & "Contact your OASIS adminstrator if this problem remains."
+142         Set GlobalGISGridLayerOriginal = Nothing
             Exit Sub
         Else
 
-138         If Not GlobalGISGridLayerOriginal.Params.Visible Then
-140             If MsgBox("The layer is not visible. Would you like you to make it visible?", vbYesNo, "OASIS Client") = vbYes Then
-142                 GlobalGISGridLayerOriginal.Params.Visible = True
+144         If Not GlobalGISGridLayerOriginal.Params.Visible Then
+146             If MsgBox("The layer is not visible. Would you like you to make it visible?", vbYesNo, "OASIS Client") = vbYes Then
+148                 GlobalGISGridLayerOriginal.Params.Visible = True
                 End If
             End If
         End If
         
         'MsgBox GlobalGISGridLayerOriginal.items.Count
-        
     
-144     GlobalGISGridLayerOriginal.Lock
-146     Set GlobalGISGridLayer = New TatukGIS_XDK10.XGIS_LayerVector
-148     dxProgressBar1.Visible = True
-150     dxGISDataGrid.Visible = False
-152     dxProgressBar1.Pos = 0
-154     elMap.Refresh
+150     GlobalGISGridLayerOriginal.Lock
+152     Set GlobalGISGridLayer = New TatukGIS_XDK10.XGIS_LayerVector
+154     dxProgressBar1.Visible = True
+156     dxGISDataGrid.Visible = False
+158     dxProgressBar1.Pos = 0
+160     elMap.Refresh
         
-156     If chkOnlyVisible.value = vbChecked Then
-158         Set GISGridExtent = GIS10.viewer.VisibleExtent
+162     If chkOnlyVisible.value = vbChecked Then
+164         Set GISGridExtent = GIS10.viewer.VisibleExtent
             'ElseIf GIS10.viewer.VisibleExtent.XMin > GlobalGISGridLayer.Extent.XMin Or GIS10.viewer.VisibleExtent.XMax < GlobalGISGridLayer.Extent.XMax Or GIS10.viewer.VisibleExtent.YMin > GlobalGISGridLayer.Extent.YMin Or GIS10.viewer.VisibleExtent.YMax < GlobalGISGridLayer.Extent.YMax Then
             'oExtent = GlobalGISGridLayerOriginal.Extent
         Else
-160         Set GISGridExtent = GlobalGISGridLayerOriginal.Extent
+166         Set GISGridExtent = GlobalGISGridLayerOriginal.Extent
         End If
         
         'GlobalGISGridLayerOriginal.ExportLayer GlobalGISGridLayer, GISGridExtent, TatukGIS_XDK10.XgisShapeTypeUnknown, GlobalGISGridLayerOriginal.scope, False
         'GlobalGISGridLayerOriginal.Unlock
 
-162     Set GlobalGISGridLayer = GlobalGISGridLayerOriginal
-164     GlobalGISGridLayer.ScopeExtent.Assign_ GISGridExtent
-166     GlobalGISGridLayer.ScopeExtent = GISGridExtent
+168     Set GlobalGISGridLayer = GlobalGISGridLayerOriginal
+170     GlobalGISGridLayer.ScopeExtent.Assign_ GISGridExtent
+172     GlobalGISGridLayer.ScopeExtent = GISGridExtent
 
         'GIS10
         'WE need to check this line when upgrading to tatuk10 - if should catch sql layers
@@ -15257,93 +15264,99 @@ Public Sub LoadLayerAttrDataToGridInit()
         
         ' Set GlobalGISGridLayerOriginal = Nothing
     
-168     With g_RSGISGridTableSettings
+174     With g_RSGISGridTableSettings
     
-170         SafeMoveFirst g_RSGISGridTableSettings
-172         .Find "Name = '" & sLayerName & "'"
+176         SafeMoveFirst g_RSGISGridTableSettings
+178         .Find "Name = '" & sLayerName & "'"
             
-174         If Not .Bof And Not .EOF Then
+180         If Not .Bof And Not .EOF Then
 
                 Dim oLayer As New XGIS_LayerVector
                 Dim sScape As String
                  
-                If GlobalGISGridLayerOriginal.Table = "dd_" & g_sIncidentsV2DDName & "_qryIncidents" Then
-                sScape = m_oSQLIncLyr.scope
-                ElseIf GlobalGISGridLayerOriginal.Table = "oincidents" Then
-                 sScape = m_oSQLIncLyr.scope
+                If Not right(GlobalGISGridLayerOriginal.Path, 4) = ".shp" Then
+                 
+182                 If GlobalGISGridLayerOriginal.Table = "dd_" & g_sIncidentsV2DDName & "_qryIncidents" Then
+184                     sScape = m_oSQLIncLyr.scope
+186                 ElseIf GlobalGISGridLayerOriginal.Table = "oincidents" Then
+188                     sScape = m_oSQLIncLyr.scope
+                    Else
+190                     sScape = ""
+                    End If
+
                 Else
-                sScape = ""
-                
+                    sScape = ""
                 End If
+
                 'DebugPrint GlobalGISGridLayer.items.Count
-                GlobalGISGridLayer.ExportLayer oLayer, GISGridExtent, XgisShapeTypeUnknown, sScape, False
-                GlobalGISGridLayer.scope = sScape
-               ' iTot = GlobalGISGridLayerOriginal.GetNewUid
-                iTot = oLayer.GetNewUid
-                GISGridLayerCount = iTot - 1
-                Set oLayer = Nothing
+192             GlobalGISGridLayer.ExportLayer oLayer, GISGridExtent, XgisShapeTypeUnknown, sScape, False
+194             GlobalGISGridLayer.scope = sScape
+                ' iTot = GlobalGISGridLayerOriginal.GetNewUid
+196             iTot = oLayer.GetNewUid
+198             GISGridLayerCount = iTot - 1
+200             Set oLayer = Nothing
                 
-        '        MsgBox m_oSQLIncLyr.scope
+                '        MsgBox m_oSQLIncLyr.scope
         
-'176             DebugPrint GlobalGISGridLayer.items.Count
-'178             iTot = GlobalGISGridLayer.GetLastUid
-'
-'180             If GlobalGISGridLayer.ConfigName = "_DUMMY.ini" Then
-'                    Dim oRS As ADODB.Recordset
-'182                 Set oRS = New ADODB.Recordset
-'                    Dim oCn As ADODB.Connection
-'184                 Set oCn = New ADODB.Connection
-'186                 oCn.Open GlobalGISGridLayer.SQLParameter("ADO")
-'188                 oRS.Open "SELECT count(*) from [" & GlobalGISGridLayer.Table & "_FEA]", oCn, adOpenDynamic, adLockBatchOptimistic
-'
-'190                 If Not oRS.EOF Then
-'192                     iTot = oRS.Fields(0).value
-'                    End If
-'
-'194                 Set oCn = Nothing
-'196                 Set oRS = Nothing
-'
-'                End If
+                '176             DebugPrint GlobalGISGridLayer.items.Count
+                '178             iTot = GlobalGISGridLayer.GetLastUid
+                '
+                '180             If GlobalGISGridLayer.ConfigName = "_DUMMY.ini" Then
+                '                    Dim oRS As ADODB.Recordset
+                '182                 Set oRS = New ADODB.Recordset
+                '                    Dim oCn As ADODB.Connection
+                '184                 Set oCn = New ADODB.Connection
+                '186                 oCn.Open GlobalGISGridLayer.SQLParameter("ADO")
+                '188                 oRS.Open "SELECT count(*) from [" & GlobalGISGridLayer.Table & "_FEA]", oCn, adOpenDynamic, adLockBatchOptimistic
+                '
+                '190                 If Not oRS.EOF Then
+                '192                     iTot = oRS.Fields(0).value
+                '                    End If
+                '
+                '194                 Set oCn = Nothing
+                '196                 Set oRS = Nothing
+                '
+                '                End If
 
                 'Get list of excluded fields
             
-198             If Not .EOF Then
-200                 If Not .Fields.Item("excludedFlds").value = vbNull Then
-202                     sExcludedFldsString = .Fields.Item("excludedFlds").value
+202             If Not .EOF Then
+204                 If Not .Fields.Item("excludedFlds").value = vbNull Then
+206                     sExcludedFldsString = .Fields.Item("excludedFlds").value
                     End If
                 End If
         
-204             If Not .EOF Then
+208             If Not .EOF Then
             
                     'Check count of records
-206                 If .Fields.Item("datasetwarning").value Then
+210                 If .Fields.Item("datasetwarning").value Then
                         
-208                     DebugPrint "datasetwarning -- iTot: " & iTot
-210                     DebugPrint "datasetwarning -- .Fields.Item('warninglevel').Value: " & .Fields.Item("warninglevel").value
+212                     DebugPrint "datasetwarning -- iTot: " & iTot
+214                     DebugPrint "datasetwarning -- .Fields.Item('warninglevel').Value: " & .Fields.Item("warninglevel").value
                 
                         'Too many records - ABORT!
-212                     If iTot > .Fields.Item("MaxRec").value Then
-214                         MsgBox "Note! According to performace settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
-216                         Set GlobalGISGridLayer = Nothing
+216                     If iTot > .Fields.Item("MaxRec").value Then
+218                         MsgBox "Note! According to performace settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
+220                         Set GlobalGISGridLayer = Nothing
                             Exit Sub
 
                         End If
 
                         'Many records - ask the question
-218                     If iTot > .Fields.Item("warninglevel").value Then
-220                         If MsgBox("The data you are about to browse contains: " & iTot & " records." & vbCrLf & "This might take very long time. Would you like to continue?", vbYesNo) = vbNo Then
-222                             Set GlobalGISGridLayer = Nothing
+222                     If iTot > .Fields.Item("warninglevel").value Then
+224                         If MsgBox("The data you are about to browse contains: " & iTot & " records." & vbCrLf & "This might take very long time. Would you like to continue?", vbYesNo) = vbNo Then
+226                             Set GlobalGISGridLayer = Nothing
                                 Exit Sub
                             End If
                         End If
                     
                     Else
-224                     DebugPrint "no datasetwarning"
+228                     DebugPrint "no datasetwarning"
 
                         'Too many records - ABORT!
-226                     If iTot > .Fields.Item("MaxRec").value Then
-228                         MsgBox "Note! According to performance settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
-230                         Set GlobalGISGridLayer = Nothing
+230                     If iTot > .Fields.Item("MaxRec").value Then
+232                         MsgBox "Note! According to performance settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
+234                         Set GlobalGISGridLayer = Nothing
                             Exit Sub
                         End If
                     End If
@@ -15351,24 +15364,24 @@ Public Sub LoadLayerAttrDataToGridInit()
                 Else
                     'UserDefGridRecords
                     'the Layer is userdrawn, Use default values from AppSettings
-232                 SafeMoveFirst g_RSAppSettings
-234                 g_RSAppSettings.Find "SettingName = 'UserDefGridRecords'"
+236                 SafeMoveFirst g_RSAppSettings
+238                 g_RSAppSettings.Find "SettingName = 'UserDefGridRecords'"
                 
-236                 If g_RSAppSettings.Fields.Item("SettingValue1").value = "1" Then
+240                 If g_RSAppSettings.Fields.Item("SettingValue1").value = "1" Then
                     
-238                     If iTot > CLng(g_RSAppSettings.Fields.Item("SettingValue2").value) Then
+242                     If iTot > CLng(g_RSAppSettings.Fields.Item("SettingValue2").value) Then
                         
                             'Too many records - ABORT!
-240                         MsgBox "Note! According to performace settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
-242                         Set GlobalGISGridLayer = Nothing
+244                         MsgBox "Note! According to performace settings." & vbCrLf & "The OASIS System Administrator has limited the Max Record grid items to:" & .Fields.Item("MaxRec").value & vbCrLf & "The data you are trying to browse is " & iTot & " Records.", vbInformation
+246                         Set GlobalGISGridLayer = Nothing
                             Exit Sub
                         
                         Else
 
                             'Too many records - ABORT!
-244                         If iTot > CLng(g_RSAppSettings.Fields.Item("SettingValue3").value) Then
-246                             If MsgBox("The data you are about to browse contains:" & iTot & " records." & vbCrLf & "This might take very long time. Would you like to continue?", vbYesNo) = vbNo Then
-248                                 Set GlobalGISGridLayer = Nothing
+248                         If iTot > CLng(g_RSAppSettings.Fields.Item("SettingValue3").value) Then
+250                             If MsgBox("The data you are about to browse contains:" & iTot & " records." & vbCrLf & "This might take very long time. Would you like to continue?", vbYesNo) = vbNo Then
+252                                 Set GlobalGISGridLayer = Nothing
                                     Exit Sub
                                 End If
                             End If
@@ -15383,18 +15396,17 @@ Public Sub LoadLayerAttrDataToGridInit()
         
         End With
     
-250     If bDebugMode Then
-252         LoadLayerAttrDataToGrid sExcludedFldsString
+254     If bDebugMode Then
+256         LoadLayerAttrDataToGrid sExcludedFldsString
         Else
 
-254         If Not pLoadLyrAttrToGrdThread.IsThreadRunning Then
-256             pLoadLyrAttrToGrdThread.CreateWin32Thread Me, "LoadLayerAttrDataToGrid", sExcludedFldsString
+258         If Not pLoadLyrAttrToGrdThread.IsThreadRunning Then
+260             pLoadLyrAttrToGrdThread.CreateWin32Thread Me, "LoadLayerAttrDataToGrid", sExcludedFldsString
             End If
         End If
 
         On Error Resume Next
-258     DebugPrint "GIS load operation took " & Round(((GetTickCount - lMilliSecsTimed) / 1000), 2) & " seconds"
-     
+262     DebugPrint "GIS load operation took " & Round(((GetTickCount - lMilliSecsTimed) / 1000), 2) & " seconds"
         
         '<EhFooter>
         Exit Sub
@@ -19359,6 +19371,7 @@ Private Sub AddShapeWithBufferAndHighlightIntersect(oShapeNew As TatukGIS_XDK10.
 
         Else
 192         MsgBox "Layer not read"
+            Exit Sub
         End If
 
         m_frmSelector.dxProgressBar1.Visible = False
