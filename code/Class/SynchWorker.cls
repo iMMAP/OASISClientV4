@@ -932,6 +932,7 @@ Private Sub Runnable_Start()
                                 '                                End If
                                 
                                 oCN.Execute "DELETE FROM SynchHistory WHERE stablename <> 'oincidents'"
+
                                 If DoesTableExist(oCN, "SynchHistoryOverview") Then oCN.Execute "DROP TABLE SynchHistoryOverview"
                                 
 166                             ValidateClientTable "Incidents_ChartSettings", "GUID1", True, False, oCN, m_StrRemoteTablePrefix
@@ -945,7 +946,7 @@ Private Sub Runnable_Start()
                                 End If
 
 180                             iCount = 0
-                                    
+                                
 182                             TxMsg "**??############################################################################################", True
 184                             TxMsg "**?? Beginning sync for usergroup datasets", True
 
@@ -958,6 +959,7 @@ Private Sub Runnable_Start()
 194                             TxMsg "**??############################################################################################", True
 
 196                             TxMsg "", True
+
 198                             Set oRS = oCN.OpenSchema(adSchemaTables)
 200                             bFound = False
                                 
@@ -977,16 +979,18 @@ Private Sub Runnable_Start()
                                 
 214                             iCount = 0
 
-216                             TxMsg "**??#########################################################################################", True
-218                             TxMsg "**?? Beginning sync for common datasets", True
+                                If CheckIfIncidentsEnabled(oCN) Then 'not ideal but quick fix to disable incidents synch
+216                                 TxMsg "**??#########################################################################################", True
+218                                 TxMsg "**?? Beginning sync for common datasets", True
 
-                                Do
-220                                 bRetval = SynchDDWithServer2("", m_StrWebsiteURL, oCN)
-222                                 iCount = iCount + 1
-224                             Loop Until bRetval Or iCount >= 50
+                                    Do
+220                                     bRetval = SynchDDWithServer2("", m_StrWebsiteURL, oCN)
+222                                     iCount = iCount + 1
+224                                 Loop Until bRetval Or iCount >= 50
 
-226                             TxMsg "**?? Ending sync for common datasets", True
-228                             TxMsg "**??########################################################################################", True
+226                                 TxMsg "**?? Ending sync for common datasets", True
+228                                 TxMsg "**??########################################################################################", True
+                                End If
 
                                 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
                                 '' SYNCH DYNAMIC DATA DEFS
@@ -2904,30 +2908,40 @@ Private Sub UpdateRSRecordSingle(RSSource As ADODB.Recordset, _
         Dim uUID As Long
         uUID = -1
         Dim i As Long
+        Dim bIsTatukSpatialTable As Boolean
 100     i = 0
+
+        If Right$(RSDest.Source, 4) = "_FEA" Or Right$(RSDest.Source, 4) = "_GEO" Then
+            bIsTatukSpatialTable = True
+        End If
     
 102     Do Until i = RSDest.Fields.Count
     
-104         If Not RSDest.Fields(i).Name = "WKB" And Not RSDest.Fields(i).Name = "ORIG_ID" Then
-106             If DoesFieldExistInRS(RSSource, RSDest.Fields(i).Name) Then
+            If Not (Not bIsTatukSpatialTable And RSDest.Fields(i).Name = "UID") Then
+    
+104             If Not RSDest.Fields(i).Name = "WKB" And Not RSDest.Fields(i).Name = "ORIG_ID" Then
+106                 If DoesFieldExistInRS(RSSource, RSDest.Fields(i).Name) Then
 
-108                 If Not IsNull(RSSource.Fields(RSDest.Fields(i).Name).Value) Then
-110                     If Not (Right$(RSDest.Source, 4) = "_FEA" And RSDest.Fields(i).Name = "UID") Then
+108                     If Not IsNull(RSSource.Fields(RSDest.Fields(i).Name).Value) Then
+110                         If Not (Right$(RSDest.Source, 4) = "_FEA" And RSDest.Fields(i).Name = "UID") Then
                         
-112                         RSDest.Fields(i).Value = RSSource.Fields(RSDest.Fields(i).Name).Value
-114                         ' TxMsg RSDest.Fields(i).Name, True
+112                             RSDest.Fields(i).Value = RSSource.Fields(RSDest.Fields(i).Name).Value
+114                             ' TxMsg RSDest.Fields(i).Name, True
                     
-                        End If
+                            End If
                    
-                    End If
+                        End If
 
-116             ElseIf RSDest.Fields(i).Name = "oincidents_FEA.UID" Or RSDest.Fields(i).Name = "oincidents_GEO.UID" Then
-                    If uUID = -1 Then uUID = GetMaxUIDFromGEOTable("oincidents_GEO", RSDest.ActiveConnection) + CLng(1)
-118                 RSDest.Fields(i).Value = uUID 'RSSource.Fields("UID").Value
-120                 'TxMsg RSDest.Fields(i).Name, True
-                ElseIf RSDest.Fields(i).Name = "SHAPETYPEFORINCIDENTS" Then
-                    RSDest.Fields(i).Value = 2
+116                 ElseIf RSDest.Fields(i).Name = "oincidents_FEA.UID" Or RSDest.Fields(i).Name = "oincidents_GEO.UID" Then
+
+                        If uUID = -1 Then uUID = GetMaxUIDFromGEOTable("oincidents_GEO", RSDest.ActiveConnection) + CLng(1)
+118                     RSDest.Fields(i).Value = uUID 'RSSource.Fields("UID").Value
+120                     'TxMsg RSDest.Fields(i).Name, True
+                    ElseIf RSDest.Fields(i).Name = "SHAPETYPEFORINCIDENTS" Then
+                        RSDest.Fields(i).Value = 2
+                    End If
                 End If
+
             End If
 
 122         i = i + 1
@@ -4364,8 +4378,8 @@ Private Function LocateIndexOfTable(oTable As DDTableCollection, _
         Exit Function
 
 LocateIndexOfTable_Err:
-        LocateIndexOfTable = -1
-        TxMsg "SynchWorker.LocateIndexOfTable_Err on line (" & Erl & ") " & Err.Description, True
+        LocateIndexOfTable = 0
+        'TxMsg "SynchWorker.LocateIndexOfTable_Err on line (" & Erl & ") " & Err.Description, True
         'Err.Raise vbObjectError + 100, "Project1.clsUpdateLocalDbSchemaWithServerSchema.LocateIndexOfTable", "clsUpdateLocalDbSchemaWithServerSchema component failure"
         '</EhFooter>
 End Function

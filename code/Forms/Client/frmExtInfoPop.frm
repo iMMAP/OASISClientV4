@@ -55,7 +55,6 @@ Begin VB.Form frmExtInfoPop
       _Version        =   393217
       BackColor       =   -2147483624
       BorderStyle     =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -204,14 +203,14 @@ Option Explicit 'All variables must be declared
 Dim XY() As POINTAPI
 
 Private Declare Function CreateEllipticRgn Lib "gdi32" _
-    (ByVal x1 As Long, ByVal y1 As Long, ByVal X2 As Long, _
+    (ByVal X1 As Long, ByVal Y1 As Long, ByVal X2 As Long, _
     ByVal Y2 As Long) As Long 'Used to round the corners of the form
     
 Private Declare Function CreatePolygonRgn Lib "gdi32" _
     (lpPoint As POINTAPI, ByVal nCount As Long, _
     ByVal nPolyFillMode As Long) As Long 'Used to round corners of form
 
-Private Declare Function SetWindowRgn Lib "user32" (ByVal hWnd As Long, _
+Private Declare Function SetWindowRgn Lib "user32" (ByVal hwnd As Long, _
 ByVal hRgn As Long, ByVal bRedraw As Long) As Long
 
 
@@ -222,7 +221,7 @@ Attribute RoundCorners.VB_Description = "Rounds the corners of the form via API 
     mlHeight = Me.ScaleHeight
     
     
-    SetWindowRgn Me.hWnd, CreateRoundRectRgn(0, 0, _
+    SetWindowRgn Me.hwnd, CreateRoundRectRgn(0, 0, _
                 (Me.Width / Screen.TwipsPerPixelX), (Me.Height / Screen.TwipsPerPixelY), _
                 25, 25), _
                 True
@@ -253,7 +252,7 @@ Exit Sub
   
   Me.DrawWidth = 1
   Me.FillStyle = 0
-  Me.Line (lblTitle.Left, lblTitle.Top)-(lblTitle.Width, lblTitle.Height), &H9EF5F3, BF
+  Me.Line (lblTitle.left, lblTitle.top)-(lblTitle.Width, lblTitle.Height), &H9EF5F3, BF
   
   Me.FillStyle = 1
   Me.DrawWidth = 2
@@ -271,11 +270,11 @@ Private Sub imgX_Click()
   HideBalloon
 End Sub
 
-Private Sub imgX_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub imgX_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
   If Button = vbLeftButton Then imgX.Picture = imgX_Dn.Picture
 End Sub
 
-Private Sub imgX_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub imgX_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
   If Button = vbLeftButton Then imgX.Picture = imgX_Up.Picture
 End Sub
 
@@ -377,7 +376,7 @@ Public Sub SetBalloon(sTitle As String, sText As String, sURL As String, lPosX A
           
       Case Else: 'Use no icon
           Me.imgDisplayIcon.Visible = False
-          Me.lblTitle.Left = imgDisplayIcon.Left 'Move title over so it looks right
+          Me.lblTitle.left = imgDisplayIcon.left 'Move title over so it looks right
   End Select
           
   'Showing/not showing THE X BUTTON:
@@ -412,7 +411,7 @@ Public Sub SetBalloon(sTitle As String, sText As String, sURL As String, lPosX A
 
 End Sub
 
-Private Sub lblTitle_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub lblTitle_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
   EasyMove Me
 End Sub
 
@@ -420,11 +419,11 @@ Private Sub lblX_Click()
   HideBalloon
 End Sub
 
-Private Sub lblX_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub lblX_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)
   If Button = vbLeftButton Then imgX.Picture = imgX_Dn.Picture
 End Sub
 
-Private Sub lblX_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+Private Sub lblX_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)
   If Button = vbLeftButton Then imgX.Picture = imgX_Up.Picture
 End Sub
 

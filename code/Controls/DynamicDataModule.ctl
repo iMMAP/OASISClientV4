@@ -1605,6 +1605,7 @@ Private Sub DisplayGridData()
 
 174     Call SetGridCaptions
 176     Call SetAccessRights
+        Call RsCount
         
         '<EhFooter>
         Exit Sub
@@ -1613,6 +1614,30 @@ DisplayGridData_Err:
         MsgBox "DynamicDataModule.DisplayGridData_Err (line " & Erl & "): " & Err.Description
         Resume Next
         '</EhFooter>
+End Sub
+
+Private Sub RsCount()
+    Dim sumgroup As DXDBGRIDLibCtl.dxGridSummaryGroup
+    Dim sumitem As DXDBGRIDLibCtl.dxGridSummaryItem
+    Dim i As Integer
+    Dim Col As DXDBGRIDLibCtl.dxGridColumn
+
+    Set sumgroup = dxDBGrid1.SummaryGroups.Add
+    sumgroup.DefaultGroup = True
+    Set sumitem = sumgroup.SummaryItems.Add
+    sumitem.SummaryType = cstCount
+'
+    dxDBGrid1.Option = egoCStyleFormatting
+    dxDBGrid1.OptionEnabled = True
+
+    sumitem.SummaryFormat = "%.0f records"
+    
+    If dxDBGrid1.Columns.Count > 0 Then
+        dxDBGrid1.Columns(1).SummaryFooterFormat = "%.0f records"
+    End If
+'
+'    elGisAttr.caption = "  " & dxGISDataGrid.Dataset.RecordCount & " record" & IIf(dxGISDataGrid.Dataset.RecordCount = 1, "", "s")
+'
 End Sub
 
 Public Sub ListDatabases_Click()
@@ -2658,8 +2683,8 @@ Private Sub SaveData()
 224             i = 0
 
 226             If DDDefCurrent.NumOfLinkedTables > 0 Then
-              
-228                 Do Until i >= UBound(mDDRSLinkedCollection) - 1
+                    'Do Until i >= UBound(mDDRSLinkedCollection) - 1
+228                 Do While i < UBound(mDDRSLinkedCollection)
     
 230                     mDDRSLinkedCollection(i).RS.Filter = adFilterPendingRecords ' adFilterAffectedRecords
 

@@ -78,9 +78,9 @@ Begin VB.UserControl OASISRSSBrowser
             Style           =   6
             Alignment       =   1
             AutoSize        =   2
-            Object.Width           =   1720
+            Object.Width           =   1746
             MinWidth        =   1411
-            TextSave        =   "31-Oct-13"
+            TextSave        =   "02-Feb-14"
          EndProperty
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Object.Width           =   4410
@@ -88,7 +88,7 @@ Begin VB.UserControl OASISRSSBrowser
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             AutoSize        =   1
-            Object.Width           =   12488
+            Object.Width           =   12462
          EndProperty
       EndProperty
       BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 

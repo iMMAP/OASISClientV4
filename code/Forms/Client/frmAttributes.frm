@@ -960,7 +960,19 @@ ShowShape_Err:
 End Sub
 
 Private Sub cmdClear_Click()
-    Attributes1(0).Clear
+        '<EhHeader>
+        On Error GoTo cmdClear_Click_Err
+        '</EhHeader>
+100     Attributes1.Clear '(0).Clear
+        '<EhFooter>
+        Exit Sub
+
+cmdClear_Click_Err:
+        MsgBox Err.Description & vbCrLf & _
+               "in OASISClient.frmAttributes.cmdClear_Click " & _
+               "at line " & Erl
+        Resume Next
+        '</EhFooter>
 End Sub
 
 Private Sub cmdPrint_Click()
@@ -1055,8 +1067,8 @@ Private Sub cmdPrint_Click()
                 End If
             
 176             If chkIncludeCentroid.value = vbChecked Then
-178                 oRS.Fields.Item("GEO_CenterX").value = m_oShp.Centroid.x
-180                 oRS.Fields.Item("GEO_CenterY").value = m_oShp.Centroid.y
+178                 oRS.Fields.Item("GEO_CenterX").value = m_oShp.Centroid.X
+180                 oRS.Fields.Item("GEO_CenterY").value = m_oShp.Centroid.Y
                 End If
             
 182             If chkIncludeMap.value = vbChecked Then

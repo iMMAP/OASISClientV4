@@ -448,7 +448,7 @@ Begin VB.Form frmMain
       BackColor       =   -2147483633
       Appearance      =   1
       ShowWeekNumbers =   -1  'True
-      StartOfWeek     =   99745794
+      StartOfWeek     =   100597762
       CurrentDate     =   39232
    End
    Begin VB.CommandButton Command1 
@@ -2130,18 +2130,19 @@ Begin VB.Form frmMain
             AccessibleDescription=   ""
             AccessibleValue =   ""
             AccessibleRole  =   9
-            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow NArrow 
-               Height          =   1095
-               Left            =   6960
-               TabIndex        =   142
-               Top             =   0
-               Width           =   1575
-               Symbol          =   7
+            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow watermark 
+               Height          =   1035
+               Left            =   6660
+               TabIndex        =   143
+               Top             =   2520
+               Visible         =   0   'False
+               Width           =   1275
+               Symbol          =   0
                Transparent     =   -1  'True
                Path            =   ""
                Align           =   0
                BevelInner      =   0
-               BevelOuter      =   2
+               BevelOuter      =   0
                BorderStyle     =   0
                Color           =   -16777201
                Ctl3D           =   -1  'True
@@ -2239,19 +2240,18 @@ Begin VB.Form frmMain
                CursorForUserDefined=   0
                View3D          =   0   'False
             End
-            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow watermark 
-               Height          =   1035
-               Left            =   6660
-               TabIndex        =   143
-               Top             =   2520
-               Visible         =   0   'False
-               Width           =   1275
-               Symbol          =   0
+            Begin TatukGIS_XDK10.XGIS_ControlNorthArrow NArrow 
+               Height          =   1095
+               Left            =   6960
+               TabIndex        =   142
+               Top             =   0
+               Width           =   1575
+               Symbol          =   7
                Transparent     =   -1  'True
                Path            =   ""
                Align           =   0
                BevelInner      =   0
-               BevelOuter      =   0
+               BevelOuter      =   2
                BorderStyle     =   0
                Color           =   -16777201
                Ctl3D           =   -1  'True
@@ -2669,7 +2669,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   930
                      MaskColor       =   &H0000C000&
-                     Picture         =   "frmMain.frx":57012
+                     Picture         =   "frmMain.frx":56F02
                      Style           =   1  'Graphical
                      TabIndex        =   62
                      ToolTipText     =   "Create scribble Area"
@@ -2721,7 +2721,7 @@ Begin VB.Form frmMain
                      Height          =   330
                      Left            =   1410
                      MaskColor       =   &H000000FF&
-                     Picture         =   "frmMain.frx":57354
+                     Picture         =   "frmMain.frx":57244
                      Style           =   1  'Graphical
                      TabIndex        =   52
                      ToolTipText     =   "Remove Markers"
@@ -2757,9 +2757,9 @@ Begin VB.Form frmMain
                   End
                   Begin VB.ComboBox comConversionType 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":5DBA6
+                     ItemData        =   "frmMain.frx":5DA96
                      Left            =   660
-                     List            =   "frmMain.frx":5DBB6
+                     List            =   "frmMain.frx":5DAA6
                      Style           =   2  'Dropdown List
                      TabIndex        =   37
                      Top             =   60
@@ -2768,7 +2768,7 @@ Begin VB.Form frmMain
                   Begin VB.CommandButton cmdZoomTo 
                      Height          =   330
                      Left            =   1890
-                     Picture         =   "frmMain.frx":5DBE2
+                     Picture         =   "frmMain.frx":5DAD2
                      Style           =   1  'Graphical
                      TabIndex        =   36
                      ToolTipText     =   "Zoom to/Create Marker"
@@ -3076,121 +3076,121 @@ Begin VB.Form frmMain
                         Italic          =   0   'False
                         Strikethrough   =   0   'False
                      EndProperty
-                     PictureClose    =   "frmMain.frx":64434
-                     PictureMinus    =   "frmMain.frx":64450
-                     PictureOpen     =   "frmMain.frx":6446C
-                     PicturePlus     =   "frmMain.frx":64488
-                     PictureLeaf     =   "frmMain.frx":644A4
-                     TitleBackImage  =   "frmMain.frx":644C0
-                     CheckPicDown    =   "frmMain.frx":644DC
-                     CheckPicUp      =   "frmMain.frx":644F8
-                     CheckPicDisabled=   "frmMain.frx":64514
-                     RadioPicDown    =   "frmMain.frx":64530
-                     RadioPicUp      =   "frmMain.frx":6454C
-                     BackImage       =   "frmMain.frx":64568
-                     MouseIcon       =   "frmMain.frx":64584
+                     PictureClose    =   "frmMain.frx":64324
+                     PictureMinus    =   "frmMain.frx":64340
+                     PictureOpen     =   "frmMain.frx":6435C
+                     PicturePlus     =   "frmMain.frx":64378
+                     PictureLeaf     =   "frmMain.frx":64394
+                     TitleBackImage  =   "frmMain.frx":643B0
+                     CheckPicDown    =   "frmMain.frx":643CC
+                     CheckPicUp      =   "frmMain.frx":643E8
+                     CheckPicDisabled=   "frmMain.frx":64404
+                     RadioPicDown    =   "frmMain.frx":64420
+                     RadioPicUp      =   "frmMain.frx":6443C
+                     BackImage       =   "frmMain.frx":64458
+                     MouseIcon       =   "frmMain.frx":64474
                      NoFocusBackColor=   -2147483633
-                     HeaderData      =   "frmMain.frx":645A0
-                     PicArray0       =   "frmMain.frx":645C8
-                     PicArray1       =   "frmMain.frx":645E4
-                     PicArray2       =   "frmMain.frx":64600
-                     PicArray3       =   "frmMain.frx":6461C
-                     PicArray4       =   "frmMain.frx":64638
-                     PicArray5       =   "frmMain.frx":64654
-                     PicArray6       =   "frmMain.frx":64670
-                     PicArray7       =   "frmMain.frx":6468C
-                     PicArray8       =   "frmMain.frx":646A8
-                     PicArray9       =   "frmMain.frx":646C4
-                     PicArray10      =   "frmMain.frx":646E0
-                     PicArray11      =   "frmMain.frx":646FC
-                     PicArray12      =   "frmMain.frx":64718
-                     PicArray13      =   "frmMain.frx":64734
-                     PicArray14      =   "frmMain.frx":64750
-                     PicArray15      =   "frmMain.frx":6476C
-                     PicArray16      =   "frmMain.frx":64788
-                     PicArray17      =   "frmMain.frx":647A4
-                     PicArray18      =   "frmMain.frx":647C0
-                     PicArray19      =   "frmMain.frx":647DC
-                     PicArray20      =   "frmMain.frx":647F8
-                     PicArray21      =   "frmMain.frx":64814
-                     PicArray22      =   "frmMain.frx":64830
-                     PicArray23      =   "frmMain.frx":6484C
-                     PicArray24      =   "frmMain.frx":64868
-                     PicArray25      =   "frmMain.frx":64884
-                     PicArray26      =   "frmMain.frx":648A0
-                     PicArray27      =   "frmMain.frx":648BC
-                     PicArray28      =   "frmMain.frx":648D8
-                     PicArray29      =   "frmMain.frx":648F4
-                     PicArray30      =   "frmMain.frx":64910
-                     PicArray31      =   "frmMain.frx":6492C
-                     PicArray32      =   "frmMain.frx":64948
-                     PicArray33      =   "frmMain.frx":64964
-                     PicArray34      =   "frmMain.frx":64980
-                     PicArray35      =   "frmMain.frx":6499C
-                     PicArray36      =   "frmMain.frx":649B8
-                     PicArray37      =   "frmMain.frx":649D4
-                     PicArray38      =   "frmMain.frx":649F0
-                     PicArray39      =   "frmMain.frx":64A0C
-                     PicArray40      =   "frmMain.frx":64A28
-                     PicArray41      =   "frmMain.frx":64A44
-                     PicArray42      =   "frmMain.frx":64A60
-                     PicArray43      =   "frmMain.frx":64A7C
-                     PicArray44      =   "frmMain.frx":64A98
-                     PicArray45      =   "frmMain.frx":64AB4
-                     PicArray46      =   "frmMain.frx":64AD0
-                     PicArray47      =   "frmMain.frx":64AEC
-                     PicArray48      =   "frmMain.frx":64B08
-                     PicArray49      =   "frmMain.frx":64B24
-                     PicArray50      =   "frmMain.frx":64B40
-                     PicArray51      =   "frmMain.frx":64B5C
-                     PicArray52      =   "frmMain.frx":64B78
-                     PicArray53      =   "frmMain.frx":64B94
-                     PicArray54      =   "frmMain.frx":64BB0
-                     PicArray55      =   "frmMain.frx":64BCC
-                     PicArray56      =   "frmMain.frx":64BE8
-                     PicArray57      =   "frmMain.frx":64C04
-                     PicArray58      =   "frmMain.frx":64C20
-                     PicArray59      =   "frmMain.frx":64C3C
-                     PicArray60      =   "frmMain.frx":64C58
-                     PicArray61      =   "frmMain.frx":64C74
-                     PicArray62      =   "frmMain.frx":64C90
-                     PicArray63      =   "frmMain.frx":64CAC
-                     PicArray64      =   "frmMain.frx":64CC8
-                     PicArray65      =   "frmMain.frx":64CE4
-                     PicArray66      =   "frmMain.frx":64D00
-                     PicArray67      =   "frmMain.frx":64D1C
-                     PicArray68      =   "frmMain.frx":64D38
-                     PicArray69      =   "frmMain.frx":64D54
-                     PicArray70      =   "frmMain.frx":64D70
-                     PicArray71      =   "frmMain.frx":64D8C
-                     PicArray72      =   "frmMain.frx":64DA8
-                     PicArray73      =   "frmMain.frx":64DC4
-                     PicArray74      =   "frmMain.frx":64DE0
-                     PicArray75      =   "frmMain.frx":64DFC
-                     PicArray76      =   "frmMain.frx":64E18
-                     PicArray77      =   "frmMain.frx":64E34
-                     PicArray78      =   "frmMain.frx":64E50
-                     PicArray79      =   "frmMain.frx":64E6C
-                     PicArray80      =   "frmMain.frx":64E88
-                     PicArray81      =   "frmMain.frx":64EA4
-                     PicArray82      =   "frmMain.frx":64EC0
-                     PicArray83      =   "frmMain.frx":64EDC
-                     PicArray84      =   "frmMain.frx":64EF8
-                     PicArray85      =   "frmMain.frx":64F14
-                     PicArray86      =   "frmMain.frx":64F30
-                     PicArray87      =   "frmMain.frx":64F4C
-                     PicArray88      =   "frmMain.frx":64F68
-                     PicArray89      =   "frmMain.frx":64F84
-                     PicArray90      =   "frmMain.frx":64FA0
-                     PicArray91      =   "frmMain.frx":64FBC
-                     PicArray92      =   "frmMain.frx":64FD8
-                     PicArray93      =   "frmMain.frx":64FF4
-                     PicArray94      =   "frmMain.frx":65010
-                     PicArray95      =   "frmMain.frx":6502C
-                     PicArray96      =   "frmMain.frx":65048
-                     PicArray97      =   "frmMain.frx":65064
-                     PicArray98      =   "frmMain.frx":65080
-                     PicArray99      =   "frmMain.frx":6509C
+                     HeaderData      =   "frmMain.frx":64490
+                     PicArray0       =   "frmMain.frx":644B8
+                     PicArray1       =   "frmMain.frx":644D4
+                     PicArray2       =   "frmMain.frx":644F0
+                     PicArray3       =   "frmMain.frx":6450C
+                     PicArray4       =   "frmMain.frx":64528
+                     PicArray5       =   "frmMain.frx":64544
+                     PicArray6       =   "frmMain.frx":64560
+                     PicArray7       =   "frmMain.frx":6457C
+                     PicArray8       =   "frmMain.frx":64598
+                     PicArray9       =   "frmMain.frx":645B4
+                     PicArray10      =   "frmMain.frx":645D0
+                     PicArray11      =   "frmMain.frx":645EC
+                     PicArray12      =   "frmMain.frx":64608
+                     PicArray13      =   "frmMain.frx":64624
+                     PicArray14      =   "frmMain.frx":64640
+                     PicArray15      =   "frmMain.frx":6465C
+                     PicArray16      =   "frmMain.frx":64678
+                     PicArray17      =   "frmMain.frx":64694
+                     PicArray18      =   "frmMain.frx":646B0
+                     PicArray19      =   "frmMain.frx":646CC
+                     PicArray20      =   "frmMain.frx":646E8
+                     PicArray21      =   "frmMain.frx":64704
+                     PicArray22      =   "frmMain.frx":64720
+                     PicArray23      =   "frmMain.frx":6473C
+                     PicArray24      =   "frmMain.frx":64758
+                     PicArray25      =   "frmMain.frx":64774
+                     PicArray26      =   "frmMain.frx":64790
+                     PicArray27      =   "frmMain.frx":647AC
+                     PicArray28      =   "frmMain.frx":647C8
+                     PicArray29      =   "frmMain.frx":647E4
+                     PicArray30      =   "frmMain.frx":64800
+                     PicArray31      =   "frmMain.frx":6481C
+                     PicArray32      =   "frmMain.frx":64838
+                     PicArray33      =   "frmMain.frx":64854
+                     PicArray34      =   "frmMain.frx":64870
+                     PicArray35      =   "frmMain.frx":6488C
+                     PicArray36      =   "frmMain.frx":648A8
+                     PicArray37      =   "frmMain.frx":648C4
+                     PicArray38      =   "frmMain.frx":648E0
+                     PicArray39      =   "frmMain.frx":648FC
+                     PicArray40      =   "frmMain.frx":64918
+                     PicArray41      =   "frmMain.frx":64934
+                     PicArray42      =   "frmMain.frx":64950
+                     PicArray43      =   "frmMain.frx":6496C
+                     PicArray44      =   "frmMain.frx":64988
+                     PicArray45      =   "frmMain.frx":649A4
+                     PicArray46      =   "frmMain.frx":649C0
+                     PicArray47      =   "frmMain.frx":649DC
+                     PicArray48      =   "frmMain.frx":649F8
+                     PicArray49      =   "frmMain.frx":64A14
+                     PicArray50      =   "frmMain.frx":64A30
+                     PicArray51      =   "frmMain.frx":64A4C
+                     PicArray52      =   "frmMain.frx":64A68
+                     PicArray53      =   "frmMain.frx":64A84
+                     PicArray54      =   "frmMain.frx":64AA0
+                     PicArray55      =   "frmMain.frx":64ABC
+                     PicArray56      =   "frmMain.frx":64AD8
+                     PicArray57      =   "frmMain.frx":64AF4
+                     PicArray58      =   "frmMain.frx":64B10
+                     PicArray59      =   "frmMain.frx":64B2C
+                     PicArray60      =   "frmMain.frx":64B48
+                     PicArray61      =   "frmMain.frx":64B64
+                     PicArray62      =   "frmMain.frx":64B80
+                     PicArray63      =   "frmMain.frx":64B9C
+                     PicArray64      =   "frmMain.frx":64BB8
+                     PicArray65      =   "frmMain.frx":64BD4
+                     PicArray66      =   "frmMain.frx":64BF0
+                     PicArray67      =   "frmMain.frx":64C0C
+                     PicArray68      =   "frmMain.frx":64C28
+                     PicArray69      =   "frmMain.frx":64C44
+                     PicArray70      =   "frmMain.frx":64C60
+                     PicArray71      =   "frmMain.frx":64C7C
+                     PicArray72      =   "frmMain.frx":64C98
+                     PicArray73      =   "frmMain.frx":64CB4
+                     PicArray74      =   "frmMain.frx":64CD0
+                     PicArray75      =   "frmMain.frx":64CEC
+                     PicArray76      =   "frmMain.frx":64D08
+                     PicArray77      =   "frmMain.frx":64D24
+                     PicArray78      =   "frmMain.frx":64D40
+                     PicArray79      =   "frmMain.frx":64D5C
+                     PicArray80      =   "frmMain.frx":64D78
+                     PicArray81      =   "frmMain.frx":64D94
+                     PicArray82      =   "frmMain.frx":64DB0
+                     PicArray83      =   "frmMain.frx":64DCC
+                     PicArray84      =   "frmMain.frx":64DE8
+                     PicArray85      =   "frmMain.frx":64E04
+                     PicArray86      =   "frmMain.frx":64E20
+                     PicArray87      =   "frmMain.frx":64E3C
+                     PicArray88      =   "frmMain.frx":64E58
+                     PicArray89      =   "frmMain.frx":64E74
+                     PicArray90      =   "frmMain.frx":64E90
+                     PicArray91      =   "frmMain.frx":64EAC
+                     PicArray92      =   "frmMain.frx":64EC8
+                     PicArray93      =   "frmMain.frx":64EE4
+                     PicArray94      =   "frmMain.frx":64F00
+                     PicArray95      =   "frmMain.frx":64F1C
+                     PicArray96      =   "frmMain.frx":64F38
+                     PicArray97      =   "frmMain.frx":64F54
+                     PicArray98      =   "frmMain.frx":64F70
+                     PicArray99      =   "frmMain.frx":64F8C
                   End
                   Begin VB.Label lblGeoMarks 
                      Caption         =   "Geo Marks"
@@ -3261,9 +3261,9 @@ Begin VB.Form frmMain
                   AccessibleRole  =   9
                   Begin VB.ComboBox ComThemes 
                      Height          =   315
-                     ItemData        =   "frmMain.frx":650B8
+                     ItemData        =   "frmMain.frx":64FA8
                      Left            =   45
-                     List            =   "frmMain.frx":650E9
+                     List            =   "frmMain.frx":64FD9
                      Style           =   2  'Dropdown List
                      TabIndex        =   20
                      Top             =   345
@@ -3281,7 +3281,7 @@ Begin VB.Form frmMain
                         Left            =   105
                         MultiLine       =   -1  'True
                         TabIndex        =   19
-                        Text            =   "frmMain.frx":6524F
+                        Text            =   "frmMain.frx":6513F
                         Top             =   270
                         Width           =   2100
                      End
@@ -3416,7 +3416,7 @@ Begin VB.Form frmMain
                FrameColor      =   -2147483628
                FrameShadow     =   -2147483632
                FloodStyle      =   1
-               _GridInfo       =   $"frmMain.frx":65261
+               _GridInfo       =   $"frmMain.frx":65151
                AccessibleName  =   ""
                AccessibleDescription=   ""
                AccessibleValue =   ""
@@ -3517,7 +3517,7 @@ Begin VB.Form frmMain
       Begin VB.Menu mnuMapAction 
          Caption         =   "Map Actions"
          Begin VB.Menu mnuZoomTo 
-            Caption         =   "ZoomTo"
+            Caption         =   "Zoom To"
          End
          Begin VB.Menu mnuSelectInMap 
             Caption         =   "Select In Map"
@@ -5792,14 +5792,14 @@ End Sub
 
 Private Sub m_frmMnuOperations_ExportLayer(oLyrName As String, sFilter As String, sDialogTitle As String, sFileExtention As String, fType As OASIS_GIS_DATA_TYPE)
 
-    Dim c As New cCommonDialog
+    Dim C As New cCommonDialog
     Dim xportLyr As TatukGIS_XDK10.XGIS_LayerVector
     Dim eFile As OASIS_GIS_DATA_TYPE
     Dim oLyr As TatukGIS_XDK10.XGIS_LayerVector
     
     Set oLyr = GIS10.get(oLyrName)
     
-    With c
+    With C
 
         Select Case fType
     
@@ -5934,9 +5934,9 @@ Private Sub m_frmMnuOperations_LoadSetting(sLayer As String)
         '<EhHeader>
         On Error GoTo m_frmMnuOperations_LoadSetting_Err
         '</EhHeader>
-        Dim c As New cCommonDialog
+        Dim C As New cCommonDialog
                 
-100     With c
+100     With C
 102         .DialogTitle = "Load layer settings file"
 104         .CancelError = False
 106         .hwnd = Me.hwnd
@@ -5954,12 +5954,12 @@ Private Sub m_frmMnuOperations_LoadSetting(sLayer As String)
 196     oStream.Open
 198     oStream.Type = 2
 200     oStream.Charset = "ascii"
-202     oStream.LoadFromFile c.Filename
+202     oStream.LoadFromFile C.Filename
 204     oSList.Text = oStream.ReadText
 206     oStream.Close
     
 118     With GIS10.get(sLayer)
-120         .ConfigName = c.Filename
+120         .ConfigName = C.Filename
             .ParamsList.LoadFromStrings oSList
 122         .UseConfig = True
 124         .ReadConfig
@@ -6043,9 +6043,9 @@ Private Sub m_frmMnuOperations_SaveSetting(sLayer As String)
         '<EhHeader>
         On Error GoTo m_frmMnuOperations_SaveSetting_Err
         '</EhHeader>
-        Dim c As New cCommonDialog
+        Dim C As New cCommonDialog
                                 
-100     With c
+100     With C
 102         .DialogTitle = "Save layer settings file"
 104         .CancelError = False
 106         .hwnd = Me.hwnd
@@ -6059,7 +6059,7 @@ Private Sub m_frmMnuOperations_SaveSetting(sLayer As String)
         Dim oStream As New ADODB.Stream
         Dim oSList As New TatukGIS_XDK10.XStringList
         On Error Resume Next
-116     Kill c.Filename
+116     Kill C.Filename
         On Error GoTo m_frmMnuOperations_SaveSetting_Err
 118     oStream.Open
 120     oStream.Type = 2
@@ -6068,14 +6068,14 @@ Private Sub m_frmMnuOperations_SaveSetting(sLayer As String)
 124     With GIS10.get(sLayer)
 126         .ParamsList.SaveToStrings oSList
 128         oStream.WriteText oSList.Text
-130         oStream.SaveToFile (c.Filename) & ".ini"
+130         oStream.SaveToFile (C.Filename) & ".ini"
 132         oStream.Close
 134         Set oStream = Nothing
-136         .ConfigName = c.Filename
+136         .ConfigName = C.Filename
 138         .WriteConfig
         End With
     
-140     MsgBox "Your file was saved to: " & c.Filename & ".ini"
+140     MsgBox "Your file was saved to: " & C.Filename & ".ini"
 
         '<EhFooter>
         Exit Sub
@@ -7006,11 +7006,11 @@ dxGISDataGrid_OnDragEndHeader_Err:
 End Sub
 
 Private Sub FraPinColor_Click(Index As Integer)
-Dim c As cCommonDialog
-    Set c = New cCommonDialog
-    c.ShowColor
+Dim C As cCommonDialog
+    Set C = New cCommonDialog
+    C.ShowColor
 
-    FraPinColor(Index).BackColor = c.color
+    FraPinColor(Index).BackColor = C.color
 
 End Sub
 
@@ -8094,7 +8094,7 @@ Public Sub g_clsHotKey_HotKeyPress(ByVal sName As String, _
         Case "OVB"
                 
             Dim sProjpath As String
-            Dim c As New cCommonDialog
+            Dim C As New cCommonDialog
                 
             If oVB Is Nothing Then
                 Set oVB = CreateObject("OVBScript.ScriptEngine")
@@ -8105,7 +8105,7 @@ Public Sub g_clsHotKey_HotKeyPress(ByVal sName As String, _
                                
                     If oVB.ScriptProjectPath = "" Then
 
-                        With c
+                        With C
                             .DialogTitle = "Open OASIS VBScript Project File"
                             .CancelError = True
                             .hwnd = Me.hwnd
@@ -11882,7 +11882,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
         On Error GoTo AB_ToolClick_Err
         '</EhHeader>
         Dim xportLyr As Object
-        Dim c As New cCommonDialog
+        Dim C As New cCommonDialog
         Dim udtOASISChartO As OASISChartObj
         Dim sAdoString As String
         Dim sLayerName As String
@@ -12297,7 +12297,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
         
 344             Case "btnOpenMap"
 
-346                 With c
+346                 With C
 348                     .DialogTitle = "Open Map Definition File"
                         '.CancelError = True
 350                     .hwnd = Me.hwnd
@@ -12310,8 +12310,8 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
                         m_frmSelector.RenewSelection
                     End With
                 
-362                 If Len(c.Filename) > 0 Then
-364                     InitMap c.Filename
+362                 If Len(C.Filename) > 0 Then
+364                     InitMap C.Filename
 366                     LoadLayerAttrDataToGridInit
                     End If
                 
@@ -12342,7 +12342,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
                     
 392                         Set oLyr = GIS10.get(sSelLayers(i))
 
-394                         With c
+394                         With C
                 
 396                             .Filter = "Microsoft Access (*.mdb)|*.mdb"
 
@@ -12351,7 +12351,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
 402                             .ShowOpen
                             End With
                     
-404                         If Len(c.Filename) > 0 Then
+404                         If Len(C.Filename) > 0 Then
 406                             Set xportLyr = New TatukGIS_XDK10.XGIS_LayerSqlAdo
                 
 408                             sLayerName = InputBox("Insert the name of the layer", "OASIS GIS SQL Layers", sSelLayers(i) & "_" & Day(Now) & "_" & Month(Now) & "_" & Year(Now) & "_" & Second(Now) & "_" & Minute(Now))
@@ -12364,17 +12364,17 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
                         
 416                             If bSQLServerInUse Then ' MsgBox("Is this the OASIS database?", vbYesNo, "Confirm if this is the OASIS database") = vbYes Then
                         
-418                                 sAdoString = GetConnectionString(c.Filename)
+418                                 sAdoString = GetConnectionString(C.Filename)
                                 Else
                         
-420                                 sAdoString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" & c.Filename & ";" 'Mode=ReadWrite|Share Deny None;Persist Security Info=False"
+420                                 sAdoString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" & C.Filename & ";" 'Mode=ReadWrite|Share Deny None;Persist Security Info=False"
                                 End If
                 
 422                             sAdoString = "[TatukGIS Layer]" & vbCrLf & "Storage = Native" & vbCrLf & "layer=" & sLayerName & vbCrLf & "Dialect=MSJET" & vbCrLf & "ADO=" & sAdoString
                                 
 424                             xportLyr.Path = sAdoString
 426                             oLyr.ExportLayer xportLyr, GisUtils.GisWholeWorld, TatukGIS_XDK10.XgisShapeTypeUnknown, "", True
-427                             CreateTTKGPReference sLayerName & "_FEA", "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" & c.Filename & ";Mode=ReadWrite|Share Deny None;Persist Security Info=False;"
+427                             CreateTTKGPReference sLayerName & "_FEA", "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" & C.Filename & ";Mode=ReadWrite|Share Deny None;Persist Security Info=False;"
 428                             xportLyr.SaveAll
                 
                                 ' NOT NEEDED ANY MORE TO CREATE TTKLS FILE
@@ -12406,7 +12406,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
                     'm_oIncidentLyr.ExportLayer
 442             Case "btnExportMapDefFile"
 
-444                 With c
+444                 With C
                 
 446                     .Filter = "Map Definition files (*.TTKGP)|*.TTKGP"
 
@@ -12422,7 +12422,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
 
 458             Case "btnExportToShape"
 
-460                 With c
+460                 With C
                 
 462                     frmLayerSelection.Init GIS10
         
@@ -12555,7 +12555,7 @@ Private Sub AB_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
 
 600                 '' If MsgBox("Would You like to use existing SQL layers from the OASIS Databases?", vbYesNo, "Add OASIS Layers") = vbNo Then
 
-602                 With c
+602                 With C
                 
 604                     .Filter = "MDB Database (*.mdb)|*.mdb"
 606                     .CancelError = True
@@ -12676,7 +12676,7 @@ Private Sub abGridTools_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
         '<EhHeader>
         On Error GoTo abGridTools_ToolClick_Err
         '</EhHeader>
-        Dim c As New cCommonDialog
+        Dim C As New cCommonDialog
         Dim oRS As ADODB.Recordset
         'Dim dxDBCopy As DXDBGRIDLibCtl.dxGridOptions
         
@@ -12702,7 +12702,7 @@ Private Sub abGridTools_ToolClick(ByVal Tool As ActiveBar3LibraryCtl.Tool)
                     
 110                 If frmExportFormats.chkFormats(0).value = vbChecked Or frmExportFormats.chkFormats(1).value = vbChecked Or frmExportFormats.chkFormats(2).value = vbChecked Or frmExportFormats.chkFormats(3).value = vbChecked Then
 
-112                     With c
+112                     With C
 114                         .CancelError = False
 116                         .DialogTitle = "Export Grid Data to..."
 118                         .InitDir = g_sAppPath & "\data\gis\"
@@ -14227,9 +14227,9 @@ Public Sub AddLayer(Optional oLayer As Object)
         On Error GoTo AddLayer_Err
         '</EhHeader>
         Dim oAbsLayer As TatukGIS_XDK10.XGIS_LayerAbstract
-        Dim c As New cCommonDialog
+        Dim C As New cCommonDialog
         Dim sName As String
-100     With c
+100     With C
     
 102         If oLayer Is Nothing Then
         
@@ -16236,9 +16236,11 @@ Private Sub GISComboGridChange(toolName As String)
                 'Buggfix Nothing was getting things stuck
                 
 106             If Not pLoadLyrAttrToGrdThread.IsThreadRunning Then
-108             dxGISDataGrid.Filter.Clear
+
+108                 dxGISDataGrid.Filter.Clear
+
 110                 If chkFilterIn.value = vbChecked Then
-112                 chkFilterIn.value = vbUnchecked
+112                     chkFilterIn.value = vbUnchecked
                     End If
                     
                     
@@ -16268,6 +16270,13 @@ Private Sub GISComboGridChange(toolName As String)
                 
                 Else
 136                 MsgBox "Please wait until the prior data in the grid has completed loading", vbInformation
+                End If
+                
+2124          If abGridTools.Tools.Item("comLyr").Text <> "selection_layer" Then
+2324                If Not GIS10.get("selection_layer") Is Nothing Then
+2111                     GIS10.Delete "selection_layer"
+                         GIS10.UpDate
+                    End If
                 End If
 
 138         Case Is = "btnRefresh"
@@ -21691,8 +21700,11 @@ On Error GoTo FindFeatureFromGrid_Err
                     
 150                 If bFlash Then
 152                     If bZoomTo Then Set lShape = lLayer.FindFirst(lLayer.Extent, sSQL, lShape, "", True)
-154                     lShape.Flash
-156                     lShape.Invalidate
+                        
+153                     If Not lShape Is Nothing Then
+154                         lShape.Flash
+156                         lShape.Invalidate
+                        End If
                     End If
                     
 158                 If bSelect Then
