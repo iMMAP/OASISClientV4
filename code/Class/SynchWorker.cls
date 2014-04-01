@@ -2005,10 +2005,10 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
         
 148         Set oRSLocal = New ADODB.Recordset
 150         oRSLocal.Open "SELECT * FROM [" & sSynchHistName & "] ORDER BY [stablename], [sID]", cn, adOpenDynamic, adLockBatchOptimistic
-
+            If oRSLocal.RecordCount > 0 Then oRSLocal.MoveFirst
+            
 152         If lLowVal > 1 Then oRSLocal.Move (lLowVal - 1)
-        
-154         Set oRSServer = OpenServerRSCompressed(sWebsite, "ID", "SELECT * FROM [" & sSynchHistName & "] ORDER BY stablename, sID OFFSET " & (lLowVal - 1) & " ROWS FETCH NEXT 200 ROWS ONLY")
+154         Set oRSServer = OpenServerRSCompressed(sWebsite, "ID", "SELECT * FROM [" & sSynchHistName & "] ORDER BY [stablename], [sID] OFFSET " & (lLowVal - 1) & " ROWS FETCH NEXT 200 ROWS ONLY")
 
 156         Do Until (oRSLocal.EOF) Or (lNumRecordsLocal >= 200)
         
@@ -2054,9 +2054,9 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
             
 208         Set oRSServer = Nothing
         
-210         oRSMerged.Sort = "sID"
-
+210         oRSMerged.Sort = "sTableName,sID"
 212         If oRSMerged.RecordCount > 0 Then oRSMerged.MoveFirst
+
 214         ReDim sIDs(201)
 216         sIDs(0) = ""
 218         iTablename = 1
@@ -2292,11 +2292,11 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
             
 496             If oRSMerged.RecordCount > 0 Then
 498                 oRSMerged.MoveFirst
-                    'TxMsg "oRSMerged.Fields(ToUpdateServer).Value: " & oRSMerged.Fields("ToUpdateServer").Value, True
-                    'TxMsg "oRSMerged.Fields(ToUpdateLocal).Value: " & oRSMerged.Fields("ToUpdateLocal").Value, True
+                    ''''                  TxMsg "oRSMerged.Fields(ToUpdateServer).Value: " & oRSMerged.Fields("ToUpdateServer").Value, True
+                    ''''TxMsg "oRSMerged.Fields(ToUpdateLocal).Value: " & oRSMerged.Fields("ToUpdateLocal").Value, True
                 End If
 
-                'TxMsg "### " & oRSMerged.RecordCount & " records need attention", True
+                ''''TxMsg "### " & oRSMerged.RecordCount & " records need attention", True
     
 500             ReDim sTableNames(1)
 502             iTablename = 1
@@ -2308,7 +2308,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 510                     ReDim Preserve sTableNames(iTablename + 1)
 512                     sTableNames(iTablename) = oRSMerged.Fields("sTableName").Value
 514                     iTablename = iTablename + 1
-                        'TxMsg "### sTableName: " & oRSMerged.Fields("sTableName").Value, True
+                        ''''TxMsg "### sTableName: " & oRSMerged.Fields("sTableName").Value, True
                     End If
             
 516                 oRSMerged.MoveNext
@@ -2318,7 +2318,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 518             iTablename = iTablename - 1
 520             ReDim oSynchOperations(1)
 
-                'TxMsg "### tables: " & CStr(iTablename), True
+                ''''TxMsg "### tables: " & CStr(iTablename), True
             
                 'sTableNames()                      = Tables to be checked
                 'oRSMerged.Fields("ToAddLocal")     = Add record from server to local
@@ -2336,7 +2336,8 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 526             oRSMerged.Sort = "[sTableName],[ToAddServer] DESC,[ToUpdateServer] DESC, [ToAddLocal] DESC, [ToUpdateLocal] DESC,[ToDeleteServer] DESC,[ToDeleteLocal] DESC"
 
 528             If Not oRSMerged.RecordCount = 0 Then oRSMerged.MoveFirst
-                'oRSMerged.Filter = "[ToAddServer] = true OR [ToUpdateServer] = true OR [ToAddLocal] = true OR [ToUpdateLocal] = true OR [ToDeleteServer] = true OR [ToDeleteLocal] = true"
+                ''''
+                oRSMerged.Filter = "[ToAddServer] = true OR [ToUpdateServer] = true OR [ToAddLocal] = true OR [ToUpdateLocal] = true OR [ToDeleteServer] = true OR [ToDeleteLocal] = true"
 530             i = 1
 532             sSQL = ""
 
@@ -2374,9 +2375,11 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 554                             sSQLCommand = "SELECT * FROM [" & .Fields("sTableName").Value & "] WHERE" & Replace(sSQL, "[sID]", sGUIDName)
 556                             Set oRSLocal = New ADODB.Recordset
 558                             oRSLocal.Open sSQLCommand, cn, adOpenDynamic, adLockBatchOptimistic
+
                                 If .Fields("sTableName").Value = "Incidents_ChartSettings" Or .Fields("sTableName").Value = "GeoBookmarks" Or .Fields("sTableName").Value = "GeoBookmarksCategories" Then
                                     sSQLCommand = "SELECT * FROM [" & m_StrRemoteTablePrefix & .Fields("sTableName").Value & "] WHERE" & Replace(sSQL, "[sID]", sGUIDName)
                                 End If
+
 560                             Set oRSServer = OpenServerRSCompressed(sWebsite, "ID", sSQLCommand)
                           
 562                             sSQLCommand = "SELECT * FROM [" & sTableNamePrefix & "SynchHistory] WHERE" & sSQL
@@ -2461,6 +2464,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
                                             End If
 
 654                                         oRSLocal.UpdateBatch adAffectCurrent
+
                                             If Right$(.Fields("sTableName").Value, 7) = "Queries" Then CreateQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, oRSLocal.Fields("QuerySQL").Value, cn, sWebsite
                                         
 656                                         If oRSLocalSynchHistory.EOF Then
@@ -2510,7 +2514,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 690                                         UpdateRSRecordSingle oRSLocal, oRSServer
 
                                             If bIsGeoTable Then
-                                            If Not oRSLocal_GEO.RecordCount = 0 Then oRSLocal_GEO.MoveFirst
+                                                If Not oRSLocal_GEO.RecordCount = 0 Then oRSLocal_GEO.MoveFirst
 694                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
 
                                                 sResponse = ""
@@ -2631,6 +2635,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
                                             End If
 
 796                                         oRSLocal.UpdateBatch adAffectCurrent
+
                                             If Right$(.Fields("sTableName").Value, 7) = "Queries" Then CreateQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, oRSLocal.Fields("QuerySQL").Value, cn, sWebsite
                                             
 798                                         If oRSLocalSynchHistory.EOF Then
@@ -2688,7 +2693,7 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
                                         
 850                                         If Not sResponse = "Data Updated" Then
 
-852                                             TxMsg "    --- Error updating oRSServer: " & sResponse, True
+852                                             TxMsg "    --- Error updating oRSServer_GEO: " & sResponse, True
                                         
                                             Else
                                         
@@ -2749,21 +2754,23 @@ Private Function SynchDDWithServer2(sTableNamePrefix As String, _
 896                                     oRSLocalSynchHistory.Filter = "[sID] = '" & oRSServerSynchHistory.Fields("sID").Value & "'"
                                     
 898                                     'If Not oRSServer.EOF Then
-                                            'ERROR: server record exist - it should not!
-                                            'TODO: clean up the records table
-                                            'oRSServer.Delete adAffectCurrent
+                                        'ERROR: server record exist - it should not!
+                                        'TODO: clean up the records table
+                                        'oRSServer.Delete adAffectCurrent
                                         'End If
 
 900                                     If Not oRSLocal.EOF Then
 
 902                                         If bIsGeoTable Then
 904                                             oRSLocal_GEO.Filter = "UID = " & oRSLocal.Fields("UID").Value
+
 906                                             If Not oRSLocal_GEO.EOF Then oRSLocal.Delete adAffectCurrent
 908                                             oRSLocal_GEO.UpdateBatch
                                             End If
 
 910                                         oRSLocal.Delete adAffectCurrent
 912                                         oRSLocal.UpdateBatch 'adAffectCurrent
+
 913                                         If Right$(.Fields("sTableName").Value, 7) = "Queries" Then DropLocalQuery sTableNamePrefix & oRSLocal.Fields("QueryName").Value, cn
                                             
                                         End If
@@ -2921,7 +2928,7 @@ Private Sub UpdateRSRecordSingle(RSSource As ADODB.Recordset, _
     
 104             If Not RSDest.Fields(i).Name = "WKB" And Not RSDest.Fields(i).Name = "ORIG_ID" Then
 106                 If DoesFieldExistInRS(RSSource, RSDest.Fields(i).Name) Then
-
+If Not RSSource.EOF And Not RSSource.BOF Then
 108                     If Not IsNull(RSSource.Fields(RSDest.Fields(i).Name).Value) Then
 110                         If Not (Right$(RSDest.Source, 4) = "_FEA" And RSDest.Fields(i).Name = "UID") Then
                         
@@ -2931,7 +2938,7 @@ Private Sub UpdateRSRecordSingle(RSSource As ADODB.Recordset, _
                             End If
                    
                         End If
-
+End If
 116                 ElseIf RSDest.Fields(i).Name = "oincidents_FEA.UID" Or RSDest.Fields(i).Name = "oincidents_GEO.UID" Then
 
                         If uUID = -1 Then uUID = GetMaxUIDFromGEOTable("oincidents_GEO", RSDest.ActiveConnection) + CLng(1)
@@ -3075,20 +3082,28 @@ Public Function RunDDSchemaCompare(sWebsite As String, _
 110     TxMsg "**??Beginning schema scan of DD [" & sPrefix & "] ......................", True
 
 112     TxMsg ">>> Getting remote tables ......................", True
+
 114     If sUG = "" Then RemoteTables = GetRemoteTables(sWebsite, sPrefix)
+        If RemoteTables.Prefix = "ABORT" Then
+            TxMsg "   !!! NO TABLES DETECTED ON SERVER - PLEASE CHECK YOUR CONFIG", True
+            RunDDSchemaCompare = False
+        Else
 
-120     TxMsg ">>> Getting local tables ......................", True
-122     If sUG = "" Then LocalTables = GetLocalTables(oCN, sPrefix)
+120         TxMsg ">>> Getting local tables ......................", True
 
-128     TxMsg ">>> Comparing tables ......................", True
-130     If sUG = "" Then CompareTables sWebsite, sPrefix, oCN
+122         If sUG = "" Then LocalTables = GetLocalTables(oCN, sPrefix)
+
+128         TxMsg ">>> Comparing tables ......................", True
+
+130         If sUG = "" Then CompareTables sWebsite, sPrefix, oCN
     
-132     RunDDSchemaCompare = Not bAbortSynchronisation
+132         RunDDSchemaCompare = Not bAbortSynchronisation
 
-134     If sUG = "" Then
-136         If UBound(RemoteTables.Tables) = 0 Then
-138             TxMsg "   !!! NO TABLES DETECTED ON SERVER - PLEASE CHECK YOUR CONFIG", True
-140             RunDDSchemaCompare = False
+134         If sUG = "" Then
+136             If UBound(RemoteTables.Tables) = 0 Then
+138                 TxMsg "   !!! NO TABLES DETECTED ON SERVER - PLEASE CHECK YOUR CONFIG", True
+140                 RunDDSchemaCompare = False
+                End If
             End If
         End If
 
@@ -3298,6 +3313,7 @@ noinet:
         Exit Function
 
 GetRemoteTables_Err:
+        GetRemoteTables.Prefix = "ABORT"
         TxMsg "SynchWorker.GetRemoteTables_Err on line (" & Erl & ") " & Err.Description, True
         '</EhFooter>
 End Function
